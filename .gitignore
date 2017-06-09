@@ -1,0 +1,9 @@
+devel/
+build/
+.idea
+*~
+.catkin_workspace
+log/
+latest
+src/CMakeLists.txt
+cmake-build-debug/

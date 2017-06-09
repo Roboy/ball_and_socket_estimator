@@ -1,0 +1,9 @@
+[submodule "src/mocap"]
+	path = src/mocap
+	url = https://github.com/Roboy/mocap
+[submodule "src/roboy_communication"]
+	path = src/roboy_communication
+	url = https://github.com/Roboy/roboy_communication
+[submodule "src/i2c_fpga"]
+	path = src/i2c_fpga
+	url = https://github.com/Roboy/i2c_fpga

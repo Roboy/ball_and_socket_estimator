@@ -1,0 +1,9 @@
+<library path="libball_in_socket_estimator">
+  <class name="BallInSocketPlugin"
+         type="BallInSocketPlugin"
+         base_class_type="rviz::Panel">
+    <description>
+      A panel widget for ball in socket estimation
+    </description>
+  </class>
+</library>
