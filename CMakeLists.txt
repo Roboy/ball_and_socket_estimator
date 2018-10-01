@@ -7,7 +7,17 @@ SET(CMAKE_BUILD_TYPE Debug FORCE)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11")
 
 # ros
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs sensor_msgs cv_bridge image_transport visualization_msgs rviz roboy_communication_middleware)
+find_package(catkin REQUIRED COMPONENTS
+        roscpp
+        std_msgs
+        geometry_msgs
+        visualization_msgs
+        rviz
+        roboy_communication_middleware
+        common_utilities
+        tf
+        tf_conversions
+        )
 catkin_package(CATKIN_DEPENDS message_runtime roboy_communication_middleware )
 #==============================================================================
 # Dependencies
@@ -23,8 +33,6 @@ catkin_package(CATKIN_DEPENDS message_runtime roboy_communication_middleware )
             ${Qt5Gui_INCLUDE_DIRS}
             ${eigen3_INCLUDE_DIR}
     )
-
-    find_package(Protobuf REQUIRED)
 
     # Eigen
     find_package(PkgConfig)

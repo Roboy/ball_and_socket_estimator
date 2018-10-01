@@ -5,9 +5,6 @@
 #include <ros/ros.h>
 #include <rviz/panel.h>
 #include <pluginlib/class_list_macros.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 //std
 #include <stdio.h>
 #include <map>
@@ -23,12 +20,9 @@
 #include <QComboBox>
 #include <QTimer>
 #include <QSlider>
-// messages
-#include <geometry_msgs/Pose.h>
 #include <roboy_communication_middleware/MagneticSensor.h>
-#include <visualization_msgs/Marker.h>
-// common definitions
 #include <common_utilities/CommonDefinitions.h>
+#include <common_utilities/rviz_visualization.hpp>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -37,19 +31,15 @@
 #include <thread>
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 
 #endif
 
 using namespace std;
-using namespace cv;
 using namespace Eigen;
 
-struct COLOR{
-    COLOR(float r, float g, float b, float a):r(r),g(g),b(b),a(a){};
-    float r,g,b,a;
-};
-
-class BallInSocketPlugin : public rviz::Panel {
+class BallInSocketPlugin : public rviz::Panel, rviz_visualization {
 Q_OBJECT
 
 public:
@@ -75,34 +65,23 @@ Q_SIGNALS:
 public Q_SLOTS:
     void recordData(int state);
     void writeData();
-    /**
-     * Publishes a ray visualization marker
-     * @param pos at this positon
-     * @param dir direction
-     * @param frame in this frame
-     * @param message_id a unique id
-     * @param ns namespace
-     * @param rgda rgb color (0-1) plus transparancy
-     * @param duration for this duration in seconds (0=forever)
-     */
-    void publishRay(Vector3d &pos, Vector3d &dir, const char* frame, const char* ns, int message_id, COLOR color, int duration=0);
 public:
-    void poseCallback(const geometry_msgs::PoseConstPtr& msg);
     void magneticSensorCallback(const roboy_communication_middleware::MagneticSensorConstPtr& msg);
 private:
-    void transformPublisher();
-    ros::NodeHandle *nh;
+    bool getTransform(const char *from, const char *to, Matrix4d &transform);
+    ros::NodeHandlePtr nh;
     bool initialized = false, recording = false, publish_transform = true;
     pair<uint, uint> currentID;
-    ros::AsyncSpinner *spinner;
-    ros::Subscriber pose_sub, magnetic_sensor_sub;
+    boost::shared_ptr<ros::AsyncSpinner> spinner;
+    ros::Subscriber magnetic_sensor_sub;
     ros::Publisher visualization_pub;
     ofstream data_log;
-    geometry_msgs::Pose pose;
     roboy_communication_middleware::MagneticSensor magneticSensors;
+    Matrix4d pose;
+    int message_id = 0;
     mutex mux;
-    COLOR colors[3] = {COLOR(255,0,0,1), COLOR(0,255,0,1), COLOR(0,0,255,1)};
     boost::shared_ptr<std::thread> transform_thread;
     tf::TransformBroadcaster tf_broadcaster;
+    tf::TransformListener tf_listener;
     tf::Transform tf_camera;
 };
