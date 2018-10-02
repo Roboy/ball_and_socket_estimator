@@ -87,31 +87,32 @@ class ball_in_socket_estimator:
     model = Sequential()
     graph = tensorflow.get_default_graph() # we need this otherwise the precition does not work ros callback
     if record is False:
-        dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/data.log", delim_whitespace=True, header=1)
+        dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/src/roboy_controller/scripts/data.log", delim_whitespace=True, header=1)
         dataset = dataset.values[1:,1:]
         # pdb.set_trace()
     prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
     br = tf.TransformBroadcaster()
     def __init__(self):
-        self.model.add(Dense(units=100, input_dim=9,kernel_initializer='normal', activation='relu'))
-        self.model.add(Dense(100, kernel_initializer='normal', activation='relu'))
+        self.model.add(Dense(units=10, input_dim=9,kernel_initializer='normal', activation='sigmoid'))
+        self.model.add(Dense(10, kernel_initializer='normal', activation='sigmoid'))
         self.model.add(Dense(units=4,kernel_initializer='normal'))
         global quaternion_set
         global sensors_set
         global record
         if record is False:
             quaternion_set = self.dataset[0:,0:4]
-            sensors_set = self.dataset[0:,7:]
+            sensors_set = self.dataset[0:,7:]/1000
+            # pdb.set_trace()
         
         self.model.compile(loss='mean_squared_error',
               optimizer='adam',
               metrics=['acc'])
 
-        self.model.fit(sensors_set, quaternion_set, epochs=3)
+        self.model.fit(sensors_set, quaternion_set, epochs=100)
         self.listener()
     def ros_callback(self, data):
         x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
-        x_test=x_test.reshape((1,9))
+        x_test=x_test.reshape((1,9))/1000
         try:
             (trans,rot) = listener.lookupTransform('/world', '/tracker_1', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
