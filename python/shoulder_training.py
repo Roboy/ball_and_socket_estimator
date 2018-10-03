@@ -56,7 +56,7 @@ if record is True:
         global numberOfSamples
         global record
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/sphereTracker_VO', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/world', '/tracker_1', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return
     
@@ -93,8 +93,8 @@ class ball_in_socket_estimator:
     prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
     br = tf.TransformBroadcaster()
     def __init__(self):
-        self.model.add(Dense(units=10, input_dim=9,kernel_initializer='normal', activation='sigmoid'))
-        self.model.add(Dense(10, kernel_initializer='normal', activation='sigmoid'))
+        self.model.add(Dense(units=200, input_dim=9,kernel_initializer='normal', activation='relu'))
+        self.model.add(Dense(200, kernel_initializer='normal', activation='relu'))
         self.model.add(Dense(units=4,kernel_initializer='normal'))
         global quaternion_set
         global sensors_set
