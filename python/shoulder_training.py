@@ -20,7 +20,7 @@ global record
 
 import pdb
 record = False
-train = True
+train = False
 # In[33]:
 rospy.init_node('shoulder_magnetics_training')
 listener = tf.TransformListener()
