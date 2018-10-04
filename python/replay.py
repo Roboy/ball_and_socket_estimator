@@ -40,20 +40,23 @@ def main():
 
     magneticSensor_pub = rospy.Publisher('roboy/middleware/MagneticSensor', MagneticSensor, queue_size=1)
 
-    dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/src/roboy_controller/scripts/data.log", delim_whitespace=True, header=1)
+    dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/data.log", delim_whitespace=True, header=1)
     dataset = dataset.values[1:,0:]
     quaternion_set = dataset[0:,1:5]
     sensors_set = dataset[0:,8:]
     samples = len(sensors_set[:, 0])
     t = 0
-    t0 = rospy.Time.now()
-
+    rate = rospy.Rate(0.001)
+    error = 0
     for (q, s) in itertools.izip(quaternion_set, sensors_set):
-        s_input = s.reshape((1,9))/1000
+        if rospy.is_shutdown():
+            return
+        s_input = s.reshape((1,9))
         quat = model.predict(s_input)
         rospy.loginfo_throttle(1, (quat[0,0],quat[0,1],quat[0,2],quat[0,3]))
         norm = numpy.linalg.norm(quat)
         quat = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
+        error = error+numpy.linalg.norm(quat-q)
         if(t%1==0):
             broadcaster.sendTransform((0, 0, 0),
                                       q,
@@ -74,11 +77,10 @@ def main():
             magneticSensor_pub.publish(msg)
             print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
             t0 = rospy.Time.now()
+            rate.sleep()
         t = t + 1
 
-    # for
-
-
+    print("mean squared error: %f" % (error/samples))
     # Signal handler
     rospy.spin()
 
