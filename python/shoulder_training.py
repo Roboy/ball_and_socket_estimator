@@ -94,25 +94,25 @@ class ball_in_socket_estimator:
     def __init__(self):
         global train
         if train:
-            self.model.add(Dense(units=100, input_dim=9,kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(100, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=10000, input_dim=9,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(10000, kernel_initializer='normal', activation='relu'))
             self.model.add(Dense(units=4,kernel_initializer='normal'))
             global quaternion_set
             global sensors_set
             global record
             if record is False:
                 rospy.loginfo("loading data")
-                dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/src/roboy_controller/scripts/data.log", delim_whitespace=True, header=1)
+                dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/data.log", delim_whitespace=True, header=1)
                 dataset = dataset.values[1:,1:]
-                quaternion_set = dataset[0:500000,0:4]
-                sensors_set = dataset[0:500000,7:]/1000
+                quaternion_set = dataset[:,0:4]
+                sensors_set = dataset[:,7:]/3000.0
                 # pdb.set_trace()
 
             self.model.compile(loss='mean_squared_error',
                   optimizer='adam',
                   metrics=['acc'])
 
-            self.model.fit(sensors_set, quaternion_set, epochs=20)
+            self.model.fit(sensors_set, quaternion_set, epochs=20, batch_size=1000, validation_split=0.3)
 
             # serialize model to JSON
             model_json = self.model.to_json()
@@ -134,7 +134,11 @@ class ball_in_socket_estimator:
         self.listener()
     def ros_callback(self, data):
         x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
-        x_test=x_test.reshape((1,9))/1000
+        x_test=x_test.reshape((1,9))/3000.0
+        try:
+            (trans,rot) = listener.lookupTransform('/world', '/tracker_1', rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            return
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             quat = self.model.predict(x_test)
 #            pos = self.model.predict(x_test)
@@ -142,7 +146,7 @@ class ball_in_socket_estimator:
             norm = numpy.linalg.norm(quat)
             q = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
 #            print "predicted: ",(pos[0,0],pos[0,1],pos[0,2])
-            self.br.sendTransform((0,0,0),
+            self.br.sendTransform(trans,
                      (q[0],q[1],q[2],q[3]),
                      rospy.Time.now(),
                      "shoulderOrientation",

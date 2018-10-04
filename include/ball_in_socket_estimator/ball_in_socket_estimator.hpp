@@ -70,6 +70,7 @@ public:
 private:
     bool getTransform(const char *from, const char *to, Matrix4d &transform);
     ros::NodeHandlePtr nh;
+    ros::Time start_time;
     bool initialized = false, recording = false, publish_transform = true;
     pair<uint, uint> currentID;
     boost::shared_ptr<ros::AsyncSpinner> spinner;

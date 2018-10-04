@@ -53,6 +53,7 @@ void BallInSocketPlugin::recordData(int state){
         data_log = ofstream("data.log");
         data_log << "time q.x q.y q.z q.w x y z magnet.x magnet.y magnet.z magnet.x magnet.y magnet.z magnet.x magnet.y magnet.z\n";
         recording = true;
+        start_time = ros::Time::now();
     }else if (state == Qt::Unchecked) {
         recording = false;
         if(data_log.is_open())
@@ -65,7 +66,7 @@ void BallInSocketPlugin::writeData(){
     Matrix3d rot = pose.block(0,0,3,3);
     Quaterniond q(rot);
     if(data_log.is_open()){
-        data_log << ros::Time::now().nsec << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << " "
+        data_log << (double)(ros::Time::now()-start_time).toSec() << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << " "
                  << pose(0,3) << " " << pose(1,3) << " " << pose(2,3) << " ";
         for(uint i=0; i<magneticSensors.x.size();i++){
             data_log << magneticSensors.x[i] << " " << magneticSensors.y[i] << " " << magneticSensors.z[i] << " ";
