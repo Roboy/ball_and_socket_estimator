@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
         common_utilities
         tf
         tf_conversions
+        pcl_ros
         )
 catkin_package(CATKIN_DEPENDS message_runtime roboy_communication_middleware )
 #==============================================================================

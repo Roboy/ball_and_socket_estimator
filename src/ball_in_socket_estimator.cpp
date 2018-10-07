@@ -15,6 +15,9 @@ BallInSocketPlugin::BallInSocketPlugin(QWidget *parent)
 
     magnetic_sensor_sub = nh->subscribe("/roboy/middleware/MagneticSensor", 100, &BallInSocketPlugin::magneticSensorCallback, this);
     visualization_pub = nh->advertise<visualization_msgs::Marker>("/visualization_marker", 1);
+    magnetic_field_pub = nh->advertise<pcl::PointCloud<pcl::PointXYZRGB> > ("/magnetic_field", 1);
+    magnetic_field.header.frame_id = "world";
+    magnetic_field.header.stamp = ros::Time::now().toSec();
 
     QObject::connect(this, SIGNAL(newData()), this, SLOT(writeData()));
 
@@ -83,17 +86,24 @@ void BallInSocketPlugin::magneticSensorCallback(const roboy_communication_middle
         ROS_WARN_THROTTLE(1,"could not get pose of tracker_1");
 
     for(uint i=0;i<magneticSensors.x.size();i++){
-        Vector3d pos(i*0.5,0,1);
-        Vector3d dir(magneticSensors.x[i]/1000.0f, magneticSensors.y[i]/1000.0f, magneticSensors.z[i]/1000.0f);
+        Vector3d dir(magneticSensors.x[i]/100.0, magneticSensors.y[i]/100.0, magneticSensors.z[i]/100.0);
         dir = pose.block(0,0,3,3)*dir;
-        pos = pos + dir;
-        if(i==0)
-            publishSphere(pos,"world","magneticSensors",message_id++,COLOR(1,0,0,1),0.01,0);
-        else if(i==1)
-            publishSphere(pos,"world","magneticSensors",message_id++,COLOR(0,1,0,1),0.01,0);
-        else if(i==2)
-            publishSphere(pos,"world","magneticSensors",message_id++,COLOR(0,0,1,1),0.01,0);
+        pcl::PointXYZRGB p;
+        p.a = 255;
+        if(i==0) {
+            p.r = 255;
+        }else if(i==1) {
+            p.g = 255;
+        }else if(i==2) {
+            p.b = 255;
+        }
+        p.x = dir[0];
+        p.y = dir[1];
+        p.z = dir[2];
+        magnetic_field.push_back(p);
     }
+
+    magnetic_field_pub.publish(magnetic_field);
 
     if(recording){
         emit newData();

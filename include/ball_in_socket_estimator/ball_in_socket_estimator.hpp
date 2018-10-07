@@ -33,6 +33,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <pcl_ros/point_cloud.h>
 
 #endif
 
@@ -75,7 +76,7 @@ private:
     pair<uint, uint> currentID;
     boost::shared_ptr<ros::AsyncSpinner> spinner;
     ros::Subscriber magnetic_sensor_sub;
-    ros::Publisher visualization_pub;
+    ros::Publisher visualization_pub, magnetic_field_pub;
     ofstream data_log;
     roboy_communication_middleware::MagneticSensor magneticSensors;
     Matrix4d pose;
@@ -85,4 +86,5 @@ private:
     tf::TransformBroadcaster tf_broadcaster;
     tf::TransformListener tf_listener;
     tf::Transform tf_camera;
+    pcl::PointCloud<pcl::PointXYZRGB> magnetic_field;
 };
