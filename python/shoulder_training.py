@@ -20,7 +20,7 @@ global record
 
 import pdb
 record = False
-train = False
+train = True
 # In[33]:
 rospy.init_node('shoulder_magnetics_training')
 listener = tf.TransformListener()
@@ -30,7 +30,7 @@ rate = rospy.Rate(60.0)
 if record is True:
     print("recording training data")
     global numberOfSamples
-    numberOfSamples = 1000
+    numberOfSamples = 100000
     global sample
     global samples
     samples = np.zeros((numberOfSamples,9))
@@ -49,7 +49,7 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("data0.log","w") 
+    record = open("/home/roboy/workspace/roboy_control/data0.log","w")
     record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2")
     sample = 0
     def magneticsCallback(data):
@@ -58,7 +58,7 @@ if record is True:
         global numberOfSamples
         global record
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/tracker_1', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/tracker_1', '/tracker_2', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return
     
@@ -103,17 +103,19 @@ class ball_in_socket_estimator:
             global record
             if record is False:
                 rospy.loginfo("loading data")
-                dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/data.log", delim_whitespace=True, header=1)
-                dataset = dataset.values[1:,1:]
+                dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+                dataset = dataset.values[:,0:]
                 quaternion_set = dataset[:,0:4]
-                sensors_set = dataset[:,7:]
+                sensors_set = dataset[:,4:]
                 # pdb.set_trace()
+                print(quaternion_set[0])
+                print(sensors_set[0])
 
             self.model.compile(loss='mean_squared_error',
                   optimizer='adam',
                   metrics=['acc'])
 
-            self.model.fit(sensors_set, quaternion_set, epochs=500, batch_size=400, validation_split=0.3)
+            self.model.fit(sensors_set, quaternion_set, epochs=300, batch_size=400, validation_split=0.3)
 
             # serialize model to JSON
             model_json = self.model.to_json()
@@ -124,12 +126,12 @@ class ball_in_socket_estimator:
             print("Saved model to disk")
         else:
             # load json and create model
-            json_file = open('/home/letrend/workspace/roboy_middleware/src/ball_in_socket_estimator/python/model.json', 'r')
+            json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/letrend/workspace/roboy_middleware/src/ball_in_socket_estimator/python/model.h5")
+            self.model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
             print("Loaded model from disk")
 
         self.listener()
@@ -137,7 +139,7 @@ class ball_in_socket_estimator:
         x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
         x_test=x_test.reshape((1,9))
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/tracker_1', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/tracker_1', '/tracker_2', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
@@ -151,7 +153,12 @@ class ball_in_socket_estimator:
                      (q[0],q[1],q[2],q[3]),
                      rospy.Time.now(),
                      "shoulderOrientation",
-                     "world")
+                     "tracker_1")
+            self.br.sendTransform(trans,
+                      rot,
+                      rospy.Time.now(),
+                      "shoulderOrientationTruth",
+                      "tracker_1")
     def listener(self):
         rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, self.ros_callback)
         rospy.spin()
