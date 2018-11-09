@@ -30,7 +30,7 @@ rate = rospy.Rate(60.0)
 if record is True:
     print("recording training data")
     global numberOfSamples
-    numberOfSamples = 100000
+    numberOfSamples = 300000
     global sample
     global samples
     samples = np.zeros((numberOfSamples,9))
@@ -50,7 +50,7 @@ if record is True:
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
     record = open("/home/roboy/workspace/roboy_control/data0.log","w")
-    record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2")
+    record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2\n")
     sample = 0
     def magneticsCallback(data):
         global sample
@@ -138,10 +138,17 @@ class ball_in_socket_estimator:
     def ros_callback(self, data):
         x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
         x_test=x_test.reshape((1,9))
+        show_ground_truth = True
         try:
             (trans,rot) = listener.lookupTransform('/tracker_1', '/tracker_2', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            return
+            show_ground_truth = False
+        if show_ground_truth:
+            self.br.sendTransform(trans,
+                                  rot,
+                                  rospy.Time.now(),
+                                  "shoulderOrientationTruth",
+                                  "world")
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             quat = self.model.predict(x_test)
 #            pos = self.model.predict(x_test)
@@ -153,12 +160,8 @@ class ball_in_socket_estimator:
                      (q[0],q[1],q[2],q[3]),
                      rospy.Time.now(),
                      "shoulderOrientation",
-                     "tracker_1")
-            self.br.sendTransform(trans,
-                      rot,
-                      rospy.Time.now(),
-                      "shoulderOrientationTruth",
-                      "tracker_1")
+                     "world")
+
     def listener(self):
         rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, self.ros_callback)
         rospy.spin()
