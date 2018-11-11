@@ -20,7 +20,7 @@ global record
 
 import pdb
 record = False
-train = True
+train = False
 # In[33]:
 rospy.init_node('shoulder_magnetics_training')
 listener = tf.TransformListener()
@@ -49,7 +49,7 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/roboy/workspace/roboy_control/data0.log","w")
+    record = open("/home/letrend/workspace/roboy_middleware/data0.log","w")
     record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2\n")
     sample = 0
     def magneticsCallback(data):
@@ -103,7 +103,7 @@ class ball_in_socket_estimator:
             global record
             if record is False:
                 rospy.loginfo("loading data")
-                dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+                dataset = pandas.read_csv("/home/letrend/workspace/roboy_middleware/data0.log", delim_whitespace=True, header=1)
                 dataset = dataset.values[:,0:]
                 quaternion_set = dataset[:,0:4]
                 sensors_set = dataset[:,4:]
@@ -126,12 +126,12 @@ class ball_in_socket_estimator:
             print("Saved model to disk")
         else:
             # load json and create model
-            json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+            json_file = open('/home/letrend/workspace/roboy_middleware/src/ball_in_socket_estimator/python/model.json', 'r')
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+            self.model.load_weights("/home/letrend/workspace/roboy_middleware/src/ball_in_socket_estimator/python/model.h5")
             print("Loaded model from disk")
 
         self.listener()
@@ -156,7 +156,7 @@ class ball_in_socket_estimator:
             norm = numpy.linalg.norm(quat)
             q = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
 #            print "predicted: ",(pos[0,0],pos[0,1],pos[0,2])
-            self.br.sendTransform(trans,
+            self.br.sendTransform(np.array([0,0,0]),
                      (q[0],q[1],q[2],q[3]),
                      rospy.Time.now(),
                      "shoulderOrientation",
