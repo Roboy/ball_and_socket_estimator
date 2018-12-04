@@ -20,7 +20,7 @@
 #include <QComboBox>
 #include <QTimer>
 #include <QSlider>
-#include <roboy_communication_middleware/MagneticSensor.h>
+#include <roboy_middleware_msgs/MagneticSensor.h>
 #include <common_utilities/CommonDefinitions.h>
 #include <common_utilities/rviz_visualization.hpp>
 #include <fstream>
@@ -67,7 +67,7 @@ public Q_SLOTS:
     void recordData(int state);
     void writeData();
 public:
-    void magneticSensorCallback(const roboy_communication_middleware::MagneticSensorConstPtr& msg);
+    void magneticSensorCallback(const roboy_middleware_msgs::MagneticSensorConstPtr& msg);
 private:
     bool getTransform(const char *from, const char *to, Matrix4d &transform);
     ros::NodeHandlePtr nh;
@@ -78,7 +78,7 @@ private:
     ros::Subscriber magnetic_sensor_sub;
     ros::Publisher visualization_pub, magnetic_field_pub;
     ofstream data_log;
-    roboy_communication_middleware::MagneticSensor magneticSensors;
+    roboy_middleware_msgs::MagneticSensor magneticSensors;
     Matrix4d pose;
     int message_id = 0;
     mutex mux;
