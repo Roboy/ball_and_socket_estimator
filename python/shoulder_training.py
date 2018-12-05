@@ -19,7 +19,7 @@ import numpy
 global record
 
 import pdb
-record = False
+record = True
 train = True
 # In[33]:
 rospy.init_node('shoulder_magnetics_training')
@@ -30,7 +30,7 @@ rate = rospy.Rate(60.0)
 if record is True:
     print("recording training data")
     global numberOfSamples
-    numberOfSamples = 300000
+    numberOfSamples = 50000
     global sample
     global samples
     samples = np.zeros((numberOfSamples,9))
@@ -49,8 +49,8 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/roboy/workspace/roboy_control/data0.log","w")
-    record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2\n")
+    record = open("/home/letrend/workspace/roboy_control/data0.log","w")
+    record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2 qx_top qy_top qz_top qw_top\n")
     sample = 0
     def magneticsCallback(data):
         global sample
@@ -59,11 +59,12 @@ if record is True:
         global record
         try:
             (trans,rot) = listener.lookupTransform('/tracker_1', '/tracker_2', rospy.Time(0))
+            (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return
     
         if sample<numberOfSamples:
-            record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + "\n")
+            record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
             print(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]))
             print(str(sample))
             sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
@@ -103,10 +104,10 @@ class ball_in_socket_estimator:
             global record
             if record is False:
                 rospy.loginfo("loading data")
-                dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+                dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
                 dataset = dataset.values[:,0:]
                 quaternion_set = dataset[:,0:4]
-                sensors_set = dataset[:,4:]
+                sensors_set = dataset[:,4:13]
                 # pdb.set_trace()
                 print(quaternion_set[0])
                 print(sensors_set[0])
@@ -115,7 +116,7 @@ class ball_in_socket_estimator:
                   optimizer='adam',
                   metrics=['acc'])
 
-            self.model.fit(sensors_set, quaternion_set, epochs=300, batch_size=400, validation_split=0.3)
+            self.model.fit(sensors_set, quaternion_set, epochs=30, batch_size=400, validation_split=0.3)
 
             # serialize model to JSON
             model_json = self.model.to_json()
@@ -126,12 +127,12 @@ class ball_in_socket_estimator:
             print("Saved model to disk")
         else:
             # load json and create model
-            json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+            json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+            self.model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
             print("Loaded model from disk")
 
         self.listener()
