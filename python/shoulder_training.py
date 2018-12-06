@@ -31,7 +31,7 @@ rate = rospy.Rate(60.0)
 if record is True:
     print("recording training data")
     global numberOfSamples
-    numberOfSamples = 50000
+    numberOfSamples = 500000
     global sample
     global samples
     samples = np.zeros((numberOfSamples,9))

@@ -53,6 +53,9 @@ catkin_package(CATKIN_DEPENDS message_runtime roboy_communication_middleware )
     add_dependencies(ball_in_socket_estimator roboy_communication_middleware_gencpp)
     target_link_libraries(ball_in_socket_estimator ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
+    add_executable(magnetic_field_visualization src/magnetic_field_visualization.cpp)
+    target_link_libraries(magnetic_field_visualization ${catkin_LIBRARIES})
+
     #==============================================================================
     # Installation
     #==============================================================================
