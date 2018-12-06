@@ -14,7 +14,7 @@ from pyquaternion import Quaternion
 # In[33]:
 
 from keras.layers import Dense, Activation
-from roboy_communication_middleware.msg import MagneticSensor
+from roboy_middleware_msgs.msg import MagneticSensor
 from visualization_msgs.msg import Marker
 
 class ball_in_socket_estimator:

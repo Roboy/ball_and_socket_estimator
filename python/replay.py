@@ -16,7 +16,7 @@ import tf
 import geometry_msgs.msg
 import visualization_msgs.msg
 from pyquaternion import Quaternion
-from roboy_communication_middleware.msg import MagneticSensor
+from roboy_middleware_msgs.msg import MagneticSensor
 from visualization_msgs.msg import Marker
 import std_msgs.msg
 import sys, select

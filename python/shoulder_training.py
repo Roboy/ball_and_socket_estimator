@@ -10,7 +10,7 @@ import geometry_msgs.msg
 from pyquaternion import Quaternion
 from keras.layers import Dense, Activation
 from keras.models import model_from_json
-from roboy_communication_middleware.msg import MagneticSensor
+from roboy_middleware_msgs.msg import MagneticSensor
 from visualization_msgs.msg import Marker
 import sys, select
 from pyquaternion import Quaternion

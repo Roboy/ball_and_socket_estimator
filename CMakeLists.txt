@@ -13,13 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
         geometry_msgs
         visualization_msgs
         rviz
-        roboy_communication_middleware
+        roboy_middleware_msgs
         common_utilities
         tf
         tf_conversions
         pcl_ros
         )
-catkin_package(CATKIN_DEPENDS message_runtime roboy_communication_middleware )
+catkin_package(CATKIN_DEPENDS message_runtime roboy_middleware_msgs )
 #==============================================================================
 # Dependencies
 #==============================================================================
@@ -50,7 +50,7 @@ catkin_package(CATKIN_DEPENDS message_runtime roboy_communication_middleware )
     #==============================================================================
     qt5_wrap_cpp(MOC_FILES include/ball_in_socket_estimator/ball_in_socket_estimator.hpp)
     add_library(ball_in_socket_estimator src/ball_in_socket_estimator.cpp ${MOC_FILES})
-    add_dependencies(ball_in_socket_estimator roboy_communication_middleware_gencpp)
+    add_dependencies(ball_in_socket_estimator roboy_middleware_msgs_gencpp)
     target_link_libraries(ball_in_socket_estimator ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
     add_executable(magnetic_field_visualization src/magnetic_field_visualization.cpp)

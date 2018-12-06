@@ -78,7 +78,7 @@ void BallInSocketPlugin::writeData(){
     }
 }
 
-void BallInSocketPlugin::magneticSensorCallback(const roboy_communication_middleware::MagneticSensorConstPtr& msg){
+void BallInSocketPlugin::magneticSensorCallback(const roboy_middleware_msgs::MagneticSensorConstPtr& msg){
     ROS_DEBUG_THROTTLE(10, "receiving magnetic data");
     magneticSensors = *msg;
 

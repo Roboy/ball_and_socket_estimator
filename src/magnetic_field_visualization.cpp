@@ -28,24 +28,29 @@ int main (int argc, char** argv)
         printf("Failed to open 'yourfile'");
         return -1;
     }
-    for(int i =0; i<8900; i++){
+    fscanf(file, "%*[^\n]\n", NULL);
+    for(int i =0; i<210000; i++){
         float qx,qy,qz,qw, s[3][3], q_top_x,q_top_y, q_top_z, q_top_w;
         int nItemsRead = fscanf(file,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
         &qx,&qy,&qz,&qw,&s[0][0],&s[0][1],&s[0][2],&s[1][0],&s[1][1],&s[1][2],&s[2][0],&s[2][1],&s[2][2],&q_top_x,&q_top_y, &q_top_z, &q_top_w);
         if(nItemsRead ==17){
-//            Vector3d mag();
-//            Quaterniond q(qw,qx,qy,qz);
-//            Matrix3d rot = q.matrix();
-//            mag = rot.inverse()*mag;
-            for(int sensor=0;sensor<3;sensor++){
-                pcl::PointXYZ p(s[sensor][0],s[sensor][1],s[sensor][2]);
-                cloud->push_back(p);
-            }
+            Vector3d dir(0,0,1);
+            Vector3d mag(s[2][0],s[2][1],s[2][2]);
+            Quaterniond q(qw,qx,qy,qz);
+            Matrix3d rot = q.matrix();
+            dir = rot*dir;
+            mag = rot*mag*0.01;
+//            for(int sensor=0;sensor<3;sensor++){
+            pcl::PointXYZ p0(dir[0],dir[1],dir[2]);
+            cloud->push_back(p0);
+            pcl::PointXYZ p(dir[0]+mag[0],dir[1]+mag[1],dir[2]+mag[2]);
+            cloud->push_back(p);
+//            }
 
         }
     }
 
-    pcl::visualization::CloudViewer viewer("Cloud Viewer");
+    pcl::visualization::CloudViewer viewer("magnetic data");
 
     //blocks until the cloud is actually rendered
     viewer.showCloud(cloud);
