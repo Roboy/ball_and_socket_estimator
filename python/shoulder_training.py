@@ -20,10 +20,10 @@ global record
 
 import pdb
 record = True
-train = True
+train = False
 
 # In[33]:
-rospy.init_node('shoulder_magnetics_training')
+rospy.init_node('shoulder_magnetics_training', anonymous=True)
 listener = tf.TransformListener()
 rate = rospy.Rate(60.0)
 
@@ -119,7 +119,7 @@ class ball_in_socket_estimator:
                   optimizer='adam',
                   metrics=['acc'])
 
-            self.model.fit(sensors_set, quaternion_set, epochs=30, batch_size=400, validation_split=0.3)
+            self.model.fit(sensors_set, quaternion_set, epochs=60, batch_size=400, validation_split=0.33)
 
             # serialize model to JSON
             model_json = self.model.to_json()
@@ -150,7 +150,7 @@ class ball_in_socket_estimator:
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             show_ground_truth = False
         if show_ground_truth:
-            self.br.sendTransform(trans,
+            self.br.sendTransform(np.array([0,0,0.3]),
                                   rot,
                                   rospy.Time.now(),
                                   "shoulderOrientationTruth",
@@ -162,7 +162,7 @@ class ball_in_socket_estimator:
             norm = numpy.linalg.norm(quat)
             q = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
 #            print "predicted: ",(pos[0,0],pos[0,1],pos[0,2])
-            self.br.sendTransform(np.array([0,0,0]),
+            self.br.sendTransform(np.array([0,0,0.3]),
                      (q[0],q[1],q[2],q[3]),
                      rospy.Time.now(),
                      "shoulderOrientation",

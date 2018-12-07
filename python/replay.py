@@ -25,7 +25,13 @@ import matplotlib.pyplot as plt
 import numpy
 import itertools
 
+publish_magnetic_data = False
+show_magnetic_field = False
+
 def main():
+
+    global publish_magnetic_data
+    global show_magnetic_field
 
     # load json and create model
     json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
@@ -72,43 +78,46 @@ def main():
                                       rospy.Time.now(),
                                       "predict",
                                       "world")
+            if show_magnetic_field:
 
-            msg2 = visualization_msgs.msg.Marker()
-            msg2.type = msg2.SPHERE
-            msg2.id = i
-            msg2.color.r = 1
-            msg2.color.a = 1
-            msg2.action = msg2.ADD
-            msg2.header.seq = i
-            msg2.header.frame_id = "world"
-            msg2.header.stamp = rospy.Time.now()
-            msg2.lifetime = rospy.Duration(0)
-            msg2.scale.x = 0.01
-            msg2.scale.y = 0.01
-            msg2.scale.z = 0.01
-            msg2.pose.orientation.w = 1
-            msg2.ns = "magnetic_field_sensor0"
+                msg2 = visualization_msgs.msg.Marker()
+                msg2.type = msg2.SPHERE
+                msg2.id = i
+                msg2.color.r = 1
+                msg2.color.a = 1
+                msg2.action = msg2.ADD
+                msg2.header.seq = i
+                msg2.header.frame_id = "world"
+                msg2.header.stamp = rospy.Time.now()
+                msg2.lifetime = rospy.Duration(0)
+                msg2.scale.x = 0.01
+                msg2.scale.y = 0.01
+                msg2.scale.z = 0.01
+                msg2.pose.orientation.w = 1
+                msg2.ns = "magnetic_field_sensor0"
 
-            sens = numpy.array([s[3],s[4],s[5]])
-            q_w = Quaternion(q)
-            sens_w = q_w.rotate(sens) * 0.01
-            msg2.pose.position.x = sens_w[0]
-            msg2.pose.position.y = sens_w[1]
-            msg2.pose.position.z = sens_w[2]
-            i= i+1
+                sens = numpy.array([s[3],s[4],s[5]])
+                q_w = Quaternion(q)
+                sens_w = q_w.rotate(sens) * 0.01
+                msg2.pose.position.x = sens_w[0]
+                msg2.pose.position.y = sens_w[1]
+                msg2.pose.position.z = sens_w[2]
+                i= i+1
 
-            visualization_pub.publish(msg2)
-            # msg = MagneticSensor()
-            # msg.id = 5
-            # msg.sensor_id = [0, 1, 2]
-            # msg.x = [s[0], s[3], s[6]]
-            # msg.y = [s[1], s[4], s[7]]
-            # msg.z = [s[2], s[5], s[8]]
-            # magneticSensor_pub.publish(msg)
-            # print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
-            # t0 = rospy.Time.now()
-            # rate.sleep()
+                visualization_pub.publish(msg2)
+            if publish_magnetic_data:
+                msg = MagneticSensor()
+                msg.id = 5
+                msg.sensor_id = [0, 1, 2]
+                msg.x = [s[0], s[3], s[6]]
+                msg.y = [s[1], s[4], s[7]]
+                msg.z = [s[2], s[5], s[8]]
+                magneticSensor_pub.publish(msg)
+                print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
+                t0 = rospy.Time.now()
+
         t = t + 1
+        rate.sleep()
 
     print("mean squared error: %f" % (error/samples))
     # Signal handler
