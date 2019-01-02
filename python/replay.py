@@ -51,11 +51,12 @@ def main():
 
     dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
     dataset = dataset.values[1:,0:]
-    quaternion_set = dataset[0:,1:5]
-    sensors_set = dataset[0:,8:17]
-    samples = len(sensors_set[:, 0])
+    quaternion_set = dataset[0:,0:4]
+    sensors_set = dataset[0:,4:13]
+    sample = 0
+    samples = len(quaternion_set)
     t = 0
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(1000)
     error = 0
     i = 0
     for (q, s) in itertools.izip(quaternion_set, sensors_set):
@@ -113,13 +114,12 @@ def main():
                 msg.y = [s[1], s[4], s[7]]
                 msg.z = [s[2], s[5], s[8]]
                 magneticSensor_pub.publish(msg)
-                print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
                 t0 = rospy.Time.now()
-
+        print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
         t = t + 1
         rate.sleep()
-
-    print("mean squared error: %f" % (error/samples))
+    error = error/samples
+    print("mean squared error: %f" % (error))
     # Signal handler
     rospy.spin()
 

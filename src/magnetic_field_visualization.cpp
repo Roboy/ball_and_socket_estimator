@@ -24,7 +24,7 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis (pcl::PointCloud<pcl
     viewer->setBackgroundColor (0, 0, 0);
     pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
     viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, "sample cloud");
-    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
     viewer->addCoordinateSystem (1.0);
     viewer->initCameraParameters ();
     return (viewer);
@@ -46,13 +46,17 @@ int main (int argc, char** argv)
     }
     fscanf(file, "%*[^\n]\n", NULL);
     float qx,qy,qz,qw, s[3][3], q_top_x,q_top_y, q_top_z, q_top_w;
+    bool first = true;
+    Quaterniond quat_init;
     while(fscanf(file,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
     &qx,&qy,&qz,&qw,&s[0][0],&s[0][1],&s[0][2],&s[1][0],&s[1][1],&s[1][2],&s[2][0],&s[2][1],&s[2][2],&q_top_x,&q_top_y, &q_top_z, &q_top_w)==17) {
         Vector3d dir(0, 0, 1);
         Vector3d mag0(s[0][0], s[0][1], s[0][2]);
         Vector3d mag1(s[1][0], s[1][1], s[1][2]);
         Vector3d mag2(s[2][0], s[2][1], s[2][2]);
+
         Quaterniond q(qw, qx, qy, qz);
+
         Matrix3d rot = q.matrix();
         dir = rot * dir;
 //            mag = rot*mag*0.01;
@@ -62,6 +66,22 @@ int main (int argc, char** argv)
         p0.y = dir[1];
         p0.z = dir[2];
         p0.r = 255;
+        p0.g = 255;
+        p0.b = 255;
+        cloud->push_back(p0);
+        dir << 0,0,1;
+        Quaterniond q2(q_top_w, q_top_x, q_top_y, q_top_z);
+//        if(first){
+//            quat_init = q2;
+//            first = false;
+//        }
+//        q2 = q2*quat_init.inverse();
+        Matrix3d rot2 = q2.matrix();
+        dir = rot2 * dir;
+        p0.x = dir[0];
+        p0.y = dir[1];
+        p0.z = dir[2];
+        p0.r = 0;
         p0.g = 255;
         p0.b = 255;
         cloud->push_back(p0);

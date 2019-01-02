@@ -17,10 +17,12 @@ from pyquaternion import Quaternion
 import matplotlib.pyplot as plt
 import numpy
 global record
+global sensors_set
+global quaternion_set
 
 import pdb
 record = True
-train = False
+train = True
 
 # In[33]:
 rospy.init_node('shoulder_magnetics_training', anonymous=True)
@@ -44,7 +46,7 @@ if record is True:
     ax.set_autoscaley_on(True)
     ax.set_xlim(0, numberOfSamples)
     ax.grid()
-    
+
     global magneticsSubscriber
     global quaternion_set
     quaternion_set = np.zeros((numberOfSamples,4))
@@ -60,24 +62,23 @@ if record is True:
         global numberOfSamples
         global record
         try:
-            (trans,rot) = listener.lookupTransform('/tracker_1', '/tracker_2', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
             (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return
     
-        if sample<numberOfSamples:
-            record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
-            print(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]))
-            print(str(sample))
-            sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
-            q = np.array([rot[0], rot[1], rot[2], rot[3]])
-            sensors_set[sample,:] = sensor.reshape(1,9)
-            quaternion_set[sample,:] = q.reshape(1,4)            
-            samples[sample,:]= sample
-            sample = sample + 1
+        record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
+        print(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]))
+        print(str(sample))
+        sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
+        q = np.array([rot[0], rot[1], rot[2], rot[3]])
+        # sensors_set[sample,:] = sensor.reshape(1,9)
+        # quaternion_set[sample,:] = q.reshape(1,4)
+        # samples[sample,:]= sample
+        sample = sample + 1
             
     magneticsSubscriber = rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, magneticsCallback)
-    
+
     sys.stdin.read(1)
     lines.set_xdata(samples)
     lines.set_ydata(sensors_set)
@@ -146,15 +147,9 @@ class ball_in_socket_estimator:
         x_test=x_test.reshape((1,9))
         show_ground_truth = True
         try:
-            (trans,rot) = listener.lookupTransform('/tracker_1', '/tracker_2', rospy.Time(0))
+            (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            show_ground_truth = False
-        if show_ground_truth:
-            self.br.sendTransform(np.array([0,0,0.3]),
-                                  rot,
-                                  rospy.Time.now(),
-                                  "shoulderOrientationTruth",
-                                  "world")
+            return
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             quat = self.model.predict(x_test)
 #            pos = self.model.predict(x_test)
@@ -162,10 +157,10 @@ class ball_in_socket_estimator:
             norm = numpy.linalg.norm(quat)
             q = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
 #            print "predicted: ",(pos[0,0],pos[0,1],pos[0,2])
-            self.br.sendTransform(np.array([0,0,0.3]),
+            self.br.sendTransform(trans,
                      (q[0],q[1],q[2],q[3]),
                      rospy.Time.now(),
-                     "shoulderOrientation",
+                     "top_NN",
                      "world")
 
     def listener(self):
