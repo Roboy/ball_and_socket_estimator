@@ -21,7 +21,7 @@ global sensors_set
 global quaternion_set
 
 import pdb
-record = True
+record = False
 train = True
 
 # In[33]:
@@ -127,7 +127,7 @@ class ball_in_socket_estimator:
             with open("model.json", "w") as json_file:
                 json_file.write(model_json)
             # serialize weights to HDF5
-            self.model.save_weights("model.h5")
+            self.model.save("model.h5")
             print("Saved model to disk")
         else:
             # load json and create model
@@ -147,7 +147,7 @@ class ball_in_socket_estimator:
         x_test=x_test.reshape((1,9))
         show_ground_truth = True
         try:
-            (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
+            (trans,rot2) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback

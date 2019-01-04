@@ -68,11 +68,11 @@ def main():
         norm = numpy.linalg.norm(quat)
         quat = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
         error = error+numpy.linalg.norm(quat-q)
-        if(t%1==0):
+        if(t%100==0):
             broadcaster.sendTransform((0, 0, 0),
                                       q,
                                       rospy.Time.now(),
-                                      "tracker_2",
+                                      "ground_truth",
                                       "world")
             broadcaster.sendTransform((0, 0, 0),
                                       quat,

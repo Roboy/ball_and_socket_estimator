@@ -14,6 +14,16 @@
 
 using namespace Eigen;
 using namespace std;
+//#define SHOWORIENTATION_MEASURED
+//#define SHOWORIENTATION_CARDSFLOW
+#define SHOWMAGNITUDE_SENSOR0
+#define SHOWMAGNITUDE_SENSOR1
+#define SHOWMAGNITUDE_SENSOR2
+//#define SHOWSENSOR0
+//#define SHOWSENSOR1
+//#define SHOWSENSOR2
+//#define GENERATESTL
+
 
 boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
 {
@@ -58,6 +68,8 @@ int main (int argc, char** argv)
         Quaterniond q(qw, qx, qy, qz);
 
         Matrix3d rot = q.matrix();
+
+#ifdef SHOWORIENTATION_MEASURED
         dir = rot * dir;
 //            mag = rot*mag*0.01;
 //            for(int sensor=0;sensor<3;sensor++){
@@ -69,6 +81,8 @@ int main (int argc, char** argv)
         p0.g = 255;
         p0.b = 255;
         cloud->push_back(p0);
+#endif
+#ifdef SHOWORIENTATION_CARDSFLOW
         dir << 0,0,1;
         Quaterniond q2(q_top_w, q_top_x, q_top_y, q_top_z);
 //        if(first){
@@ -82,9 +96,12 @@ int main (int argc, char** argv)
         p0.y = dir[1];
         p0.z = dir[2];
         p0.r = 0;
-        p0.g = 255;
-        p0.b = 255;
+        p0.g = 30;
+        p0.b = 90;
         cloud->push_back(p0);
+#endif
+#ifdef SHOWMAGNITUDE_SENSOR0
+
         {
             double norm = mag0.norm();
             dir << 0, 0, 1 + norm * scale;
@@ -96,6 +113,8 @@ int main (int argc, char** argv)
             p.r = 255;
             cloud->push_back(p);
         }
+#endif
+#ifdef SHOWMAGNITUDE_SENSOR1
         {
             double norm = mag1.norm();
             dir << 0, 0, 1 + norm * scale;
@@ -107,6 +126,8 @@ int main (int argc, char** argv)
             p.g = 255;
             cloud->push_back(p);
         }
+#endif
+#ifdef SHOWMAGNITUDE_SENSOR2
         {
             double norm = mag2.norm();
             dir << 0, 0, 1 + norm * scale;
@@ -118,7 +139,107 @@ int main (int argc, char** argv)
             p.b = 255;
             cloud->push_back(p);
         }
-//            }
+#endif
+#ifdef SHOWSENSOR0
+        cloud->push_back(p0);
+        {
+            dir << 0, 0, 1 + mag0[0] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.r = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag0[1] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.g = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag0[2] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.b = 255;
+            cloud->push_back(p);
+        }
+#endif
+#ifdef SHOWSENSOR1
+        cloud->push_back(p0);
+        {
+            dir << 0, 0, 1 + mag1[0] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.r = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag1[1] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.g = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag1[2] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.b = 255;
+            cloud->push_back(p);
+        }
+#endif
+#ifdef SHOWSENSOR2
+        cloud->push_back(p0);
+        {
+            dir << 0, 0, 1 + mag2[0] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.r = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag2[1] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.g = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag2[2] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.b = 255;
+            cloud->push_back(p);
+        }
+#endif
+
     }
 
 
@@ -132,54 +253,58 @@ int main (int argc, char** argv)
         viewer->spinOnce (100);
         boost::this_thread::sleep (boost::posix_time::microseconds (100000));
     }
-//    //* the data should be available in cloud
-//
-//    // Normal estimation*
-//    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
-//    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
-//    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-//    tree->setInputCloud (cloud);
-//    n.setInputCloud (cloud);
-//    n.setSearchMethod (tree);
-//    n.setKSearch (20);
-//    n.compute (*normals);
-//    //* normals should not contain the point normals + surface curvatures
-//
-//    // Concatenate the XYZ and normal fields*
-//    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
-//    pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
-//    //* cloud_with_normals = cloud + normals
-//
-//    // Create search tree*
-//    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
-//    tree2->setInputCloud (cloud_with_normals);
-//
-//    // Initialize objects
-//    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
-//    pcl::PolygonMesh triangles;
-//
-//    // Set the maximum distance between connected points (maximum edge length)
-//    gp3.setSearchRadius (0.025);
-//
-//    // Set typical values for the parameters
-//    gp3.setMu (2.5);
-//    gp3.setMaximumNearestNeighbors (100);
-//    gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
-//    gp3.setMinimumAngle(M_PI/18); // 10 degrees
-//    gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
-//    gp3.setNormalConsistency(false);
-//
-//    // Get result
-//    gp3.setInputCloud (cloud_with_normals);
-//    gp3.setSearchMethod (tree2);
-//    gp3.reconstruct (triangles);
-//
-//    // Additional vertex information
-//    std::vector<int> parts = gp3.getPartIDs();
-//    std::vector<int> states = gp3.getPointStates();
-//
-//    pcl::io::savePolygonFileSTL ("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/mesh.stl", triangles);
+    //* the data should be available in cloud
 
+#ifdef GENERATESTL
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::copyPointCloud(*cloud, *cloud_xyz);
+
+    // Normal estimation*
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud (cloud_xyz);
+    n.setInputCloud (cloud_xyz);
+    n.setSearchMethod (tree);
+    n.setKSearch (20);
+    n.compute (*normals);
+    //* normals should not contain the point normals + surface curvatures
+
+    // Concatenate the XYZ and normal fields*
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields (*cloud_xyz, *normals, *cloud_with_normals);
+    //* cloud_with_normals = cloud + normals
+
+    // Create search tree*
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud (cloud_with_normals);
+
+    // Initialize objects
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
+
+    // Set the maximum distance between connected points (maximum edge length)
+    gp3.setSearchRadius (0.5);
+
+    // Set typical values for the parameters
+    gp3.setMu (2.5);
+    gp3.setMaximumNearestNeighbors (10000);
+    gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
+    gp3.setMinimumAngle(M_PI/18); // 10 degrees
+    gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
+    gp3.setNormalConsistency(true);
+
+    // Get result
+    gp3.setInputCloud (cloud_with_normals);
+    gp3.setSearchMethod (tree2);
+    gp3.reconstruct (triangles);
+
+    // Additional vertex information
+    std::vector<int> parts = gp3.getPartIDs();
+    std::vector<int> states = gp3.getPointStates();
+
+    pcl::io::savePolygonFileSTL ("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/mesh.stl", triangles);
+#endif
     // Finish
     return (0);
 }
