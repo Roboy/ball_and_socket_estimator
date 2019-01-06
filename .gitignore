@@ -1,3 +1,4 @@
+.ipynb_checkpoints
 devel/
 build/
 .idea
@@ -7,3 +8,4 @@ log/
 latest
 src/CMakeLists.txt
 cmake-build-debug/
+log*

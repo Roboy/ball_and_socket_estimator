@@ -24,6 +24,7 @@ from pyquaternion import Quaternion
 import matplotlib.pyplot as plt
 import numpy
 import itertools
+import wrangle
 
 publish_magnetic_data = False
 show_magnetic_field = False
@@ -39,8 +40,9 @@ def main():
     json_file.close()
     model = model_from_json(loaded_model_json)
     # load weights into new model
-    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model_checkpoint-12-0.0002365596.hdf5")
     print("Loaded model from disk")
+    model.summary()
 
     rospy.init_node('replay')
     listener = tf.TransformListener()
@@ -50,13 +52,14 @@ def main():
     visualization_pub = rospy.Publisher('visualization_marker', visualization_msgs.msg.Marker, queue_size=100)
 
     dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
-    dataset = dataset.values[1:,0:]
+    dataset = dataset.values[1+1000000:,0:]
     quaternion_set = dataset[0:,0:4]
     sensors_set = dataset[0:,4:13]
+    sensors_set = wrangle.mean_zero(pandas.DataFrame(sensors_set)).values
     sample = 0
     samples = len(quaternion_set)
     t = 0
-    rate = rospy.Rate(1000)
+    rate = rospy.Rate(100)
     error = 0
     i = 0
     for (q, s) in itertools.izip(quaternion_set, sensors_set):
@@ -68,17 +71,20 @@ def main():
         norm = numpy.linalg.norm(quat)
         quat = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
         error = error+numpy.linalg.norm(quat-q)
+        broadcaster.sendTransform((0, 0, 0),
+                                  q,
+                                  rospy.Time.now(),
+                                  "ground_truth",
+                                  "world")
+        broadcaster.sendTransform((0, 0, 0),
+                                  quat,
+                                  rospy.Time.now(),
+                                  "predict",
+                                  "world")
         if(t%100==0):
-            broadcaster.sendTransform((0, 0, 0),
-                                      q,
-                                      rospy.Time.now(),
-                                      "ground_truth",
-                                      "world")
-            broadcaster.sendTransform((0, 0, 0),
-                                      quat,
-                                      rospy.Time.now(),
-                                      "predict",
-                                      "world")
+            # print(quat)
+            # print(q)
+
             if show_magnetic_field:
 
                 msg2 = visualization_msgs.msg.Marker()
@@ -115,7 +121,7 @@ def main():
                 msg.z = [s[2], s[5], s[8]]
                 magneticSensor_pub.publish(msg)
                 t0 = rospy.Time.now()
-        print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
+            print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
         t = t + 1
         rate.sleep()
     error = error/samples
