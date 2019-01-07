@@ -15,6 +15,7 @@ def create_model(activation='relu',neurons=100, dropout=0):
     model.add(Dense(units=neurons, input_dim=9,kernel_initializer='normal', activation=activation))
     # model.add(Dropout(dropout))
     model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
+    model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     # model.add(Dropout(dropout))
     model.add(Dense(units=4,kernel_initializer='normal'))
 
@@ -70,7 +71,7 @@ model = KerasRegressorTB(build_fn=create_model, verbose=0, epochs=100, validatio
 # define the grid search parameters
 # batch_size = [500]
 # epochs = [60]
-neurons = [10,15,20,30,40,50,60,70,80,90,100]
+neurons = [100,200,300,400,500,600]
 activation = ['tanh']
 dropout = [0,0.1,0.2,0.3]
 batch_size = [10,20,30,40,50,60,70]

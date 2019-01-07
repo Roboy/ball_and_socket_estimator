@@ -29,18 +29,20 @@ import wrangle
 publish_magnetic_data = False
 show_magnetic_field = False
 
+model_name = "400_tanh"
+
 def main():
 
     global publish_magnetic_data
     global show_magnetic_field
 
     # load json and create model
-    json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+    json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/'+model_name+'.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     model = model_from_json(loaded_model_json)
     # load weights into new model
-    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model_checkpoint-12-0.0002365596.hdf5")
+    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+"_checkpoint.h5")
     print("Loaded model from disk")
     model.summary()
 
