@@ -20,6 +20,12 @@ find_package(catkin REQUIRED COMPONENTS
         pcl_ros
         )
 catkin_package(CATKIN_DEPENDS message_runtime roboy_middleware_msgs )
+
+
+find_package(PCL REQUIRED COMPONENTS common io visualization)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 #==============================================================================
 # Dependencies
 #==============================================================================
@@ -54,7 +60,7 @@ catkin_package(CATKIN_DEPENDS message_runtime roboy_middleware_msgs )
     target_link_libraries(ball_in_socket_estimator ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
     add_executable(magnetic_field_visualization src/magnetic_field_visualization.cpp)
-    target_link_libraries(magnetic_field_visualization ${catkin_LIBRARIES})
+    target_link_libraries(magnetic_field_visualization ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
     #==============================================================================
     # Installation
