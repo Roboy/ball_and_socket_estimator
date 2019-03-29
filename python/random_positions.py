@@ -23,9 +23,9 @@ class MoveAround(State):
         self.axis2 = rospy.Publisher('/sphere_axis2/sphere_axis2/target', std_msgs.msg.Float32 , queue_size=1)
     def execute(self, userdata):
         rospy.loginfo('new pose')
-        self.axis0.publish(random.uniform(-1.41, 0.2))
-        self.axis1.publish(random.uniform(-0.73, 0.3))
-        self.axis2.publish(random.uniform(-0.4, 0.4))
+        self.axis0.publish(random.uniform(-0.5, 0.5))
+        self.axis1.publish(random.uniform(-0.5, 0.5))
+        self.axis2.publish(random.uniform(-0.6, 0.6))
         time.sleep(3)
         return 'done'
     axis0 = []
