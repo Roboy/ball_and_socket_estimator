@@ -27,8 +27,8 @@ global quaternion_set
 import std_msgs, sensor_msgs
 
 import pdb
-record = True
-train = False
+record = False
+train = True
 
 # In[33]:
 rospy.init_node('shoulder_magnetics_training', anonymous=True)
@@ -143,10 +143,10 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=100, input_dim=9,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=600, input_dim=9,kernel_initializer='normal', activation='relu'))
             # model.add(Dropout(dropout))
-            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=600, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=600, kernel_initializer='normal', activation='relu'))
             # model.add(Dropout(dropout))
             self.model.add(Dense(units=3,kernel_initializer='normal'))
 
@@ -166,10 +166,10 @@ class ball_in_socket_estimator:
             print(euler_set[0,:])
             # sensors_set = wr.mean_zero(pandas.DataFrame(sensors_set)).values
 
-            data_in_train = sensors_set[:int(len(sensors_set)*0.7),:]
-            data_in_test = sensors_set[int(len(sensors_set)*0.7):,:]
-            data_out_train = euler_set[:int(len(sensors_set)*0.7),:]
-            data_out_test = euler_set[int(len(sensors_set)*0.7):,:]
+            data_in_train = sensors_set[:int(len(sensors_set)*0.3),:]
+            data_in_test = sensors_set[int(len(sensors_set)*0.3):,:]
+            data_out_train = euler_set[:int(len(sensors_set)*0.3),:]
+            data_out_test = euler_set[int(len(sensors_set)*0.3):,:]
 
             # self.model = Sequential()
             # self.model.add(CuDNNLSTM(units=100, input_shape=(train_X.shape[1], train_X.shape[2])))

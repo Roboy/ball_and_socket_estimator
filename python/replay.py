@@ -29,7 +29,16 @@ import wrangle
 publish_magnetic_data = False
 show_magnetic_field = False
 
-model_name = "400_tanh"
+model_name = "model"
+
+def euler_to_quaternion(roll, pitch, yaw):
+
+    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+    return [qx, qy, qz, qw]
 
 def main():
 
@@ -42,7 +51,7 @@ def main():
     json_file.close()
     model = model_from_json(loaded_model_json)
     # load weights into new model
-    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+"_checkpoint.h5")
+    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+".h5") #_checkpoint
     print("Loaded model from disk")
     model.summary()
 
@@ -52,36 +61,36 @@ def main():
 
     magneticSensor_pub = rospy.Publisher('roboy/middleware/MagneticSensor', MagneticSensor, queue_size=1)
     visualization_pub = rospy.Publisher('visualization_marker', visualization_msgs.msg.Marker, queue_size=100)
-
+    rospy.loginfo('loading data')
     dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
-    dataset = dataset.values[1+1000000:,0:]
-    quaternion_set = dataset[0:,0:4]
+    dataset = dataset.values[:,0:]
+    euler_set = dataset[0:,0:3]
     sensors_set = dataset[0:,4:13]
-    sensors_set = wrangle.mean_zero(pandas.DataFrame(sensors_set)).values
+    quaternion_set = dataset[0:,16:]
+    # sensors_set = wrangle.mean_zero(pandas.DataFrame(sensors_set)).values
     sample = 0
-    samples = len(quaternion_set)
+    samples = len(euler_set)
     t = 0
     rate = rospy.Rate(100)
     error = 0
     i = 0
-    for (q, s) in itertools.izip(quaternion_set, sensors_set):
+    rospy.loginfo('running')
+    for (e, s, q) in itertools.izip(euler_set, sensors_set, quaternion_set):
         if rospy.is_shutdown():
             return
         s_input = s.reshape((1,9))
-        quat = model.predict(s_input)
-        rospy.loginfo_throttle(1, (quat[0,0],quat[0,1],quat[0,2],quat[0,3]))
-        norm = numpy.linalg.norm(quat)
-        quat = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
-        error = error+numpy.linalg.norm(quat-q)
+        euler_predict = model.predict(s_input)
+        rospy.loginfo_throttle(1, (euler_predict[0,0],euler_predict[0,1],euler_predict[0,2]))
+        error = error+numpy.linalg.norm(euler_predict-e)
+        broadcaster.sendTransform((0, 0, 0),
+                                  euler_to_quaternion(euler_predict[0,0], euler_predict[0,1], euler_predict[0,2]),
+                                  rospy.Time.now(),
+                                  "predict",
+                                  "world")
         broadcaster.sendTransform((0, 0, 0),
                                   q,
                                   rospy.Time.now(),
                                   "ground_truth",
-                                  "world")
-        broadcaster.sendTransform((0, 0, 0),
-                                  quat,
-                                  rospy.Time.now(),
-                                  "predict",
                                   "world")
         if(t%100==0):
             # print(quat)
