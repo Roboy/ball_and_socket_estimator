@@ -5,7 +5,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.wrappers.scikit_learn import KerasRegressor
 import pandas as pd
-import wrangle as wr
+
 from keras import callbacks
 import os, itertools
 from sklearn.model_selection import train_test_split, KFold
@@ -17,7 +17,7 @@ def create_model(activation='relu',neurons=100, dropout=0):
     model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     # model.add(Dropout(dropout))
-    model.add(Dense(units=4,kernel_initializer='normal'))
+    model.add(Dense(units=3,kernel_initializer='normal'))
 
     model.compile(loss='mean_squared_error',
                   optimizer='adam',
@@ -60,14 +60,14 @@ numpy.random.seed(seed)
 # load dataset
 dataset = pd.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
 dataset = dataset.values[1:400000,0:]
-y = dataset[:,0:4]
+y = dataset[:,13:16]
 x = dataset[:,4:13]
 print(x[0])
 print(y[0])
-x = wr.mean_zero(pd.DataFrame(x)).values
+# x = wr.mean_zero(pd.DataFrame(x)).values
 # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 # create model
-model = KerasRegressorTB(build_fn=create_model, verbose=0, epochs=100, validation_split=0.8, shuffle=True)
+model = KerasRegressorTB(build_fn=create_model, verbose=0, epochs=100, validation_split=0.7, shuffle=True)
 # define the grid search parameters
 # batch_size = [500]
 # epochs = [60]
