@@ -16,9 +16,9 @@ using namespace Eigen;
 using namespace std;
 //#define SHOWORIENTATION_MEASURED
 //#define SHOWORIENTATION_CARDSFLOW
-#define SHOWMAGNITUDE_SENSOR0
+//#define SHOWMAGNITUDE_SENSOR0
 #define SHOWMAGNITUDE_SENSOR1
-#define SHOWMAGNITUDE_SENSOR2
+//#define SHOWMAGNITUDE_SENSOR2
 //#define SHOWSENSOR0
 //#define SHOWSENSOR1
 //#define SHOWSENSOR2
@@ -46,20 +46,19 @@ int main (int argc, char** argv)
 {
     // Load input file into a PointCloud<T> with an appropriate type
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-
-
-    FILE*       file = fopen("/home/letrend/workspace/roboy_control/data0.log","r");
+    FILE*       file = fopen("/home/letrend/workspace/roboy_control/batch2.log","r");
 
     if (NULL == file) {
         printf("Failed to open 'yourfile'");
         return -1;
     }
     fscanf(file, "%*[^\n]\n", NULL);
+    float roll, pitch, yaw;
     float qx,qy,qz,qw, s[3][3], q_top_x,q_top_y, q_top_z, q_top_w;
     bool first = true;
     Quaterniond quat_init;
-    while(fscanf(file,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-    &qx,&qy,&qz,&qw,&s[0][0],&s[0][1],&s[0][2],&s[1][0],&s[1][1],&s[1][2],&s[2][0],&s[2][1],&s[2][2],&q_top_x,&q_top_y, &q_top_z, &q_top_w)==17) {
+    while(fscanf(file,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+    &qx,&qy,&qz,&qw,&s[0][0],&s[0][1],&s[0][2],&s[1][0],&s[1][1],&s[1][2],&s[2][0],&s[2][1],&s[2][2],&roll,&pitch,&yaw,&q_top_x,&q_top_y, &q_top_z, &q_top_w)==20) {
         Vector3d dir(0, 0, 1);
         Vector3d mag0(s[0][0], s[0][1], s[0][2]);
         Vector3d mag1(s[1][0], s[1][1], s[1][2]);
