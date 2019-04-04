@@ -27,8 +27,8 @@ global quaternion_set
 import std_msgs, sensor_msgs
 
 import pdb
-record = False
-train = True
+record = True
+train = False
 
 # In[33]:
 rospy.init_node('shoulder_magnetics_training', anonymous=True)
@@ -81,7 +81,7 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/letrend/workspace/roboy_control/data0.log","w")
+    record = open("/home/roboy/workspace/roboy_control/data0.log","w")
     record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2 roll pitch yaw qx_top qy_top qz_top qw_top\n")
     roll = 0
     pitch = 0
@@ -143,9 +143,9 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=100, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
-            self.model.add(Dense(units=600, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
 #            self.model.add(Dropout(0.1))
 #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
@@ -159,7 +159,7 @@ class ball_in_socket_estimator:
             global sensors_set
             global record
             rospy.loginfo("loading data")
-            dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/batch2.log", delim_whitespace=True, header=1)
+            dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
 
             dataset = dataset.values[:len(dataset)-1,0:]
             euler_set = np.array(dataset[:,13:16])
@@ -227,21 +227,21 @@ class ball_in_socket_estimator:
             self.trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
 
             # load json and create model
-            json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+            json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
 
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+            self.model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
 
             print("Loaded model from disk")
             self.listener()
 
         self.listener()
     def ros_callback(self, data):
-        x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
-        x_test=x_test.reshape((1,9))
+        x_test = np.array([data.x[0], data.y[0], data.x[1], data.y[1], data.x[2], data.y[2]])
+        x_test=x_test.reshape((1,6))
         show_ground_truth = True
         # try:
         #     (trans,rot2) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
@@ -262,7 +262,7 @@ class ball_in_socket_estimator:
             error_pitch = ((self.pitch-euler[0,1])**2)**0.5
             error_yaw = ((self.yaw-euler[0,2])**2)**0.5
             rospy.loginfo_throttle(1, str(error_roll) + " " + str(error_pitch) + " " + str(error_yaw) )
-            self.joint_state.publish(msg)
+            # self.joint_state.publish(msg)
 #             norm = numpy.linalg.norm(quat)
 #             q = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
 # #            print "predicted: ",(pos[0,0],pos[0,1],pos[0,2])

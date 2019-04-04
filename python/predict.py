@@ -11,12 +11,12 @@ model_name = 'model'
 rospy.init_node('3dof predictor', anonymous=True)
 
 # load json and create model
-json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/'+model_name+'.json', 'r')
+json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/'+model_name+'.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
 model = model_from_json(loaded_model_json)
 # load weights into new model
-model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+".h5") #_checkpoint
+model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+".h5") #_checkpoint
 rospy.loginfo("Loaded model from disk")
 model.summary()
 
@@ -25,12 +25,12 @@ class ball_in_socket_estimator:
     joint_state = rospy.Publisher('/joint_states', sensor_msgs.msg.JointState , queue_size=1)
     def __init__(self):
         # load json and create model
-        json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+        json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         self.model = model_from_json(loaded_model_json)
         # load weights into new model
-        self.model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+        self.model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
         print("Loaded model from disk")
         self.listener()
     def magneticsCallback(self, data):
