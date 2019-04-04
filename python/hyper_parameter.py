@@ -59,9 +59,12 @@ seed = 7
 numpy.random.seed(seed)
 # load dataset
 dataset = pd.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
-dataset = dataset.values[1:400000,0:]
-y = dataset[:,13:16]
-x = dataset[:,4:13]
+dataset = dataset.values[:len(dataset)-1,0:]
+data_split = 0.5
+train_set = dataset[:int(len(dataset)*data_split),:]
+
+y = train_set[:,13:16]
+x = train_set[:,4:13]
 print(x[0])
 print(y[0])
 # x = wr.mean_zero(pd.DataFrame(x)).values
@@ -74,9 +77,9 @@ model = KerasRegressorTB(build_fn=create_model, verbose=0, epochs=100, validatio
 neurons = [100,200,300,400,500,600]
 activation = ['tanh']
 dropout = [0,0.1,0.2,0.3]
-batch_size = [10,20,30,40,50,60,70]
+batch_size = [500]
 param_grid = dict(neurons=neurons,activation=activation, batch_size=batch_size)
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=25, verbose=50, scoring='neg_mean_squared_error',fit_params={'log_dir': './log_hyperparameter'})
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=20, verbose=50, scoring='neg_mean_squared_error',fit_params={'log_dir': './log_hyperparameter'})
 grid_result = grid.fit(x, y)
 # summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))

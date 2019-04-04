@@ -114,7 +114,7 @@ if record is True:
         pitch = data.position[1]
         yaw = data.position[2]
         rospy.loginfo_throttle(5, "receiving tracking data")
-            
+
     magneticsSubscriber = rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, magneticsCallback)
     trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, trackingCallback)
 
@@ -143,11 +143,13 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=600, input_dim=9,kernel_initializer='normal', activation='relu'))
-            # model.add(Dropout(dropout))
+            self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
+            # self.model.add(Dropout(0.1))
             self.model.add(Dense(units=600, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=600, kernel_initializer='normal', activation='relu'))
-            # model.add(Dropout(dropout))
+#            self.model.add(Dropout(0.1))
+#            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
+            # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
+            # self.model.add(Dropout(0.1))
             self.model.add(Dense(units=3,kernel_initializer='normal'))
 
             self.model.compile(loss='mean_squared_error',
@@ -157,19 +159,41 @@ class ball_in_socket_estimator:
             global sensors_set
             global record
             rospy.loginfo("loading data")
-            dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+            dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/batch2.log", delim_whitespace=True, header=1)
 
             dataset = dataset.values[:len(dataset)-1,0:]
             euler_set = np.array(dataset[:,13:16])
-            sensors_set = np.array(dataset[:,4:13])
+            # mean_euler = euler_set.mean(axis=0)
+            # std_euler = euler_set.std(axis=0)
+            # euler_set = (euler_set - mean_euler) / std_euler
+            print('max euler ' + str(np.amax(euler_set)))
+            print('min euler ' + str(np.amin(euler_set)))
+            print('min euler ' + str(np.amin(euler_set)))
+            # sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11],dataset[:,12]])
+            sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,7],dataset[:,8],dataset[:,10],dataset[:,11]])
+            sensors_set = np.transpose(sensors_set)
+
+            # mean_sensor = sensors_set.mean(axis=0)
+            # std_sensor = sensors_set.std(axis=0)
+            # sensors_set = (sensors_set - mean_sensor) / std_sensor
+            np.set_printoptions(precision=3)
+            # print(mean_sensor)
+            # print(std_sensor)
             print(sensors_set[0,:])
             print(euler_set[0,:])
             # sensors_set = wr.mean_zero(pandas.DataFrame(sensors_set)).values
 
-            data_in_train = sensors_set[:int(len(sensors_set)*0.3),:]
-            data_in_test = sensors_set[int(len(sensors_set)*0.3):,:]
-            data_out_train = euler_set[:int(len(sensors_set)*0.3),:]
-            data_out_test = euler_set[int(len(sensors_set)*0.3):,:]
+            data_split = 1
+
+            sensor_train_set = sensors_set[:int(len(sensors_set)*data_split),:]
+            euler_train_set = euler_set[:int(len(sensors_set)*data_split),:]
+            sensor_test_set = sensors_set[int(len(sensors_set)*data_split):,:]
+            euler_test_set = euler_set[int(len(sensors_set)*data_split):,:]
+
+            data_in_train = sensor_train_set[:int(len(sensor_train_set)*0.7),:]
+            data_in_test = sensor_train_set[int(len(sensor_train_set)*0.7):,:]
+            data_out_train = euler_train_set[:int(len(sensor_train_set)*0.7),:]
+            data_out_test = euler_train_set[int(len(sensor_train_set)*0.7):,:]
 
             # self.model = Sequential()
             # self.model.add(CuDNNLSTM(units=100, input_shape=(train_X.shape[1], train_X.shape[2])))
@@ -180,6 +204,15 @@ class ball_in_socket_estimator:
 
             # fit network
             history = self.model.fit(data_in_train, data_out_train, epochs=50, batch_size=500, validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True)
+
+            # serialize model to JSON
+            model_json = self.model.to_json()
+            with open("model.json", "w") as json_file:
+                json_file.write(model_json)
+            # serialize weights to HDF5
+            self.model.save("model.h5")
+            print("Saved model to disk")
+
             # plot history
             pyplot.plot(history.history['loss'], label='train')
             pyplot.plot(history.history['val_loss'], label='test')
@@ -189,13 +222,7 @@ class ball_in_socket_estimator:
             # result = self.model.predict(data_in_test)
             # print(result)
 
-            # serialize model to JSON
-            model_json = self.model.to_json()
-            with open("model.json", "w") as json_file:
-                json_file.write(model_json)
-            # serialize weights to HDF5
-            self.model.save("model.h5")
-            print("Saved model to disk")
+
         else:
             self.trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
 
@@ -310,6 +337,3 @@ estimator = ball_in_socket_estimator()
 #classes
 
 # In[ ]:
-
-
-
