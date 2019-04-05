@@ -5,9 +5,9 @@ import time
 
 rospy.init_node('msj_platform_grid_map')
 
-sphere_axis0_max = 0.5
-sphere_axis1_max = 0.5
-sphere_axis2_max = 2.0
+sphere_axis0_max = 0.6
+sphere_axis1_max = 0.6
+sphere_axis2_max = 1.0
 
 sphere0 = rospy.Publisher('/sphere_axis0/sphere_axis0/target', std_msgs.msg.Float32 , queue_size=1)
 sphere1 = rospy.Publisher('/sphere_axis1/sphere_axis1/target', std_msgs.msg.Float32 , queue_size=1)
@@ -30,19 +30,19 @@ while not rospy.is_shutdown():
     msg.data = yaw
     sphere2.publish(msg)
     if roll_dir:
-        roll = roll + 0.0011
+        roll = roll + 0.001
     else:
-        roll = roll - 0.0011
+        roll = roll - 0.001
 
     if pitch_dir:
-        pitch = pitch + 0.000309
+        pitch = pitch + 0.0013
     else:
-        pitch = pitch - 0.000309
+        pitch = pitch - 0.0013
 
     if yaw_dir:
-        yaw = yaw + 0.000712
+        yaw = yaw + 0.0017
     else:
-        yaw = yaw - 0.000712
+        yaw = yaw - 0.0017
 
     if abs(roll)>sphere_axis0_max:
         roll_dir = not roll_dir
@@ -51,4 +51,4 @@ while not rospy.is_shutdown():
     if abs(yaw)>sphere_axis0_max:
         yaw_dir = not yaw_dir
 
-    time.sleep(0.005)
+    time.sleep(0.02)
