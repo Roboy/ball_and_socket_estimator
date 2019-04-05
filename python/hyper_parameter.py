@@ -12,9 +12,8 @@ from sklearn.model_selection import train_test_split, KFold
 # Function to create model, required for KerasClassifier
 def create_model(activation='relu',neurons=100, dropout=0):
     model = Sequential()
-    model.add(Dense(units=neurons, input_dim=9,kernel_initializer='normal', activation=activation))
+    model.add(Dense(units=neurons, input_dim=6,kernel_initializer='normal', activation=activation))
     # model.add(Dropout(dropout))
-    model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     # model.add(Dropout(dropout))
     model.add(Dense(units=3,kernel_initializer='normal'))
@@ -63,8 +62,11 @@ dataset = dataset.values[:len(dataset)-1,0:]
 data_split = 0.5
 train_set = dataset[:int(len(dataset)*data_split),:]
 
-y = train_set[:,13:16]
-x = train_set[:,4:13]
+euler_set = numpy.array(dataset[:,13:16])
+sensors_set = numpy.array([dataset[:,4],dataset[:,5],dataset[:,7],dataset[:,8],dataset[:,10],dataset[:,11]])
+
+y = euler_set
+x = sensors_set
 print(x[0])
 print(y[0])
 # x = wr.mean_zero(pd.DataFrame(x)).values
@@ -74,12 +76,12 @@ model = KerasRegressorTB(build_fn=create_model, verbose=0, epochs=100, validatio
 # define the grid search parameters
 # batch_size = [500]
 # epochs = [60]
-neurons = [100,200,300,400,500,600]
-activation = ['tanh']
+neurons = [50,100,200,300,400,500,600]
+activation = ['relu']
 dropout = [0,0.1,0.2,0.3]
-batch_size = [500]
+batch_size = [50,100,200,300]
 param_grid = dict(neurons=neurons,activation=activation, batch_size=batch_size)
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=20, verbose=50, scoring='neg_mean_squared_error',fit_params={'log_dir': './log_hyperparameter'})
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=15, verbose=50, scoring='neg_mean_squared_error',fit_params={'log_dir': './log_hyperparameter'})
 grid_result = grid.fit(x, y)
 # summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
