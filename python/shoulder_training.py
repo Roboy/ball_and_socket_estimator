@@ -29,7 +29,7 @@ import math
 
 import pdb
 record = False
-train = False
+train = True
 
 # In[33]:
 rospy.init_node('shoulder_magnetics_training', anonymous=True)
@@ -144,16 +144,16 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=100, input_dim=6,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=40, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
-            self.model.add(Dropout(0.1))
+            # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=40, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
 #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
-            self.model.add(Dropout(0.1))
+            # self.model.add(Dropout(0.1))
             self.model.add(Dense(units=3,kernel_initializer='normal'))
 
             self.model.compile(loss='mean_squared_error',
@@ -163,10 +163,14 @@ class ball_in_socket_estimator:
             global sensors_set
             global record
             rospy.loginfo("loading data")
-            dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+            dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/batch1.log", delim_whitespace=True, header=1)
 
             dataset = dataset.values[:len(dataset)-1,0:]
-            np.random.shuffle(dataset)
+            print('%d values'%(len(dataset)))
+            dataset = dataset[abs(dataset[:,13])<=0.6,:]
+            dataset = dataset[abs(dataset[:,14])<=0.6,:]
+            dataset = dataset[abs(dataset[:,15])<=1.0,:]
+            print('%d values after filtering outliers'%(len(dataset)))
             # dataset = dataset[0:200000,:]
             euler_set = np.array(dataset[:,13:16])
             # mean_euler = euler_set.mean(axis=0)
@@ -181,14 +185,14 @@ class ball_in_socket_estimator:
             # mean_sensor = sensors_set.mean(axis=0)
             # std_sensor = sensors_set.std(axis=0)
             # sensors_set = (sensors_set - mean_sensor) / std_sensor
-            np.set_printoptions(precision=3)
+            np.set_printoptions(precision=8)
             # print(mean_sensor)
             # print(std_sensor)
             print(sensors_set[0,:])
             print(euler_set[0,:])
             # sensors_set = wr.mean_zero(pandas.DataFrame(sensors_set)).values
 
-            data_split = 0.3
+            data_split = 0.5
 
             sensor_train_set = sensors_set[:int(len(sensors_set)*data_split),:]
             euler_train_set = euler_set[:int(len(sensors_set)*data_split),:]
@@ -208,7 +212,7 @@ class ball_in_socket_estimator:
             # print(out)
 
             # fit network
-            history = self.model.fit(data_in_train, data_out_train, epochs=50, batch_size=500, validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True)
+            history = self.model.fit(data_in_train, data_out_train, epochs=60, batch_size=50, validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True)
 
             # serialize model to JSON
             model_json = self.model.to_json()
@@ -217,7 +221,9 @@ class ball_in_socket_estimator:
             # serialize weights to HDF5
             self.model.save("model.h5")
             print("Saved model to disk")
-
+            euler_predict = self.model.predict(data_in_test)
+            mse = numpy.linalg.norm(euler_predict-euler_test_set)/len(euler_predict)
+            print("mse on test_set %f"%(mse))
             # plot history
             pyplot.plot(history.history['loss'], label='train')
             pyplot.plot(history.history['val_loss'], label='test')

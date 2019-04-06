@@ -16,8 +16,10 @@ using namespace Eigen;
 using namespace std;
 //#define SHOWORIENTATION_MEASURED
 //#define SHOWORIENTATION_CARDSFLOW
+#define SHOW_EULER
+//#define SHOW_SENSOR0_COMPONENTS
 //#define SHOWMAGNITUDE_SENSOR0
-#define SHOWMAGNITUDE_SENSOR1
+//#define SHOWMAGNITUDE_SENSOR1
 //#define SHOWMAGNITUDE_SENSOR2
 //#define SHOWSENSOR0
 //#define SHOWSENSOR1
@@ -46,7 +48,7 @@ int main (int argc, char** argv)
 {
     // Load input file into a PointCloud<T> with an appropriate type
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    FILE*       file = fopen("/home/letrend/workspace/roboy_control/batch2.log","r");
+    FILE*       file = fopen("/home/letrend/workspace/roboy_control/data0.log","r");
 
     if (NULL == file) {
         printf("Failed to open 'yourfile'");
@@ -99,8 +101,49 @@ int main (int argc, char** argv)
         p0.b = 90;
         cloud->push_back(p0);
 #endif
+#ifdef SHOW_EULER
+        if(abs(roll)<0.5 && abs(pitch)<0.5 && abs(yaw)<1.0) {
+            pcl::PointXYZRGB p;
+            p.x = roll;
+            p.y = pitch;
+            p.z = yaw;
+            p.r = 255;
+            cloud->push_back(p);
+        }
+#endif
+#ifdef SHOW_SENSOR0_COMPONENTS
+        {
+            dir << 0, 0, 1 + mag0[0] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.r = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag0[1] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.g = 255;
+            cloud->push_back(p);
+        }
+        {
+            dir << 0, 0, 1 + mag0[2] * scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.b = 255;
+            cloud->push_back(p);
+        }
+#endif
 #ifdef SHOWMAGNITUDE_SENSOR0
-
         {
             double norm = mag0.norm();
             dir << 0, 0, 1 + norm * scale;

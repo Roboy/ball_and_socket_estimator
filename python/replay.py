@@ -27,7 +27,7 @@ import itertools
 import wrangle
 import math
 
-publish_magnetic_data = True
+publish_magnetic_data = False
 show_magnetic_field = False
 
 model_name = "model"
@@ -92,8 +92,9 @@ def main():
     magneticSensor_pub = rospy.Publisher('roboy/middleware/MagneticSensor', MagneticSensor, queue_size=1)
     visualization_pub = rospy.Publisher('visualization_marker', visualization_msgs.msg.Marker, queue_size=100)
     rospy.loginfo('loading data')
-    dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/batch1.log", delim_whitespace=True, header=1)
+    dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
     dataset = dataset.values[:,0:]
+    dataset = dataset[0:1000000,:]
     print(str(len(dataset))+' samples')
     euler_set = np.array(dataset[:,13:16])
     # mean_euler = euler_set.mean(axis=0)
