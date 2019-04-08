@@ -16,8 +16,8 @@ using namespace Eigen;
 using namespace std;
 //#define SHOWORIENTATION_MEASURED
 //#define SHOWORIENTATION_CARDSFLOW
-#define SHOW_EULER
-//#define SHOW_SENSOR0_COMPONENTS
+//#define SHOW_EULER
+#define SHOW_SENSOR0_COMPONENTS
 //#define SHOWMAGNITUDE_SENSOR0
 //#define SHOWMAGNITUDE_SENSOR1
 //#define SHOWMAGNITUDE_SENSOR2
@@ -48,7 +48,7 @@ int main (int argc, char** argv)
 {
     // Load input file into a PointCloud<T> with an appropriate type
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    FILE*       file = fopen("/home/letrend/workspace/roboy_control/data0.log","r");
+    FILE*       file = fopen("/home/roboy/workspace/roboy_control/batch0.log","r");
 
     if (NULL == file) {
         printf("Failed to open 'yourfile'");
@@ -102,7 +102,7 @@ int main (int argc, char** argv)
         cloud->push_back(p0);
 #endif
 #ifdef SHOW_EULER
-        if(abs(roll)<0.5 && abs(pitch)<0.5 && abs(yaw)<1.0) {
+        if(abs(roll)<0.5 && abs(pitch)<0.5 && abs(yaw)<1.5) {
             pcl::PointXYZRGB p;
             p.x = roll;
             p.y = pitch;

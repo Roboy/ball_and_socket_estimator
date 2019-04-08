@@ -16,7 +16,7 @@ def create_model(activation='relu',neurons=100, dropout=0):
     model.add(Dropout(dropout))
     model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     model.add(Dropout(dropout))
-    model.add(Dense(units=3,kernel_initializer='normal'))
+    model.add(Dense(units=3,kernel_initializer='normal', activation=activation))
 
     model.compile(loss='mean_squared_error',
                   optimizer='adam',
@@ -50,23 +50,24 @@ class KerasRegressorTB(KerasRegressor):
                 except OSError:
                     pass
             cbs = [callbacks.TensorBoard(log_dir=conf_dir, histogram_freq=0,
-                               write_graph=True, write_images=False)]
+                               write_graph=True, write_images=False),
+                   callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')]
         super(KerasRegressorTB, self).fit(x, y, callbacks=cbs, **kwargs)
 
 # fix random seed for reproducibility
 seed = 7
 numpy.random.seed(seed)
 # load dataset
-dataset = pd.read_csv("/home/letrend/workspace/roboy_control/batch1.log", delim_whitespace=True, header=1)
+dataset = pd.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
 dataset = dataset.values[:len(dataset)-1,0:]
 print('%d values'%(len(dataset)))
 dataset = dataset[abs(dataset[:,13])<=0.6,:]
 dataset = dataset[abs(dataset[:,14])<=0.6,:]
-dataset = dataset[abs(dataset[:,15])<=1.0,:]
+dataset = dataset[abs(dataset[:,15])<=1.5,:]
 print('%d values after filtering outliers'%(len(dataset)))
-data_split = 0.5
+data_split = 1
 train_set = dataset[:int(len(dataset)*data_split),:]
-numpy.random.shuffle(train_set)
+# numpy.random.shuffle(train_set)
 euler_set = numpy.array(train_set[:,13:16])
 sensors_set = numpy.array([train_set[:,4],train_set[:,5],train_set[:,7],train_set[:,8],train_set[:,10],train_set[:,11]])
 sensors_set = numpy.transpose(sensors_set)
@@ -77,16 +78,19 @@ print(y[0])
 # x = wr.mean_zero(pd.DataFrame(x)).values
 # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 # create model
-model = KerasRegressorTB(build_fn=create_model, verbose=0, epochs=100, validation_split=0.7, shuffle=True)
+cbs = [callbacks.TensorBoard(log_dir='./log_hyperparameter', histogram_freq=0,
+                             write_graph=True, write_images=False),
+       callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')]
+model = KerasRegressor(build_fn=create_model, verbose=0, epochs=100, validation_split=0.7, shuffle=True)
 # define the grid search parameters
 # batch_size = [500]
 # epochs = [60]
-neurons = [40]
+neurons = [40,50,60,70,80,90,100]
 activation = ['relu']
-dropout = [0]
-batch_size = [50]
+dropout = [0,0.05,0.1]
+batch_size = [50,100,150,200]
 param_grid = dict(neurons=neurons,activation=activation, batch_size=batch_size, dropout=dropout)
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=20, verbose=50, scoring='neg_mean_squared_error',fit_params={'log_dir': './log_hyperparameter'})
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=8, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
 grid_result = grid.fit(x, y)
 # summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
@@ -135,7 +139,7 @@ grid_result.best_estimator_.model.save('beschde.h5')
 #
 #     return out, model
 #
-# dataset = pd.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+# dataset = pd.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
 # dataset = dataset.values[1:,0:]
 # y_train = dataset[0:1000,0:4]
 # x_train = dataset[0:1000,4:13]

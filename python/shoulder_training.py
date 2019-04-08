@@ -26,6 +26,8 @@ global sensors_set
 global quaternion_set
 import std_msgs, sensor_msgs
 import math
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.optimizers import Adam
 
 import pdb
 record = False
@@ -144,13 +146,13 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=40, input_dim=6,kernel_initializer='normal', activation='relu'))
-            # self.model.add(Dropout(0.1))
+            self.model.add(Dense(units=45, input_dim=6,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dropout(0.01))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=40, kernel_initializer='normal', activation='relu'))
-            # self.model.add(Dropout(0.1))
+            self.model.add(Dense(units=45, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dropout(0.01))
 #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
             # self.model.add(Dropout(0.1))
@@ -163,14 +165,14 @@ class ball_in_socket_estimator:
             global sensors_set
             global record
             rospy.loginfo("loading data")
-            dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/batch1.log", delim_whitespace=True, header=1)
+            dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
 
-            dataset = dataset.values[:len(dataset)-1,0:]
+            dataset = dataset.values[1:len(dataset)-1,0:]
             print('%d values'%(len(dataset)))
-            dataset = dataset[abs(dataset[:,13])<=0.6,:]
-            dataset = dataset[abs(dataset[:,14])<=0.6,:]
-            dataset = dataset[abs(dataset[:,15])<=1.0,:]
-            print('%d values after filtering outliers'%(len(dataset)))
+            dataset = dataset[abs(dataset[:,13])<=0.7,:]
+            dataset = dataset[abs(dataset[:,14])<=0.7,:]
+            dataset = dataset[abs(dataset[:,15])<=1.5,:]
+            # print('%d values after filtering outliers'%(len(dataset)))
             # dataset = dataset[0:200000,:]
             euler_set = np.array(dataset[:,13:16])
             # mean_euler = euler_set.mean(axis=0)
@@ -207,21 +209,27 @@ class ball_in_socket_estimator:
             # self.model = Sequential()
             # self.model.add(CuDNNLSTM(units=100, input_shape=(train_X.shape[1], train_X.shape[2])))
             # self.model.add(Dense(train_y.shape[1], activation="relu"))
+            # optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.1, amsgrad=False)
             self.model.compile(loss='mse', optimizer='adam')
             # out = self.model.predict(train_X)
             # print(out)
 
+            earlyStopping = EarlyStopping(monitor='val_loss', patience=40, verbose=0, mode='min')
+            mcp_save = ModelCheckpoint('model.h5', save_best_only=True, monitor='val_loss', mode='min')
+
             # fit network
-            history = self.model.fit(data_in_train, data_out_train, epochs=60, batch_size=50, validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True)
+            history = self.model.fit(data_in_train, data_out_train, epochs=500, batch_size=150,
+                                     validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True,
+                                     callbacks=[earlyStopping, mcp_save])
 
             # serialize model to JSON
             model_json = self.model.to_json()
             with open("model.json", "w") as json_file:
                 json_file.write(model_json)
             # serialize weights to HDF5
-            self.model.save("model.h5")
+            # self.model.save("model.h5")
             print("Saved model to disk")
-            euler_predict = self.model.predict(data_in_test)
+            euler_predict = self.model.predict(sensor_test_set)
             mse = numpy.linalg.norm(euler_predict-euler_test_set)/len(euler_predict)
             print("mse on test_set %f"%(mse))
             # plot history

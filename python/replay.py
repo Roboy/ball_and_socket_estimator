@@ -17,14 +17,11 @@ import geometry_msgs.msg
 import visualization_msgs.msg
 from pyquaternion import Quaternion
 from roboy_middleware_msgs.msg import MagneticSensor
+from roboy_simulation_msgs.msg import JointState
 from visualization_msgs.msg import Marker
-import std_msgs.msg
-import sys, select
+import sensor_msgs, std_msgs
 from pyquaternion import Quaternion
-import matplotlib.pyplot as plt
 import numpy
-import itertools
-import wrangle
 import math
 
 publish_magnetic_data = False
@@ -76,12 +73,12 @@ def main():
     global show_magnetic_field
 
     # load json and create model
-    json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/'+model_name+'.json', 'r')
+    json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/'+model_name+'.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     model = model_from_json(loaded_model_json)
     # load weights into new model
-    model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+".h5") #_checkpoint
+    model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+".h5") #_checkpoint
     print("Loaded model from disk")
     model.summary()
 
@@ -90,11 +87,12 @@ def main():
     broadcaster = tf.TransformBroadcaster()
 
     magneticSensor_pub = rospy.Publisher('roboy/middleware/MagneticSensor', MagneticSensor, queue_size=1)
+    joint_state_pub = rospy.Publisher('joint_states', sensor_msgs.msg.JointState, queue_size=1)
     visualization_pub = rospy.Publisher('visualization_marker', visualization_msgs.msg.Marker, queue_size=100)
     rospy.loginfo('loading data')
-    dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+    dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/batch0.log", delim_whitespace=True, header=1)
     dataset = dataset.values[:,0:]
-    dataset = dataset[0:1000000,:]
+    # dataset = dataset[0:1000000,:]
     print(str(len(dataset))+' samples')
     euler_set = np.array(dataset[:,13:16])
     # mean_euler = euler_set.mean(axis=0)
@@ -120,6 +118,12 @@ def main():
     euler_predict = model.predict(sensors_set)
     mse = numpy.linalg.norm(euler_predict-euler_set)/len(euler_predict)
     print('mse: ' + str(mse))
+    msg = sensor_msgs.msg.JointState()
+    msg.header = std_msgs.msg.Header()
+    msg.name = ['sphere_axis0', 'sphere_axis1', 'sphere_axis2']
+    msg.velocity = [0,0,0]
+    msg.effort = [0,0,0]
+
     for i in range(0,len(euler_predict),stride):
         if rospy.is_shutdown():
             return
@@ -139,9 +143,9 @@ def main():
                                   rospy.Time.now(),
                                   "ground_truth",
                                   "world")
-        # if(t==0):
-            # print(quat)
-            # print(q)
+        msg.header.stamp = rospy.Time.now()
+        msg.position = euler_truth
+        joint_state_pub.publish(msg)
 
         if show_magnetic_field:
 
@@ -179,7 +183,11 @@ def main():
             msg.z = [sensors_set[i,2],sensors_set[i,5]]#,sensors_set[i,8]]
             magneticSensor_pub.publish(msg)
             t0 = rospy.Time.now()
-        print("%d/%d\t\t%.3f%%" % (t, samples, (t/float(samples))*100.0))
+        print("%d/%d\t\t%.3f%% error %f\n"
+              "truth     : %.3f %.3f %.3f\n"
+              "predicted : %.3f %.3f %.3f" % (t, samples, (t/float(samples))*100.0, numpy.linalg.norm(euler_truth-euler_predictED),
+                                  euler_truth[0], euler_truth[1], euler_truth[2],
+                                  euler_predictED[0], euler_predictED[1], euler_predictED[2]))
         t = t + stride
         rate.sleep()
     error = error/samples
