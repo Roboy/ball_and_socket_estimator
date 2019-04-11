@@ -146,12 +146,12 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=50, input_dim=6,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=100, input_dim=9,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.01))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=50, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.01))
 #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
@@ -184,8 +184,8 @@ class ball_in_socket_estimator:
             # euler_set = (euler_set - mean_euler) / std_euler
             print('max euler ' + str(np.amax(euler_set)))
             print('min euler ' + str(np.amin(euler_set)))
-            # sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11],dataset[:,12]])
-            sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,7],dataset[:,8],dataset[:,10],dataset[:,11]])
+            sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11],dataset[:,12]])
+            # sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,7],dataset[:,8],dataset[:,10],dataset[:,11]])
             sensors_set = np.transpose(sensors_set)
 
             # mean_sensor = sensors_set.mean(axis=0)
@@ -218,11 +218,11 @@ class ball_in_socket_estimator:
             # out = self.model.predict(train_X)
             # print(out)
 
-            earlyStopping = EarlyStopping(monitor='val_loss', patience=50, verbose=1, mode='min')
+            earlyStopping = EarlyStopping(monitor='val_loss', patience=30, verbose=2, mode='min')
             mcp_save = ModelCheckpoint('model.h5', save_best_only=True, monitor='val_loss', mode='min')
 
             # fit network
-            history = self.model.fit(data_in_train, data_out_train, epochs=10000, batch_size=200,
+            history = self.model.fit(data_in_train, data_out_train, epochs=1000, batch_size=200,
                                      validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True,
                                      callbacks=[earlyStopping, mcp_save])
 
@@ -263,8 +263,8 @@ class ball_in_socket_estimator:
 
         self.listener()
     def ros_callback(self, data):
-        # x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
-        x_test = np.array([data.x[0], data.y[0], data.x[1], data.y[1], data.x[2], data.y[2]])
+        x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
+        # x_test = np.array([data.x[0], data.y[0], data.x[1], data.y[1], data.x[2], data.y[2]])
         x_test=x_test.reshape((1,len(x_test)))
         show_ground_truth = True
         # try:
