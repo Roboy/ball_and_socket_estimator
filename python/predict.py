@@ -34,8 +34,8 @@ class ball_in_socket_estimator:
         print("Loaded model from disk")
         self.listener()
     def magneticsCallback(self, data):
-        x_test = np.array([data.x[0], data.y[0], data.x[1], data.y[1], data.x[2], data.y[2]])
-        x_test=x_test.reshape((1,6))
+        x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
+        x_test=x_test.reshape((1,9))
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             euler = self.model.predict(x_test)
             #            pos = self.model.predict(x_test)

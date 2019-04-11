@@ -146,13 +146,13 @@ class ball_in_socket_estimator:
         global train
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=45, input_dim=6,kernel_initializer='normal', activation='relu'))
-            self.model.add(Dropout(0.01))
+            self.model.add(Dense(units=50, input_dim=6,kernel_initializer='normal', activation='relu'))
+            # self.model.add(Dropout(0.01))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=45, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dropout(0.01))
+            self.model.add(Dense(units=50, kernel_initializer='normal', activation='relu'))
+            # self.model.add(Dropout(0.01))
 #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
             # self.model.add(Dropout(0.1))
@@ -168,11 +168,15 @@ class ball_in_socket_estimator:
             dataset = pandas.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
 
             dataset = dataset.values[1:len(dataset)-1,0:]
+            numpy.random.shuffle(dataset)
             print('%d values'%(len(dataset)))
             dataset = dataset[abs(dataset[:,13])<=0.7,:]
             dataset = dataset[abs(dataset[:,14])<=0.7,:]
             dataset = dataset[abs(dataset[:,15])<=1.5,:]
-            # print('%d values after filtering outliers'%(len(dataset)))
+            dataset = dataset[abs(dataset[:,13])!=0.0,:]
+            dataset = dataset[abs(dataset[:,14])!=0.0,:]
+            dataset = dataset[abs(dataset[:,15])!=0.0,:]
+            print('%d values after filtering outliers'%(len(dataset)))
             # dataset = dataset[0:200000,:]
             euler_set = np.array(dataset[:,13:16])
             # mean_euler = euler_set.mean(axis=0)
@@ -194,7 +198,7 @@ class ball_in_socket_estimator:
             print(euler_set[0,:])
             # sensors_set = wr.mean_zero(pandas.DataFrame(sensors_set)).values
 
-            data_split = 0.5
+            data_split = 0.7
 
             sensor_train_set = sensors_set[:int(len(sensors_set)*data_split),:]
             euler_train_set = euler_set[:int(len(sensors_set)*data_split),:]
@@ -214,11 +218,11 @@ class ball_in_socket_estimator:
             # out = self.model.predict(train_X)
             # print(out)
 
-            earlyStopping = EarlyStopping(monitor='val_loss', patience=40, verbose=0, mode='min')
+            earlyStopping = EarlyStopping(monitor='val_loss', patience=50, verbose=1, mode='min')
             mcp_save = ModelCheckpoint('model.h5', save_best_only=True, monitor='val_loss', mode='min')
 
             # fit network
-            history = self.model.fit(data_in_train, data_out_train, epochs=500, batch_size=150,
+            history = self.model.fit(data_in_train, data_out_train, epochs=10000, batch_size=200,
                                      validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True,
                                      callbacks=[earlyStopping, mcp_save])
 
@@ -230,8 +234,8 @@ class ball_in_socket_estimator:
             # self.model.save("model.h5")
             print("Saved model to disk")
             euler_predict = self.model.predict(sensor_test_set)
-            mse = numpy.linalg.norm(euler_predict-euler_test_set)/len(euler_predict)
-            print("mse on test_set %f"%(mse))
+            mse = numpy.linalg.norm(euler_predict-euler_test_set)/len(euler_predict)*180.0/math.pi
+            print("mse on test_set %f degrees"%(mse))
             # plot history
             pyplot.plot(history.history['loss'], label='train')
             pyplot.plot(history.history['val_loss'], label='test')
@@ -259,8 +263,9 @@ class ball_in_socket_estimator:
 
         self.listener()
     def ros_callback(self, data):
+        # x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
         x_test = np.array([data.x[0], data.y[0], data.x[1], data.y[1], data.x[2], data.y[2]])
-        x_test=x_test.reshape((1,6))
+        x_test=x_test.reshape((1,len(x_test)))
         show_ground_truth = True
         # try:
         #     (trans,rot2) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
