@@ -5,8 +5,8 @@ import time
 import random
 rospy.init_node('msj_platform_grid_map')
 
-sphere_axis0_max = 0.5
-sphere_axis1_max = 0.5
+sphere_axis0_max = 0.6
+sphere_axis1_max = 0.6
 sphere_axis2_max = 1.5
 
 sphere0 = rospy.Publisher('/sphere_axis0/sphere_axis0/target', std_msgs.msg.Float32 , queue_size=1)
