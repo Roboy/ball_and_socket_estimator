@@ -48,7 +48,7 @@ int main (int argc, char** argv)
 {
     // Load input file into a PointCloud<T> with an appropriate type
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    FILE*       file = fopen("/home/roboy/workspace/roboy_control/batch0.log","r");
+    FILE*       file = fopen("/home/letrend/workspace/roboy_control/data0.log","r");
 
     if (NULL == file) {
         printf("Failed to open 'yourfile'");
