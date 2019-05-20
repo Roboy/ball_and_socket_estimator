@@ -58,7 +58,7 @@ class KerasRegressorTB(KerasRegressor):
 seed = 7
 numpy.random.seed(seed)
 # load dataset
-dataset = pd.read_csv("/home/roboy/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+dataset = pd.read_csv("/home/roboy/workspace/roboy_control/head.log", delim_whitespace=True, header=1)
 dataset = dataset.values[:len(dataset)-1,0:]
 print('%d values'%(len(dataset)))
 dataset = dataset[abs(dataset[:,13])<=0.6,:]

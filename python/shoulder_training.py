@@ -85,7 +85,7 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/roboy/workspace/roboy_control/data0.log","w")
+    record = open("/home/letrend/workspace/roboy_control/data0.log","w")
     record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2 roll pitch yaw qx_top qy_top qz_top qw_top\n")
     roll = 0
     pitch = 0
@@ -176,6 +176,7 @@ class ball_in_socket_estimator:
             else:
                 dataset = pandas.read_csv('/home/roboy/workspace/roboy_control/data0.log', delim_whitespace=True, header=1)
 
+
             dataset = dataset.values[1:len(dataset)-1,0:]
             numpy.random.shuffle(dataset)
             print('%d values'%(len(dataset)))
@@ -259,13 +260,13 @@ class ball_in_socket_estimator:
             self.trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
 
             # load json and create model
-            json_file = open('/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+            json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
 
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/roboy/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+            self.model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
 
             print("Loaded model from disk")
             self.listener()
@@ -367,9 +368,9 @@ estimator = ball_in_socket_estimator()
 ## In[18]:
 #
 #
-#dataset = pandas.read_csv("/home/roboy/workspace/neural_net_test/data0.log", delim_whitespace=True, header=None)
-#dataset2 = pandas.read_csv("/home/roboy/workspace/neural_net_test/data1.log", delim_whitespace=True, header=None)
-#dataset3 = pandas.read_csv("/home/roboy/workspace/neural_net_test/data3.log", delim_whitespace=True, header=None)
+#dataset = pandas.read_csv("/home/letrend/workspace/neural_net_test/data0.log", delim_whitespace=True, header=None)
+#dataset2 = pandas.read_csv("/home/letrend/workspace/neural_net_test/data1.log", delim_whitespace=True, header=None)
+#dataset3 = pandas.read_csv("/home/letrend/workspace/neural_net_test/data3.log", delim_whitespace=True, header=None)
 #
 #
 #quaternion_set = dataset.values[1:,1:5]
