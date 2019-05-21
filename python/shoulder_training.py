@@ -30,8 +30,8 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import Adam
 
 import pdb
-record = True
-train = False
+record = False
+train = True
 
 # In[33]:
 rospy.init_node('shoulder_magnetics_training', anonymous=True)
@@ -166,7 +166,6 @@ class ball_in_socket_estimator:
             global record
             rospy.loginfo("loading data")
             dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
-
             dataset = dataset.values[1:len(dataset)-1,0:]
             numpy.random.shuffle(dataset)
             print('%d values'%(len(dataset)))
