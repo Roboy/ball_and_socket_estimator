@@ -28,10 +28,11 @@ import std_msgs, sensor_msgs
 import math
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import Adam
-
+import paramiko
 import pdb
-record = False
-train = True
+record = True
+train = False
+use_sftp = False
 
 # In[33]:
 rospy.init_node('shoulder_magnetics_training', anonymous=True)
@@ -165,7 +166,17 @@ class ball_in_socket_estimator:
             global sensors_set
             global record
             rospy.loginfo("loading data")
-            dataset = pandas.read_csv("/home/letrend/workspace/roboy_control/data0.log", delim_whitespace=True, header=1)
+            if use_sftp:
+                client = paramiko.SSHClient()
+                client.load_system_host_keys()
+                client.connect(hostname='192.168.0.224', username='letrend')
+                sftp_client = client.open_sftp()
+                remote_file = sftp_client.open('/home/letrend/workspace/roboy_control/data0.log')
+                dataset = pandas.read_csv(remote_file, delim_whitespace=True, header=1)
+            else:
+                dataset = pandas.read_csv('/home/letrend/workspace/roboy_control/data0.log', delim_whitespace=True, header=1)
+
+
             dataset = dataset.values[1:len(dataset)-1,0:]
             numpy.random.shuffle(dataset)
             print('%d values'%(len(dataset)))

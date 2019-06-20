@@ -17,8 +17,8 @@ using namespace std;
 //#define SHOWORIENTATION_MEASURED
 //#define SHOWORIENTATION_CARDSFLOW
 //#define SHOW_EULER
-#define SHOW_SENSOR0_COMPONENTS
-//#define SHOWMAGNITUDE_SENSOR0
+//#define SHOW_SENSOR0_COMPONENTS
+#define SHOWMAGNITUDE_SENSOR0
 //#define SHOWMAGNITUDE_SENSOR1
 //#define SHOWMAGNITUDE_SENSOR2
 //#define SHOWSENSOR0
@@ -42,7 +42,7 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis (pcl::PointCloud<pcl
     return (viewer);
 }
 
-float scale = 0.01;
+float scale = 0.1;
 
 int main (int argc, char** argv)
 {
