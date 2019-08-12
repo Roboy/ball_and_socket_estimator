@@ -5,34 +5,35 @@ import rospy
 from roboy_middleware_msgs.msg import MagneticSensor
 import std_msgs.msg, sensor_msgs.msg
 
-
-network_name = 'model'
+base_path= '/home/roboy/workspace/scooping_ws/src/ball_in_socket_estimator/python/'
+network_name = 'shoulder_left'
 model_name = 'shoulder_left'
 rospy.init_node('3dof predictor', anonymous=True)
 
 # load json and create model
-json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/'+network_name+'.json', 'r')
+json_file = open(base_path+network_name+'.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
 model = model_from_json(loaded_model_json)
 # load weights into new model
-model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+model_name+".h5") #_checkpoint
+model.load_weights(base_path+model_name+".h5") #_checkpoint
 rospy.loginfo("Loaded model from disk")
 model.summary()
 
 class ball_in_socket_estimator:
     graph = tensorflow.get_default_graph()
-    network_name = 'model'
+    base_path= '/home/roboy/workspace/scooping_ws/src/ball_in_socket_estimator/python/'
+    network_name = 'shoulder_left'
     model_name = 'shoulder_left'
     joint_state = rospy.Publisher('/joint_states', sensor_msgs.msg.JointState , queue_size=1)
     def __init__(self):
         # load json and create model
-        json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/'+self.network_name+'.json', 'r')
+        json_file = open(self.base_path+self.network_name+'.json', 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         self.model = model_from_json(loaded_model_json)
         # load weights into new model
-        self.model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/"+self.model_name+".h5")
+        self.model.load_weights(self.base_path+self.model_name+".h5")
         print("Loaded model from disk")
         self.listener()
     def magneticsCallback(self, data):
