@@ -7,3 +7,9 @@
 [submodule "src/i2c_fpga"]
 	path = src/i2c_fpga
 	url = https://github.com/Roboy/i2c_fpga
+[submodule "pcbs/roboy_3.0_40mm_ball_sensor/--force"]
+	path = pcbs/roboy_3.0_40mm_ball_sensor/--force
+	url = https://github.com/Roboy/kicad_db
+[submodule "pcbs/roboy_3.0_40mm_ball_sensor/kicad_db"]
+	path = pcbs/roboy_3.0_40mm_ball_sensor/kicad_db
+	url = https://github.com/Roboy/kicad_db

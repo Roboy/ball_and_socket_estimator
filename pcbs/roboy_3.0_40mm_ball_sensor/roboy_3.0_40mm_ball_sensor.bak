@@ -1,0 +1,196 @@
+EESchema Schematic File Version 4
+EELAYER 29 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Sensor_Magnetic:TLV493D U2
+U 1 1 5D599E60
+P 5550 3100
+F 0 "U2" H 5830 3196 50  0000 L CNN
+F 1 "TLV493D" H 5830 3105 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-6" H 5500 2600 50  0001 C CNN
+F 3 "http://www.infineon.com/dgdl/Infineon-TLV493D-A1B6-DS-v01_00-EN.pdf?fileId=5546d462525dbac40152a6b85c760e80" H 5400 3600 50  0001 C CNN
+	1    5550 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Sensor_Magnetic:TLV493D U1
+U 1 1 5D59A236
+P 5550 1700
+F 0 "U1" H 5830 1796 50  0000 L CNN
+F 1 "TLV493D" H 5830 1705 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-6" H 5500 1200 50  0001 C CNN
+F 3 "http://www.infineon.com/dgdl/Infineon-TLV493D-A1B6-DS-v01_00-EN.pdf?fileId=5546d462525dbac40152a6b85c760e80" H 5400 2200 50  0001 C CNN
+	1    5550 1700
+	1    0    0    -1  
+$EndComp
+$Comp
+L Sensor_Magnetic:TLV493D U3
+U 1 1 5D59A62C
+P 5550 4500
+F 0 "U3" H 5830 4596 50  0000 L CNN
+F 1 "TLV493D" H 5830 4505 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-6" H 5500 4000 50  0001 C CNN
+F 3 "http://www.infineon.com/dgdl/Infineon-TLV493D-A1B6-DS-v01_00-EN.pdf?fileId=5546d462525dbac40152a6b85c760e80" H 5400 5000 50  0001 C CNN
+	1    5550 4500
+	1    0    0    -1  
+$EndComp
+Text Label 5150 1600 2    50   ~ 0
+SCL_0
+Text Label 5150 1700 2    50   ~ 0
+SDA_0
+Text Label 5150 3000 2    50   ~ 0
+SCL_1
+Text Label 5150 3100 2    50   ~ 0
+SDA_1
+Text Label 5150 4400 2    50   ~ 0
+SCL_2
+Text Label 5150 4500 2    50   ~ 0
+SDA_2
+$Comp
+L power:+3.3V #PWR0101
+U 1 1 5D59F8C4
+P 5550 1200
+F 0 "#PWR0101" H 5550 1050 50  0001 C CNN
+F 1 "+3.3V" H 5565 1373 50  0000 C CNN
+F 2 "" H 5550 1200 50  0001 C CNN
+F 3 "" H 5550 1200 50  0001 C CNN
+	1    5550 1200
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR0102
+U 1 1 5D5A14E0
+P 5550 2600
+F 0 "#PWR0102" H 5550 2450 50  0001 C CNN
+F 1 "+3.3V" H 5565 2773 50  0000 C CNN
+F 2 "" H 5550 2600 50  0001 C CNN
+F 3 "" H 5550 2600 50  0001 C CNN
+	1    5550 2600
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR0103
+U 1 1 5D5A1851
+P 5550 4000
+F 0 "#PWR0103" H 5550 3850 50  0001 C CNN
+F 1 "+3.3V" H 5565 4173 50  0000 C CNN
+F 2 "" H 5550 4000 50  0001 C CNN
+F 3 "" H 5550 4000 50  0001 C CNN
+	1    5550 4000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0104
+U 1 1 5D5A20B8
+P 5100 4900
+F 0 "#PWR0104" H 5100 4650 50  0001 C CNN
+F 1 "GND" V 5105 4772 50  0000 R CNN
+F 2 "" H 5100 4900 50  0001 C CNN
+F 3 "" H 5100 4900 50  0001 C CNN
+	1    5100 4900
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5650 4900 5550 4900
+Connection ~ 5450 4900
+Wire Wire Line
+	5450 4900 5100 4900
+Connection ~ 5550 4900
+Wire Wire Line
+	5550 4900 5450 4900
+$Comp
+L power:GND #PWR0105
+U 1 1 5D5A342D
+P 5050 3500
+F 0 "#PWR0105" H 5050 3250 50  0001 C CNN
+F 1 "GND" V 5055 3372 50  0000 R CNN
+F 2 "" H 5050 3500 50  0001 C CNN
+F 3 "" H 5050 3500 50  0001 C CNN
+	1    5050 3500
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR0106
+U 1 1 5D5A36A3
+P 5050 2100
+F 0 "#PWR0106" H 5050 1850 50  0001 C CNN
+F 1 "GND" V 5055 1972 50  0000 R CNN
+F 2 "" H 5050 2100 50  0001 C CNN
+F 3 "" H 5050 2100 50  0001 C CNN
+	1    5050 2100
+	0    1    1    0   
+$EndComp
+Connection ~ 5450 2100
+Wire Wire Line
+	5450 2100 5050 2100
+Connection ~ 5550 2100
+Wire Wire Line
+	5550 2100 5450 2100
+Wire Wire Line
+	5050 3500 5450 3500
+Connection ~ 5450 3500
+Wire Wire Line
+	5450 3500 5550 3500
+Connection ~ 5550 3500
+Wire Wire Line
+	5550 3500 5650 3500
+$Comp
+L Connector:Conn_01x08_Male J1
+U 1 1 5D5A49FD
+P 3450 3000
+F 0 "J1" H 3558 3481 50  0000 C CNN
+F 1 "Conn_01x08_Male" H 3558 3390 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical" H 3450 3000 50  0001 C CNN
+F 3 "~" H 3450 3000 50  0001 C CNN
+	1    3450 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0107
+U 1 1 5D5A562E
+P 3650 2700
+F 0 "#PWR0107" H 3650 2450 50  0001 C CNN
+F 1 "GND" V 3655 2572 50  0000 R CNN
+F 2 "" H 3650 2700 50  0001 C CNN
+F 3 "" H 3650 2700 50  0001 C CNN
+	1    3650 2700
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3V #PWR0108
+U 1 1 5D5A5AA7
+P 3650 2800
+F 0 "#PWR0108" H 3650 2650 50  0001 C CNN
+F 1 "+3.3V" V 3665 2928 50  0000 L CNN
+F 2 "" H 3650 2800 50  0001 C CNN
+F 3 "" H 3650 2800 50  0001 C CNN
+	1    3650 2800
+	0    1    1    0   
+$EndComp
+Text Label 3650 3000 0    50   ~ 0
+SCL_0
+Text Label 3650 2900 0    50   ~ 0
+SDA_0
+Text Label 3650 3100 0    50   ~ 0
+SCL_1
+Text Label 3650 3200 0    50   ~ 0
+SDA_1
+Text Label 3650 3300 0    50   ~ 0
+SCL_2
+Text Label 3650 3400 0    50   ~ 0
+SDA_2
+Wire Wire Line
+	5550 2100 5650 2100
+$EndSCHEMATC
