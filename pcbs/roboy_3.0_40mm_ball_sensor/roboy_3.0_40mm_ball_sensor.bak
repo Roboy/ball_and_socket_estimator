@@ -1,5 +1,6 @@
 EESchema Schematic File Version 4
-EELAYER 29 0
+LIBS:roboy_3.0_40mm_ball_sensor-cache
+EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -102,12 +103,9 @@ F 3 "" H 5100 4900 50  0001 C CNN
 	1    5100 4900
 	0    1    1    0   
 $EndComp
-Wire Wire Line
-	5650 4900 5550 4900
 Connection ~ 5450 4900
 Wire Wire Line
 	5450 4900 5100 4900
-Connection ~ 5550 4900
 Wire Wire Line
 	5550 4900 5450 4900
 $Comp
@@ -144,8 +142,6 @@ Connection ~ 5450 3500
 Wire Wire Line
 	5450 3500 5550 3500
 Connection ~ 5550 3500
-Wire Wire Line
-	5550 3500 5650 3500
 $Comp
 L Connector:Conn_01x08_Male J1
 U 1 1 5D5A49FD
@@ -183,14 +179,82 @@ Text Label 3650 3000 0    50   ~ 0
 SCL_0
 Text Label 3650 2900 0    50   ~ 0
 SDA_0
-Text Label 3650 3100 0    50   ~ 0
-SCL_1
 Text Label 3650 3200 0    50   ~ 0
+SCL_1
+Text Label 3650 3100 0    50   ~ 0
 SDA_1
-Text Label 3650 3300 0    50   ~ 0
-SCL_2
 Text Label 3650 3400 0    50   ~ 0
+SCL_2
+Text Label 3650 3300 0    50   ~ 0
 SDA_2
 Wire Wire Line
 	5550 2100 5650 2100
+$Comp
+L Device:C C?
+U 1 1 5D5A7D8D
+P 6350 1625
+F 0 "C?" H 6465 1671 50  0000 L CNN
+F 1 "C" H 6465 1580 50  0000 L CNN
+F 2 "" H 6388 1475 50  0001 C CNN
+F 3 "~" H 6350 1625 50  0001 C CNN
+	1    6350 1625
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6350 1475 6350 1200
+Wire Wire Line
+	6350 1200 5550 1200
+Connection ~ 5550 1200
+Wire Wire Line
+	6350 1775 6350 2100
+Wire Wire Line
+	6350 2100 5650 2100
+Connection ~ 5650 2100
+$Comp
+L Device:C C?
+U 1 1 5D5A8046
+P 6350 3025
+F 0 "C?" H 6465 3071 50  0000 L CNN
+F 1 "C" H 6465 2980 50  0000 L CNN
+F 2 "" H 6388 2875 50  0001 C CNN
+F 3 "~" H 6350 3025 50  0001 C CNN
+	1    6350 3025
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6350 2875 6350 2600
+Wire Wire Line
+	6350 3175 6350 3500
+$Comp
+L Device:C C?
+U 1 1 5D5A81EE
+P 6350 4425
+F 0 "C?" H 6465 4471 50  0000 L CNN
+F 1 "C" H 6465 4380 50  0000 L CNN
+F 2 "" H 6388 4275 50  0001 C CNN
+F 3 "~" H 6350 4425 50  0001 C CNN
+	1    6350 4425
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6350 4275 6350 4000
+Wire Wire Line
+	6350 4000 5550 4000
+Wire Wire Line
+	6350 4575 6350 4900
+Connection ~ 5550 4000
+Connection ~ 5650 4900
+Wire Wire Line
+	5650 4900 6350 4900
+Wire Wire Line
+	5550 4900 5650 4900
+Connection ~ 5550 4900
+Wire Wire Line
+	6350 3500 5650 3500
+Connection ~ 5650 3500
+Wire Wire Line
+	6350 2600 5550 2600
+Wire Wire Line
+	5550 3500 5650 3500
+Connection ~ 5550 2600
 $EndSCHEMATC
