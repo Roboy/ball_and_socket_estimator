@@ -143,49 +143,38 @@ Wire Wire Line
 	5450 3500 5550 3500
 Connection ~ 5550 3500
 $Comp
-L Connector:Conn_01x08_Male J1
-U 1 1 5D5A49FD
-P 3450 3000
-F 0 "J1" H 3558 3481 50  0000 C CNN
-F 1 "Conn_01x08_Male" H 3558 3390 50  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical" H 3450 3000 50  0001 C CNN
-F 3 "~" H 3450 3000 50  0001 C CNN
-	1    3450 3000
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:GND #PWR0107
 U 1 1 5D5A562E
-P 3650 2700
-F 0 "#PWR0107" H 3650 2450 50  0001 C CNN
-F 1 "GND" V 3655 2572 50  0000 R CNN
-F 2 "" H 3650 2700 50  0001 C CNN
-F 3 "" H 3650 2700 50  0001 C CNN
-	1    3650 2700
+P 3650 3600
+F 0 "#PWR0107" H 3650 3350 50  0001 C CNN
+F 1 "GND" V 3655 3472 50  0000 R CNN
+F 2 "" H 3650 3600 50  0001 C CNN
+F 3 "" H 3650 3600 50  0001 C CNN
+	1    3650 3600
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3V #PWR0108
 U 1 1 5D5A5AA7
-P 3650 2800
-F 0 "#PWR0108" H 3650 2650 50  0001 C CNN
-F 1 "+3.3V" V 3665 2928 50  0000 L CNN
-F 2 "" H 3650 2800 50  0001 C CNN
-F 3 "" H 3650 2800 50  0001 C CNN
-	1    3650 2800
+P 3650 3500
+F 0 "#PWR0108" H 3650 3350 50  0001 C CNN
+F 1 "+3.3V" V 3665 3628 50  0000 L CNN
+F 2 "" H 3650 3500 50  0001 C CNN
+F 3 "" H 3650 3500 50  0001 C CNN
+	1    3650 3500
 	0    1    1    0   
 $EndComp
-Text Label 3650 3000 0    50   ~ 0
+Text Label 3650 3400 0    50   ~ 0
 SCL_0
-Text Label 3650 2900 0    50   ~ 0
+Text Label 3650 3300 0    50   ~ 0
 SDA_0
 Text Label 3650 3200 0    50   ~ 0
 SCL_1
 Text Label 3650 3100 0    50   ~ 0
 SDA_1
-Text Label 3650 3400 0    50   ~ 0
+Text Label 3650 3000 0    50   ~ 0
 SCL_2
-Text Label 3650 3300 0    50   ~ 0
+Text Label 3650 2900 0    50   ~ 0
 SDA_2
 Wire Wire Line
 	5550 2100 5650 2100
@@ -257,4 +246,85 @@ Wire Wire Line
 Wire Wire Line
 	5550 3500 5650 3500
 Connection ~ 5550 2600
+$Comp
+L Sensor_Magnetic:TLV493D U4
+U 1 1 5D5BD4F1
+P 5550 5950
+F 0 "U4" H 5830 6046 50  0000 L CNN
+F 1 "TLV493D" H 5830 5955 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-6" H 5500 5450 50  0001 C CNN
+F 3 "http://www.infineon.com/dgdl/Infineon-TLV493D-A1B6-DS-v01_00-EN.pdf?fileId=5546d462525dbac40152a6b85c760e80" H 5400 6450 50  0001 C CNN
+	1    5550 5950
+	1    0    0    -1  
+$EndComp
+Text Label 5150 5850 2    50   ~ 0
+SCL_3
+Text Label 5150 5950 2    50   ~ 0
+SDA_3
+$Comp
+L power:+3.3V #PWR0109
+U 1 1 5D5BD4F9
+P 5550 5450
+F 0 "#PWR0109" H 5550 5300 50  0001 C CNN
+F 1 "+3.3V" H 5565 5623 50  0000 C CNN
+F 2 "" H 5550 5450 50  0001 C CNN
+F 3 "" H 5550 5450 50  0001 C CNN
+	1    5550 5450
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0110
+U 1 1 5D5BD4FF
+P 5100 6350
+F 0 "#PWR0110" H 5100 6100 50  0001 C CNN
+F 1 "GND" V 5105 6222 50  0000 R CNN
+F 2 "" H 5100 6350 50  0001 C CNN
+F 3 "" H 5100 6350 50  0001 C CNN
+	1    5100 6350
+	0    1    1    0   
+$EndComp
+Connection ~ 5450 6350
+Wire Wire Line
+	5450 6350 5100 6350
+Wire Wire Line
+	5550 6350 5450 6350
+$Comp
+L Device:C C4
+U 1 1 5D5BD508
+P 6350 5875
+F 0 "C4" H 6465 5921 50  0000 L CNN
+F 1 "C" H 6465 5830 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 6388 5725 50  0001 C CNN
+F 3 "~" H 6350 5875 50  0001 C CNN
+	1    6350 5875
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6350 5725 6350 5450
+Wire Wire Line
+	6350 5450 5550 5450
+Wire Wire Line
+	6350 6025 6350 6350
+Connection ~ 5550 5450
+Connection ~ 5650 6350
+Wire Wire Line
+	5650 6350 6350 6350
+Wire Wire Line
+	5550 6350 5650 6350
+Connection ~ 5550 6350
+$Comp
+L Connector:Conn_01x10_Female J1
+U 1 1 5D5BDBED
+P 3450 3200
+F 0 "J1" H 3344 2475 50  0000 C CNN
+F 1 "Conn_01x10_Female" H 3344 2566 50  0000 C CNN
+F 2 "custom_lib:TE-Connectivity_Micro-Match_connector_02x05_Pitch_1.27mm" H 3450 3200 50  0001 C CNN
+F 3 "~" H 3450 3200 50  0001 C CNN
+	1    3450 3200
+	-1   0    0    1   
+$EndComp
+Text Label 3650 2800 0    50   ~ 0
+SCL_3
+Text Label 3650 2700 0    50   ~ 0
+SDA_3
 $EndSCHEMATC
