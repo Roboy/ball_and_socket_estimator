@@ -34,8 +34,24 @@ record = True
 train = False
 use_sftp = False
 
+if len(sys.argv) < 2:
+    print("\nUSAGE: python particle_swarm.py body_part, e.g. \n python particle_swarm.py shoulder_left \n")
+    sys.exit()
+    
+body_part = sys.argv[1]
+joint_names = [body_part+"_axis"+str(i) for i in range(3)]
+if body_part == "shoulder_left":
+    id = 3
+elif body_part == "shoulder_right":
+    id = 4
+else:
+    rospy.logwarn("unknown FPGA id")
+    sys.exit()
+
+rospy.loginfo("collecting data for %s"%body_part)
+
 # In[33]:
-rospy.init_node('shoulder_magnetics_training', anonymous=True)
+rospy.init_node(body_part+'_magnetics_training')
 listener = tf.TransformListener()
 rate = rospy.Rate(60.0)
 
@@ -63,7 +79,7 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 if record is True:
-    print("recording training data")
+    print("recording training data for %s"%body_part)
     global numberOfSamples
     numberOfSamples = 500000
     global sample
@@ -85,39 +101,51 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/letrend/workspace/roboy_control/data0.log","w")
-    record.write("qx qy qz qw mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2 roll pitch yaw qx_top qy_top qz_top qw_top\n")
+    record = open("/home/roboy/workspace/scooping_ws/"+body_part+"_data0.log","w")
+    record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz2 roll pitch yaw\n")
     roll = 0
     pitch = 0
     yaw = 0
     sample = 0
-    def magneticsCallback(data):
-        global sample
-        global samples
-        global numberOfSamples
-        global record
-        try:
-            (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
-            (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            return
 
-        record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
-        rospy.loginfo_throttle(5,str(sample) + " " + str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]))
-        sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
-        q = np.array([rot[0], rot[1], rot[2], rot[3]])
-        # sensors_set[sample,:] = sensor.reshape(1,9)
-        # quaternion_set[sample,:] = q.reshape(1,4)
-        # samples[sample,:]= sample
-        sample = sample + 1
+    def magneticsCallback(data):
+        if (data.id == id):
+            global sample
+            global samples
+            global numberOfSamples
+            global record
+            # try:
+            #     (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
+            #     (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
+            # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            #     return
+
+            record.write(str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2])  + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
+
+            # record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
+            rospy.loginfo_throttle(5,str(sample) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
+            sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2]])
+            # q = np.array([rot[0], rot[1], rot[2], rot[3]])
+            # sensors_set[sample,:] = sensor.reshape(1,9)
+            # quaternion_set[sample,:] = q.reshape(1,4)
+            # samples[sample,:]= sample
+            sample = sample + 1
+            rospy.loginfo_throttle(5, "%s: \n Data collection progress: %f%%"%(body_part, float(sample)/float(numberOfSamples)*100.0))
+
     def trackingCallback(data):
         global roll
         global pitch
         global yaw
-        roll = data.position[0]
-        pitch = data.position[1]
-        yaw = data.position[2]
-        rospy.loginfo_throttle(5, "receiving tracking data")
+        position = [0,0,0]
+        for i in range(3):
+            idx = data.name.index(joint_names[i])
+            position[i] = data.position[idx]
+
+        roll = position[0]
+        pitch = position[1]
+        yaw = position[2]
+        rospy.loginfo_throttle(10, "%s: receiving tracking data"%body_part)
+
 
     magneticsSubscriber = rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, magneticsCallback)
     trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, trackingCallback)
@@ -154,7 +182,7 @@ class ball_in_socket_estimator:
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
             self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.01))
-#            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
+            #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
             # self.model.add(Dropout(0.1))
             self.model.add(Dense(units=3,kernel_initializer='normal'))
@@ -171,10 +199,10 @@ class ball_in_socket_estimator:
                 client.load_system_host_keys()
                 client.connect(hostname='192.168.0.224', username='letrend')
                 sftp_client = client.open_sftp()
-                remote_file = sftp_client.open('/home/letrend/workspace/roboy_control/data0.log')
+                remote_file = sftp_client.open('/home/roboy/workspace/scooping_ws/data0.log')
                 dataset = pandas.read_csv(remote_file, delim_whitespace=True, header=1)
             else:
-                dataset = pandas.read_csv('/home/letrend/workspace/roboy_control/data0.log', delim_whitespace=True, header=1)
+                dataset = pandas.read_csv('/home/roboy/workspace/scooping_ws/data0.log', delim_whitespace=True, header=1)
 
 
             dataset = dataset.values[1:len(dataset)-1,0:]
@@ -260,13 +288,13 @@ class ball_in_socket_estimator:
             self.trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
 
             # load json and create model
-            json_file = open('/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.json', 'r')
+            json_file = open('/home/roboy/workspace/scooping_ws/src/ball_in_socket_estimator/python/model.json', 'r')
 
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/letrend/workspace/roboy_control/src/ball_in_socket_estimator/python/model.h5")
+            self.model.load_weights("/home/roboy/workspace/scooping_ws/src/ball_in_socket_estimator/python/model.h5")
 
             print("Loaded model from disk")
             self.listener()
@@ -348,7 +376,7 @@ class ball_in_socket_estimator:
 
 
 # In[34]:
-estimator = ball_in_socket_estimator()
+# estimator = ball_in_socket_estimator()
 # In[34]:
 #estimator.listener()
 # In[13]:
@@ -368,9 +396,9 @@ estimator = ball_in_socket_estimator()
 ## In[18]:
 #
 #
-#dataset = pandas.read_csv("/home/letrend/workspace/neural_net_test/data0.log", delim_whitespace=True, header=None)
-#dataset2 = pandas.read_csv("/home/letrend/workspace/neural_net_test/data1.log", delim_whitespace=True, header=None)
-#dataset3 = pandas.read_csv("/home/letrend/workspace/neural_net_test/data3.log", delim_whitespace=True, header=None)
+#dataset = pandas.read_csv("/home/roboy/workspace/neural_net_test/data0.log", delim_whitespace=True, header=None)
+#dataset2 = pandas.read_csv("/home/roboy/workspace/neural_net_test/data1.log", delim_whitespace=True, header=None)
+#dataset3 = pandas.read_csv("/home/roboy/workspace/neural_net_test/data3.log", delim_whitespace=True, header=None)
 #
 #
 #quaternion_set = dataset.values[1:,1:5]
