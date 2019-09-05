@@ -55,7 +55,7 @@ class Space():
         self.joint_targets_msg.effort = [0]*len(self.joint_names)
 
         self.received_messages = 0
-        self.visual = pcl.pcl_visualization.CloudViewing()
+        #self.visual = pcl.pcl_visualization.CloudViewing()
         self.global_attraction = 0.01
         self.personal_attraction = 0.1
         self.random_speed = 0.1
@@ -151,7 +151,7 @@ class Space():
         # print(search_space.gbest_position)
         pc_1 = pcl.PointCloud_PointXYZRGB()
         pc_1.from_array(search_space.visited_colored)
-        self.visual.ShowColorCloud(pc_1, b'particle_swarm')
+        #self.visual.ShowColorCloud(pc_1, b'particle_swarm')
         # time.sleep(0.5)
 
     def run(self):
