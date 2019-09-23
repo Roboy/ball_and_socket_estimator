@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 21)
+    (drawings 22)
     (tracks 143)
     (zones 0)
     (modules 17)
@@ -805,6 +805,9 @@
     )
   )
 
+  (gr_text "THIS SIDE UP" (at 160.4 122.2) (layer B.SilkS) (tstamp 5D682B19)
+    (effects (font (size 1 0.6) (thickness 0.15)) (justify mirror))
+  )
   (gr_line (start 156.6 124.8) (end 154 124.8) (layer F.SilkS) (width 0.2) (tstamp 5D682A2C))
   (gr_line (start 155.2 120.6) (end 155.2 127) (layer F.SilkS) (width 0.2) (tstamp 5D682A2B))
   (gr_line (start 155.2 127) (end 156.6 124.8) (layer F.SilkS) (width 0.2) (tstamp 5D682A2A))
@@ -816,7 +819,7 @@
   (gr_line (start 167 124.8) (end 164.4 124.8) (layer F.SilkS) (width 0.2))
   (gr_line (start 165.6 127) (end 167 124.8) (layer F.SilkS) (width 0.2))
   (gr_line (start 165.6 120.6) (end 165.6 127) (layer F.SilkS) (width 0.2))
-  (gr_text 40mm_ball_sensor_v0.1 (at 160.4 121.6) (layer B.SilkS) (tstamp 5D682917)
+  (gr_text 40mm_ball_sensor_v0.1 (at 160.4 120.8) (layer B.SilkS) (tstamp 5D682917)
     (effects (font (size 1 0.6) (thickness 0.15)) (justify mirror))
   )
   (gr_text SENSOR3 (at 183 90.6) (layer F.SilkS) (tstamp 5D6828BE)
