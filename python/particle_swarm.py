@@ -155,7 +155,7 @@ class Space():
         # time.sleep(0.5)
 
     def run(self):
-        trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback, queue_size=1)
+        trackingSubscriber = rospy.Subscriber("external_joint_states", sensor_msgs.msg.JointState, self.trackingCallback, queue_size=1)
         rospy.spin()
 
 

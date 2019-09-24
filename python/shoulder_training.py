@@ -30,7 +30,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import Adam
 import paramiko
 import pdb
-record = True
+record = False
 train = False
 use_sftp = False
 
@@ -51,7 +51,7 @@ else:
 rospy.loginfo("collecting data for %s"%body_part)
 
 # In[33]:
-rospy.init_node(body_part+'_magnetics_training')
+rospy.init_node(body_part+'_magnetics_training_training')
 listener = tf.TransformListener()
 rate = rospy.Rate(60.0)
 
@@ -321,7 +321,7 @@ class ball_in_socket_estimator:
                 msg.header = std_msgs.msg.Header()
                 msg.header.stamp = rospy.Time.now()
                 msg.name = self.joint_names
-                msg.position = [(-1)*euler[0,0], euler[0,1], euler[0,2]]
+                msg.position = [euler[0,0], euler[0,1], euler[0,2]]
                 msg.velocity = [0,0,0]
                 msg.effort = [0,0,0]
                 self.trackingPublisher.publish(msg)
@@ -383,9 +383,10 @@ class ball_in_socket_estimator:
 
 
 # In[34]:
-# estimator = ball_in_socket_estimator(body_part)
+estimator = ball_in_socket_estimator(body_part)
+
 # In[34]:
-#estimator.listener()
+estimator.listener()
 # In[13]:
 #
 #
