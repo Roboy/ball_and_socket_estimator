@@ -14,9 +14,7 @@ import sensor_msgs.msg
 import roboy_simulation_msgs.msg
 import sys
 
-
-
-model_name = "roboy_icecream"
+model_name = "head_testbed"
 
 class Space():
     def __init__(self, n_particles, body_part):
@@ -60,7 +58,7 @@ class Space():
         self.personal_attraction = 0.1
         self.random_speed = 0.1
         global model_name
-        with open("/home/roboy/workspace/scooping_ws/src/CARDSflow/robots/"+model_name+"/joint_limits.yaml", 'r') as stream:
+        with open("/home/roboy/workspace/roboy3/src/robots/"+model_name+"/joint_limits.yaml", 'r') as stream:
             try:
                 joint_limits = yaml.safe_load(stream)
                 polygon = []
