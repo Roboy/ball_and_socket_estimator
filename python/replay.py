@@ -27,7 +27,7 @@ import math
 publish_magnetic_data = False
 show_magnetic_field = False
 
-model_name = "headmodel"
+model_name = "beschde"
 
 def euler_to_quaternion(roll, pitch, yaw):
     qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
