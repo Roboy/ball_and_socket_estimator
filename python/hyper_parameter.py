@@ -5,6 +5,8 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.wrappers.scikit_learn import KerasRegressor
 import pandas as pd
+import calendar
+from datetime import datetime
 
 from keras import callbacks
 import os, itertools
@@ -12,11 +14,11 @@ from sklearn.model_selection import train_test_split, KFold
 # Function to create model, required for KerasClassifier
 def create_model(activation='relu',neurons=100, dropout=0):
     model = Sequential()
-    model.add(Dense(units=neurons, input_dim=6,kernel_initializer='normal', activation=activation))
+    model.add(Dense(units=neurons, input_dim=12,kernel_initializer='normal', activation=activation))
     model.add(Dropout(dropout))
     model.add(Dense(units=neurons, kernel_initializer='normal', activation=activation))
     model.add(Dropout(dropout))
-    model.add(Dense(units=3,kernel_initializer='normal', activation=activation))
+    model.add(Dense(units=3,kernel_initializer='normal'))
 
     model.compile(loss='mean_squared_error',
                   optimizer='adam',
@@ -24,12 +26,17 @@ def create_model(activation='relu',neurons=100, dropout=0):
     model.summary()
     return model
 
+
+dt = datetime.utcnow()
+timestamp = calendar.timegm(dt.utctimetuple())
+
+
 class KerasRegressorTB(KerasRegressor):
 
     def __init__(self, *args, **kwargs):
-        super(KerasRegressorTB, self).__init__(*args, **kwargs)
+        super(KerasRegressor, self).__init__(*args, **kwargs)
 
-    def fit(self, x, y, log_dir=None, **kwargs):
+    def fit(self, x, y, log_dir='./hyperparameter_logs/'+str(timestamp), **kwargs):
         cbs = None
         if log_dir is not None:
             # Make sure the base log directory exists
@@ -51,25 +58,28 @@ class KerasRegressorTB(KerasRegressor):
                     pass
             cbs = [callbacks.TensorBoard(log_dir=conf_dir, histogram_freq=0,
                                write_graph=True, write_images=False),
-                   callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')]
-        super(KerasRegressorTB, self).fit(x, y, callbacks=cbs, **kwargs)
+                   callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0, mode='min')]
+        super(KerasRegressor, self).fit(x, y, callbacks=cbs)#, **kwargs
 
 # fix random seed for reproducibility
 seed = 7
 numpy.random.seed(seed)
 # load dataset
-dataset = pd.read_csv("/home/roboy/workspace/roboy_control/head.log", delim_whitespace=True, header=1)
-dataset = dataset.values[:len(dataset)-1,0:]
+dataset = pd.read_csv("/home/letrend/workspace/roboy3/head_data0.log", delim_whitespace=True, header=1)
+dataset = dataset.values[1:len(dataset)-1,0:]
 print('%d values'%(len(dataset)))
-dataset = dataset[abs(dataset[:,13])<=0.6,:]
-dataset = dataset[abs(dataset[:,14])<=0.6,:]
-dataset = dataset[abs(dataset[:,15])<=1.5,:]
+dataset = dataset[abs(dataset[:,12])<=0.7,:]
+dataset = dataset[abs(dataset[:,13])<=0.7,:]
+dataset = dataset[abs(dataset[:,14])<=1.5,:]
+# dataset = dataset[abs(dataset[:,12])!=0.0,:]
+# dataset = dataset[abs(dataset[:,13])!=0.0,:]
+# dataset = dataset[abs(dataset[:,14])!=0.0,:]
 print('%d values after filtering outliers'%(len(dataset)))
 data_split = 1
 train_set = dataset[:int(len(dataset)*data_split),:]
 # numpy.random.shuffle(train_set)
-euler_set = numpy.array(train_set[:,13:16])
-sensors_set = numpy.array([train_set[:,4],train_set[:,5],train_set[:,7],train_set[:,8],train_set[:,10],train_set[:,11]])
+euler_set = numpy.array(dataset[:,12:15])
+sensors_set = numpy.array([dataset[:,0],dataset[:,1],dataset[:,2],dataset[:,3],dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11]])
 sensors_set = numpy.transpose(sensors_set)
 y = euler_set
 x = sensors_set
@@ -80,17 +90,17 @@ print(y[0])
 # create model
 cbs = [callbacks.TensorBoard(log_dir='./log_hyperparameter', histogram_freq=0,
                              write_graph=True, write_images=False),
-       callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')]
-model = KerasRegressor(build_fn=create_model, verbose=0, epochs=100, validation_split=0.7, shuffle=True)
+       callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0, mode='min')]
+model = KerasRegressorTB(build_fn=create_model ,verbose=0, epochs=1000, validation_split=0.7, shuffle=True)
 # define the grid search parameters
 # batch_size = [500]
 # epochs = [60]
 neurons = [40,50,60,70,80,90,100]
 activation = ['relu']
 dropout = [0,0.05,0.1]
-batch_size = [50,100,150,200]
+batch_size = [200,400,600,800]
 param_grid = dict(neurons=neurons,activation=activation, batch_size=batch_size, dropout=dropout)
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=8, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=60, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
 grid_result = grid.fit(x, y)
 # summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))

@@ -8,4 +8,4 @@ log/
 latest
 src/CMakeLists.txt
 cmake-build-debug/
-log*
+python/hyperparameter_logs

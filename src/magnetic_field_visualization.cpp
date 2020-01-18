@@ -8,7 +8,7 @@
 #include <pcl/io/vtk_lib_io.h>
 #include <stdio.h>
 #include <pcl/visualization/cloud_viewer.h>
-
+#include "tinyxml.h"
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
@@ -19,11 +19,13 @@ using namespace std;
 //#define SHOW_EULER
 //#define SHOW_SENSOR0_COMPONENTS
 #define SHOWMAGNITUDE_SENSOR0
-//#define SHOWMAGNITUDE_SENSOR1
-//#define SHOWMAGNITUDE_SENSOR2
+#define SHOWMAGNITUDE_SENSOR1
+#define SHOWMAGNITUDE_SENSOR2
+#define SHOWMAGNITUDE_SENSOR3
 //#define SHOWSENSOR0
 //#define SHOWSENSOR1
 //#define SHOWSENSOR2
+//#define SHOWSENSOR3
 //#define GENERATESTL
 
 
@@ -42,13 +44,47 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis (pcl::PointCloud<pcl
     return (viewer);
 }
 
-float scale = 0.1;
+float sensor_location_scale = 5;
+float sensor_scale = 2;
 
 int main (int argc, char** argv)
 {
+    TiXmlDocument doc("/home/letrend/workspace/roboy3/src/robots/neck_magentic_field/cardsflow.xml");
+    if (!doc.LoadFile()) {
+        printf("Can't parse file\n");
+        return false;
+    }
+
+    TiXmlElement *root = doc.RootElement();
+    TiXmlElement *myoMuscle_it = NULL;
+    vector<Vector3d> sensor_rel_locations;
+    for (myoMuscle_it = root->FirstChildElement("myoMuscle"); myoMuscle_it;
+         myoMuscle_it = myoMuscle_it->NextSiblingElement("myoMuscle")) {
+        if (myoMuscle_it->Attribute("name")) {
+            // myoMuscle joint acting on
+            TiXmlElement *link_child_it = NULL;
+            for (link_child_it = myoMuscle_it->FirstChildElement("link"); link_child_it;
+                 link_child_it = link_child_it->NextSiblingElement("link")) {
+                string link_name = link_child_it->Attribute("name");
+                if (!link_name.empty()) {
+                    TiXmlElement *viaPoint_child_it = NULL;
+                    for (viaPoint_child_it = link_child_it->FirstChildElement("viaPoint"); viaPoint_child_it;
+                         viaPoint_child_it = viaPoint_child_it->NextSiblingElement("viaPoint")) {
+                        float x, y, z;
+                        if (sscanf(viaPoint_child_it->GetText(), "%f %f %f", &x, &y, &z) != 3) {
+                            printf("parser", "error reading [via point] (x y z)\n");
+                            return false;
+                        }
+                        Vector3d local_coordinates(x, y, z);
+                        sensor_rel_locations.push_back(local_coordinates);
+                    }
+                }
+            }
+        }
+    }
     // Load input file into a PointCloud<T> with an appropriate type
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    FILE*       file = fopen("/home/letrend/workspace/roboy_control/data0.log","r");
+    FILE*       file = fopen("/home/letrend/workspace/roboy3/head_data0.log","r");
 
     if (NULL == file) {
         printf("Failed to open 'yourfile'");
@@ -56,19 +92,27 @@ int main (int argc, char** argv)
     }
     fscanf(file, "%*[^\n]\n", NULL);
     float roll, pitch, yaw;
-    float qx,qy,qz,qw, s[3][3], q_top_x,q_top_y, q_top_z, q_top_w;
+    float s[4][3];
     bool first = true;
-    Quaterniond quat_init;
-    while(fscanf(file,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-    &qx,&qy,&qz,&qw,&s[0][0],&s[0][1],&s[0][2],&s[1][0],&s[1][1],&s[1][2],&s[2][0],&s[2][1],&s[2][2],&roll,&pitch,&yaw,&q_top_x,&q_top_y, &q_top_z, &q_top_w)==20) {
+//    Quaterniond quat_init;
+    while(fscanf(file,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+    &s[0][0],&s[0][1],&s[0][2],
+    &s[1][0],&s[1][1],&s[1][2],
+    &s[2][0],&s[2][1],&s[2][2],
+    &s[3][0],&s[3][1],&s[3][2],&roll,&pitch,&yaw)==15) {
         Vector3d dir(0, 0, 1);
         Vector3d mag0(s[0][0], s[0][1], s[0][2]);
         Vector3d mag1(s[1][0], s[1][1], s[1][2]);
         Vector3d mag2(s[2][0], s[2][1], s[2][2]);
+        Vector3d mag3(s[3][0], s[3][1], s[3][2]);
 
-        Quaterniond q(qw, qx, qy, qz);
+//        Quaterniond q(qw, qx, qy, qz);
 
-        Matrix3d rot = q.matrix();
+//        Matrix3d rot = q.matrix();
+        Matrix3d rot;
+        rot = AngleAxisd(roll, Vector3d::UnitX())
+        * AngleAxisd(pitch, Vector3d::UnitY())
+        * AngleAxisd(yaw, Vector3d::UnitZ());
 
 #ifdef SHOWORIENTATION_MEASURED
         dir = rot * dir;
@@ -113,7 +157,7 @@ int main (int argc, char** argv)
 #endif
 #ifdef SHOW_SENSOR0_COMPONENTS
         {
-            dir << 0, 0, 1 + mag0[0] * scale;
+            dir << 0, 0, 1 + mag0[0] * sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -123,7 +167,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag0[1] * scale;
+            dir << 0, 0, 1 + mag0[1] * sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -133,7 +177,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag0[2] * scale;
+            dir << 0, 0, 1 + mag0[2] * sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -146,7 +190,7 @@ int main (int argc, char** argv)
 #ifdef SHOWMAGNITUDE_SENSOR0
         {
             double norm = mag0.norm();
-            dir << 0, 0, 1 + norm * scale;
+            Vector3d dir = sensor_rel_locations[0]*norm*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -159,7 +203,7 @@ int main (int argc, char** argv)
 #ifdef SHOWMAGNITUDE_SENSOR1
         {
             double norm = mag1.norm();
-            dir << 0, 0, 1 + norm * scale;
+            Vector3d dir = sensor_rel_locations[1]*norm*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -172,7 +216,7 @@ int main (int argc, char** argv)
 #ifdef SHOWMAGNITUDE_SENSOR2
         {
             double norm = mag2.norm();
-            dir << 0, 0, 1 + norm * scale;
+            Vector3d dir = sensor_rel_locations[2]*norm*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -182,10 +226,24 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
 #endif
-#ifdef SHOWSENSOR0
-        cloud->push_back(p0);
+#ifdef SHOWMAGNITUDE_SENSOR3
         {
-            dir << 0, 0, 1 + mag0[0] * scale;
+            double norm = mag3.norm();
+            Vector3d dir = sensor_rel_locations[3]*norm*sensor_scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.r = 235;
+            p.g = 225;
+            p.b = 52;
+            cloud->push_back(p);
+        }
+#endif
+#ifdef SHOWSENSOR0
+        {
+            Vector3d dir = sensor_rel_locations[0]*sensor_location_scale + sensor_rel_locations[0]*mag0[0]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -195,7 +253,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag0[1] * scale;
+            Vector3d dir = sensor_rel_locations[0]*sensor_location_scale + sensor_rel_locations[0]*mag0[1]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -205,7 +263,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag0[2] * scale;
+            Vector3d dir = sensor_rel_locations[0]*sensor_location_scale + sensor_rel_locations[0]*mag0[2]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -216,9 +274,8 @@ int main (int argc, char** argv)
         }
 #endif
 #ifdef SHOWSENSOR1
-        cloud->push_back(p0);
         {
-            dir << 0, 0, 1 + mag1[0] * scale;
+            Vector3d dir = sensor_rel_locations[1]*sensor_location_scale + sensor_rel_locations[1]*mag1[0]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -228,7 +285,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag1[1] * scale;
+            Vector3d dir = sensor_rel_locations[1]*sensor_location_scale + sensor_rel_locations[1]*mag1[1]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -238,7 +295,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag1[2] * scale;
+            Vector3d dir = sensor_rel_locations[1]*sensor_location_scale + sensor_rel_locations[1]*mag1[2]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -249,9 +306,8 @@ int main (int argc, char** argv)
         }
 #endif
 #ifdef SHOWSENSOR2
-        cloud->push_back(p0);
         {
-            dir << 0, 0, 1 + mag2[0] * scale;
+            Vector3d dir = sensor_rel_locations[2]*sensor_location_scale + sensor_rel_locations[2]*mag2[0]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -261,7 +317,7 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag2[1] * scale;
+            Vector3d dir = sensor_rel_locations[2]*sensor_location_scale + sensor_rel_locations[2]*mag2[1]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
@@ -271,7 +327,39 @@ int main (int argc, char** argv)
             cloud->push_back(p);
         }
         {
-            dir << 0, 0, 1 + mag2[2] * scale;
+            Vector3d dir = sensor_rel_locations[2]*sensor_location_scale + sensor_rel_locations[2]*mag2[2]*sensor_scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.b = 255;
+            cloud->push_back(p);
+        }
+#endif
+#ifdef SHOWSENSOR3
+        {
+            Vector3d dir = sensor_rel_locations[3]*sensor_location_scale + sensor_rel_locations[3]*mag3[0]*sensor_scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.r = 255;
+            cloud->push_back(p);
+        }
+        {
+            Vector3d dir = sensor_rel_locations[3]*sensor_location_scale + sensor_rel_locations[3]*mag3[1]*sensor_scale;
+            dir = rot * dir;
+            pcl::PointXYZRGB p;
+            p.x = dir[0];
+            p.y = dir[1];
+            p.z = dir[2];
+            p.g = 255;
+            cloud->push_back(p);
+        }
+        {
+            Vector3d dir = sensor_rel_locations[3]*sensor_location_scale + sensor_rel_locations[3]*mag3[2]*sensor_scale;
             dir = rot * dir;
             pcl::PointXYZRGB p;
             p.x = dir[0];
