@@ -32,11 +32,6 @@ while not rospy.is_shutdown():
     else:
         roll = roll - random.uniform(0.005, 0.01)
 
-    if pitch_dir:
-        pitch = pitch + random.uniform(0.005, 0.01)
-    else:
-        pitch = pitch - random.uniform(0.005, 0.01)
-
     if yaw_dir:
         yaw = yaw + random.uniform(0.005, 0.01)
     else:
@@ -48,6 +43,10 @@ while not rospy.is_shutdown():
         else:
             roll = roll + random.uniform(0.015, 0.05)
         roll_dir = not roll_dir
+        if pitch_dir:
+            pitch = pitch + random.uniform(0.005, 0.01)
+        else:
+            pitch = pitch - random.uniform(0.005, 0.01)
     if abs(pitch)>=sphere_axis1_max:
         if pitch_dir:
             pitch = pitch - random.uniform(0.015, 0.03)
