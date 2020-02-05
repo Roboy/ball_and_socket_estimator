@@ -134,7 +134,7 @@ class Space():
         # self.axis2.publish(self.gbest_position[2])
         self.joint_targets_msg.position = [self.gbest_position[0], self.gbest_position[1], self.gbest_position[2]]
         self.joint_targets_pub.publish(self.joint_targets_msg)
-        time.sleep(3)
+        time.sleep(1)
 
     def trackingCallback(self,data):
         # if moself.received_messages,10) ==0:

@@ -35,8 +35,8 @@ import pdb
 # record = True
 # train = False
 
-record = False
-train = True
+# record = False
+# train = True
 
 
 use_sftp = False
@@ -109,7 +109,7 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/roboy/workspace/roboy3/"+body_part+"_data0.log","w")
+    record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
     record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
     roll = 0
     pitch = 0
@@ -117,35 +117,35 @@ if record is True:
     sample = 0
 
     def magneticsCallback(data):
-        if (data.id == id):
-            global sample
-            global samples
-            global numberOfSamples
-            global record
-            # try:
-            #     (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
-            #     (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
-            # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            #     return
+        # if (data.id == id):
+        global sample
+        global samples
+        global numberOfSamples
+        global record
+        # try:
+        #     (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
+        #     (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
+        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+        #     return
 
-            s0_norm = ((data.x[0]+data.y[0]+data.z[0])**2)**(0.5)
-            s1_norm = ((data.x[1]+data.y[1]+data.z[1])**2)**(0.5)
-            s2_norm = ((data.x[2]+data.y[2]+data.z[2])**2)**(0.5)
-            s3_norm = ((data.x[3]+data.y[3]+data.z[3])**2)**(0.5)
-            if s0_norm==0 or s1_norm==0 or s2_norm==0 or s3_norm==0:
-                return
+        s0_norm = ((data.x[0]+data.y[0]+data.z[0])**2)**(0.5)
+        s1_norm = ((data.x[1]+data.y[1]+data.z[1])**2)**(0.5)
+        s2_norm = ((data.x[2]+data.y[2]+data.z[2])**2)**(0.5)
+        s3_norm = ((data.x[3]+data.y[3]+data.z[3])**2)**(0.5)
+        if s0_norm==0 or s1_norm==0 or s2_norm==0 or s3_norm==0:
+            return
 
-            record.write(str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2])  + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3])+ " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
+        record.write(str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2])  + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3])+ " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
 
-            # record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
-            rospy.loginfo_throttle(5,str(sample) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
-            sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
-            # q = np.array([rot[0], rot[1], rot[2], rot[3]])
-            # sensors_set[sample,:] = sensor.reshape(1,9)
-            # quaternion_set[sample,:] = q.reshape(1,4)
-            # samples[sample,:]= sample
-            sample = sample + 1
-            rospy.loginfo_throttle(5, "%s: \n Data collection progress: %f%%"%(body_part, float(sample)/float(numberOfSamples)*100.0))
+        # record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
+        rospy.loginfo_throttle(5,str(sample) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
+        sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
+        # q = np.array([rot[0], rot[1], rot[2], rot[3]])
+        # sensors_set[sample,:] = sensor.reshape(1,9)
+        # quaternion_set[sample,:] = q.reshape(1,4)
+        # samples[sample,:]= sample
+        sample = sample + 1
+        rospy.loginfo_throttle(5, "%s: \n Data collection progress: %f%%"%(body_part, float(sample)/float(numberOfSamples)*100.0))
 
     def trackingCallback(data):
         global roll
@@ -208,18 +208,18 @@ class ball_in_socket_estimator:
                 client.load_system_host_keys()
                 client.connect(hostname='192.168.0.224', username='letrend')
                 sftp_client = client.open_sftp()
-                remote_file = sftp_client.open('/home/roboy/workspace/roboy3/data0.log')
+                remote_file = sftp_client.open('/home/letrend/workspace/roboy3/data0.log')
                 dataset = pandas.read_csv(remote_file, delim_whitespace=True, header=1)
             else:
-                dataset = pandas.read_csv('/home/roboy/workspace/roboy3/'+self.body_part+'_data0.log', delim_whitespace=True, header=1)
+                dataset = pandas.read_csv('/home/letrend/workspace/roboy3/'+self.body_part+'_data0.log', delim_whitespace=True, header=1)
 
 
             dataset = dataset.values[1:len(dataset)-1,0:]
             numpy.random.shuffle(dataset)
             print('%d values'%(len(dataset)))
-            dataset = dataset[abs(dataset[:,12])<=0.7,:]
-            dataset = dataset[abs(dataset[:,13])<=0.7,:]
-            dataset = dataset[abs(dataset[:,14])<=1.5,:]
+            # dataset = dataset[abs(dataset[:,12])<=0.7,:]
+            # dataset = dataset[abs(dataset[:,13])<=0.7,:]
+            # dataset = dataset[abs(dataset[:,14])<=1.5,:]
             dataset = dataset[abs(dataset[:,12])!=0.0,:]
             dataset = dataset[abs(dataset[:,13])!=0.0,:]
             dataset = dataset[abs(dataset[:,14])!=0.0,:]
@@ -297,13 +297,13 @@ class ball_in_socket_estimator:
             self.trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
 
             # load json and create model
-            json_file = open('/home/roboy/workspace/roboy3/src/ball_in_socket_estimator/python/'+self.body_part+'model.json', 'r')
+            json_file = open('/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'+self.body_part+'model.json', 'r')
 
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/roboy/workspace/roboy3/src/ball_in_socket_estimator/python/"+self.body_part+"model.h5")
+            self.model.load_weights("/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/"+self.body_part+"model.h5")
 
             print("Loaded model from disk")
             self.listener()
@@ -399,54 +399,3 @@ estimator = ball_in_socket_estimator(body_part)
 
 # In[34]:
 estimator.listener()
-# In[13]:
-#
-#
-#
-#model = Sequential()
-#from keras.layers import Dense, Activation
-#
-#model.add(Dense(units=64, input_dim=9,kernel_initializer='normal', activation='relu'))
-##model.add(Activation('relu'))
-#model.add(Dense(6, kernel_initializer='normal', activation='relu'))
-#model.add(Dense(units=4,kernel_initializer='normal'))
-##model.add(Activation('softmax'))
-#
-#
-## In[18]:
-#
-#
-#dataset = pandas.read_csv("/home/roboy/workspace/neural_net_test/data0.log", delim_whitespace=True, header=None)
-#dataset2 = pandas.read_csv("/home/roboy/workspace/neural_net_test/data1.log", delim_whitespace=True, header=None)
-#dataset3 = pandas.read_csv("/home/roboy/workspace/neural_net_test/data3.log", delim_whitespace=True, header=None)
-#
-#
-#quaternion_set = dataset.values[1:,1:5]
-#q_test = dataset2.values[1:,1:5]
-#sensors_set = dataset.values[1:,8:]
-#s_test = dataset2.values[1:,8:]
-## In[26]:
-#
-#
-#model.compile(loss='mean_squared_error',
-#              optimizer='adam',
-#              metrics=['accuracy'])
-## x_train and y_train are Numpy arrays --just like in the Scikit-Learn API.
-#model.fit(sensors_set, quaternion_set, epochs=100)
-#
-#
-## In[9]:
-#
-#
-#x_test=dataset2.values[25,8:]
-#x_test=x_test.reshape((1,9))
-#x_test
-#
-#
-## In[10]:
-#
-#
-#classes = model.predict(x_test)
-#classes
-
-# In[ ]:
