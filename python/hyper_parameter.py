@@ -10,6 +10,7 @@ from datetime import datetime
 
 from keras import callbacks
 import os, itertools
+
 from sklearn.model_selection import train_test_split, KFold
 # Function to create model, required for KerasClassifier
 def create_model(activation='relu',neurons=100, dropout=0):
@@ -65,7 +66,7 @@ class KerasRegressorTB(KerasRegressor):
 seed = 7
 numpy.random.seed(seed)
 # load dataset
-dataset = pd.read_csv("/home/letrend/workspace/roboy3/head_data0.log", delim_whitespace=True, header=1)
+dataset = pd.read_csv(os.environ['HOME']+"/workspace/roboy3/head_data0.log", delim_whitespace=True, header=1)
 dataset = dataset.values[1:len(dataset)-1,0:]
 print('%d values'%(len(dataset)))
 dataset = dataset[abs(dataset[:,12])<=0.7,:]
@@ -100,7 +101,7 @@ activation = ['relu']
 dropout = [0,0.05,0.1]
 batch_size = [200,400,600,800]
 param_grid = dict(neurons=neurons,activation=activation, batch_size=batch_size, dropout=dropout)
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=60, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=4, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
 grid_result = grid.fit(x, y)
 # summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
