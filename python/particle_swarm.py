@@ -14,7 +14,7 @@ import sensor_msgs.msg
 import roboy_simulation_msgs.msg
 import sys
 
-model_name = "head_testbed"
+model_name = "right_arm"
 
 class Space():
     def __init__(self, n_particles, body_part):
@@ -36,8 +36,8 @@ class Space():
         self.colors = np.zeros(n_particles,dtype=np.float32)
         self.minima = np.zeros((3,1),dtype=np.float32)
         self.maxima = np.zeros((3,1),dtype=np.float32)
-        self.minima[2] = -0.6
-        self.maxima[2] = 0.6
+        self.minima[2] = -0.001
+        self.maxima[2] = 0.001
         self.receiving_data = False
         for i in range(self.colors.size):
             self.colors[i] = float(random.randint(50, 255)<<16|random.randint(50, 255)<<8|random.randint(50, 255)<<0)
@@ -58,7 +58,7 @@ class Space():
         self.personal_attraction = 0.1
         self.random_speed = 0.1
         global model_name
-        with open("/home/roboy/workspace/roboy3/src/robots/"+model_name+"/joint_limits.yaml", 'r') as stream:
+        with open("/home/letrend/workspace/roboy3/src/robots/"+model_name+"/joint_limits.yaml", 'r') as stream:
             try:
                 joint_limits = yaml.safe_load(stream)
                 polygon = []
@@ -134,7 +134,7 @@ class Space():
         # self.axis2.publish(self.gbest_position[2])
         self.joint_targets_msg.position = [self.gbest_position[0], self.gbest_position[1], self.gbest_position[2]]
         self.joint_targets_pub.publish(self.joint_targets_msg)
-        time.sleep(0.1)
+        time.sleep(3)
 
     def trackingCallback(self,data):
         # if moself.received_messages,10) ==0:
