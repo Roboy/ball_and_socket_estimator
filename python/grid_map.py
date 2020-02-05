@@ -25,12 +25,20 @@ joint_targets_msg.velocity = [0,0,0]
 joint_targets_msg.effort = [0,0,0]
 
 while not rospy.is_shutdown():
-    joint_targets_msg.position = [roll,pitch,yaw]
+    joint_targets_msg.position = [pitch,roll,yaw]
     joint_targets.publish(joint_targets_msg)
+<<<<<<< HEAD
     if roll_dir:
         roll = roll + random.uniform(0.005, 0.05)
     else:
         roll = roll - random.uniform(0.005, 0.05)
+=======
+
+    if pitch_dir:
+        pitch = pitch + random.uniform(0.005, 0.01)
+    else:
+        pitch = pitch - random.uniform(0.005, 0.01)
+>>>>>>> ff752b7b6ef971f7ca5c5b6163189797ad3cc46e
 
     if yaw_dir:
         yaw = yaw + random.uniform(0.005, 0.01)
@@ -49,6 +57,10 @@ while not rospy.is_shutdown():
         else:
             pitch = pitch + 0.051
         pitch_dir = not pitch_dir
+        if roll_dir:
+            roll = roll + random.uniform(0.005, 0.01)
+        else:
+            roll = roll - random.uniform(0.005, 0.01)
     if abs(yaw)>=sphere_axis2_max:
         if yaw_dir:
             yaw = yaw - 0.011
