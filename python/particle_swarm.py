@@ -14,7 +14,7 @@ import sensor_msgs.msg
 import roboy_simulation_msgs.msg
 import sys
 
-model_name = "right_arm"
+model_name = "upper_body"
 
 class Space():
     def __init__(self, n_particles, body_part):
@@ -36,8 +36,8 @@ class Space():
         self.colors = np.zeros(n_particles,dtype=np.float32)
         self.minima = np.zeros((3,1),dtype=np.float32)
         self.maxima = np.zeros((3,1),dtype=np.float32)
-        self.minima[2] = -0.001
-        self.maxima[2] = 0.001
+        self.minima[2] = -0.1
+        self.maxima[2] = 0.1
         self.receiving_data = False
         for i in range(self.colors.size):
             self.colors[i] = float(random.randint(50, 255)<<16|random.randint(50, 255)<<8|random.randint(50, 255)<<0)

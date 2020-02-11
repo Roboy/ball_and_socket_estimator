@@ -35,8 +35,8 @@ import pdb
 # record = True
 # train = False
 
-# record = False
-# train = True
+record = False
+train = True
 
 
 use_sftp = False
