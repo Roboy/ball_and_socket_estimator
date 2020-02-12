@@ -4,9 +4,9 @@ import tensorflow
 import rospy
 from roboy_middleware_msgs.msg import MagneticSensor
 import std_msgs.msg, sensor_msgs.msg
+import rospkg
 
-
-rospy.init_node('3dof predictor')
+rospy.init_node('shoulder_predictor')
 
 # # load json and create model
 # json_file = open(base_path+network_name+'.json', 'r')
@@ -19,12 +19,15 @@ rospy.init_node('3dof predictor')
 # model.summary()
 
 class ball_in_socket_estimator:
-    base_path= '/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'
+    rospack = rospkg.RosPack()
+    base_path = rospack.get_path('ball_in_socket_estimator')+'/python/'
+
+    # base_path= '/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'
     network_name = 'shoulder_left'
     model_name = 'shoulder_left'
     offset = [0,0,0]
     graph = tensorflow.get_default_graph()
-    base_path= '/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'
+    # base_path= '/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'
     joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
     def __init__(self):
         # load json and create model
