@@ -28,6 +28,7 @@ publish_magnetic_data = False
 show_magnetic_field = False
 
 model_name = "beschde"
+data_name = "test"
 
 def euler_to_quaternion(roll, pitch, yaw):
     qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
@@ -91,7 +92,7 @@ def main():
     joint_targets_pub = rospy.Publisher('joint_targets', sensor_msgs.msg.JointState, queue_size=1)
     visualization_pub = rospy.Publisher('visualization_marker', visualization_msgs.msg.Marker, queue_size=100)
     rospy.loginfo('loading data')
-    dataset = pandas.read_csv("/home/letrend/workspace/roboy3/head_data0.log", delim_whitespace=True, header=1)
+    dataset = pandas.read_csv("/home/letrend/workspace/roboy3/"+data_name+"_data0.log", delim_whitespace=True, header=1)
     dataset = dataset.values[1:len(dataset)-1,0:]
     print('%d values'%(len(dataset)))
     dataset = dataset[abs(dataset[:,12])<=0.7,:]
@@ -112,7 +113,7 @@ def main():
     sample = 0
     samples = len(euler_set)
     t = 0
-    rate = rospy.Rate(30)
+    rate = rospy.Rate(1)
     error = 0
     stride = 1
     print('model predicts')

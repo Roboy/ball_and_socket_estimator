@@ -54,8 +54,7 @@ elif body_part == "shoulder_left":
 elif body_part == "shoulder_right":
     id = 4
 else:
-    print("unknown FPGA id")
-    sys.exit()
+    id=0
 
 # In[33]:
 rospy.init_node(body_part+'_magnetics_training_training',anonymous=True)
@@ -321,20 +320,11 @@ class ball_in_socket_estimator:
         #     return
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             euler = self.model.predict(x_test)
-#            pos = self.model.predict(x_test)
-            rospy.loginfo_throttle(1, (euler[0,0],euler[0,1],euler[0,2]))
-            # msg = sensor_msgs.msg.JointState()
-            # msg.header = std_msgs.msg.Header()
-            # msg.header.stamp = rospy.Time.now()
-            # msg.name = self.joint_names
-            # msg.position = [euler[0,0], euler[0,1], euler[0,2]]
-            # msg.velocity = [0,0,0]
-            # msg.effort = [0,0,0]
-            # self.trackingPublisher.publish(msg)
             error_roll = (((self.roll-euler[0,0])*180.0/math.pi)**2)**0.5
             error_pitch = (((self.pitch-euler[0,1])*180.0/math.pi)**2)**0.5
             error_yaw = (((self.yaw-euler[0,2])**2)*180.0/math.pi)**0.5
-            rospy.loginfo_throttle(1, str(error_roll) + " " + str(error_pitch) + " " + str(error_yaw) )
+            rospy.loginfo_throttle(1, "predict: %f %f %f, truth %f %f %f\nerror %f %f %f"%(euler[0,0],euler[0,1],euler[0,2],self.roll,self.pitch,self.yaw,error_roll,error_pitch,error_yaw))
+
             self.publishErrorCube(error_roll,error_pitch,error_yaw)
             self.publishErrorText(error_roll,error_pitch,error_yaw)
             # self.joint_state.publish(msg)
