@@ -9,3 +9,4 @@ latest
 src/CMakeLists.txt
 cmake-build-debug/
 python/hyperparameter_logs
+*.mp4

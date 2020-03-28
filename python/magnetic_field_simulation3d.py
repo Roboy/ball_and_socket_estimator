@@ -23,8 +23,9 @@ for pos in sensor_pos:
 def gen_magnets():
     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
 
-
-for iter in range(360):
+mlab.options.offscreen = True
+fig = mlab.figure(bgcolor=(1,1,1), size=(1500, 1500), fgcolor=(0, 0, 0))
+for iter in range(126,360):
     c = Collection(gen_magnets())
     c.rotate(iter,(0,1,0),(0,0,0))
     x_lower,x_upper = -20, 20
@@ -58,11 +59,9 @@ for iter in range(360):
         print("(%d/%d)"%(i,zd))
         # print(Bs)
 
-    mlab.options.offscreen = True
-    fig = mlab.figure(bgcolor=(1,1,1), size=(1500, 1500), fgcolor=(0, 0, 0))
     i = 0
     print("generating flow")
-    fig.scene.y_plus_view()
+
     fig.scene.disable_render = True
     for xi in xs:
         st = mlab.flow(x, y, z, U,V,W, line_width=0.1,
@@ -80,7 +79,6 @@ for iter in range(360):
         st.update_pipeline()
         print("(%d/%d)"%(i,zd))
         i= i+1
-        fig.scene.render()
         mlab.show(stop=True)
     fig.scene.disable_render = False
     mayavi.mlab.view(azimuth=iter/4, elevation=70)

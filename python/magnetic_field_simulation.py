@@ -27,7 +27,8 @@ for pos in sensor_pos:
     sensors.append(Sensor(pos=pos))
 
 def gen_magnets():
-    return [Box(mag=(0,500,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,-500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
+    return [Box(mag=(0,0,500),dim=(10,10,10),pos=(0,0,12)), Box(mag=(0,500,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,500,0),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
+    # return [Box(mag=(0,500,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,-500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
 
 c = Collection(gen_magnets())
 
@@ -52,7 +53,7 @@ first = True
 
 with writer.saving(fig, "writer_test.mp4", 100):
     for iter in range(iterations):
-        rot = [random.uniform(-180,180),random.uniform(-180,180),random.uniform(-180,180)]
+        rot = [random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)]
 
         c = Collection(gen_magnets())
         c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
@@ -86,7 +87,8 @@ with writer.saving(fig, "writer_test.mp4", 100):
             return [b_error,b_error,b_error]
 
         res = least_squares(func, [1,1,1], bounds = ((-180, -180, -180), (180, 180, 180)))
-        print("iteration (%d/%d) target %f %f %f result %f %f %f error %f"%(iter,iterations,rot[0],rot[1],rot[2],res.x[0],res.x[1],res.x[2],res.cost))
+        angle_error = ((rot[0]-res.x[0])**2+(rot[1]-res.x[1])**2+(rot[2]-res.x[2])**2)**0.5
+        print("iteration (%d/%d) target %.3f %.3f %.3f result %.3f %.3f %.3f b-field error %.3f, angle_error %.3f"%(iter,iterations,rot[0],rot[1],rot[2],res.x[0],res.x[1],res.x[2],res.cost,angle_error))
         c = Collection(gen_magnets())
         c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
         c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
