@@ -10,7 +10,7 @@ import MDAnalysis.visualization.streamlines_3D
 import mayavi, mayavi.mlab
 
 
-iterations = 100
+iterations = 360
 
 FFMpegWriter = manimation.writers['ffmpeg']
 metadata = dict(title='Movie Test', artist='Matplotlib',
@@ -52,8 +52,8 @@ plt.show()
 first = True
 
 with writer.saving(fig, "writer_test.mp4", 100):
-    for iter in range(iterations):
-        rot = [random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)]
+    for iter in range(0,iterations,5):
+        rot = [iter,0,0]#random.uniform(-90,90),random.uniform(-90,90)
 
         c = Collection(gen_magnets())
         c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
@@ -86,7 +86,7 @@ with writer.saving(fig, "writer_test.mp4", 100):
             # print(b_error)
             return [b_error,b_error,b_error]
 
-        res = least_squares(func, [1,1,1], bounds = ((-180, -180, -180), (180, 180, 180)))
+        res = least_squares(func, [0,0,0], bounds = ((-360,-360,-360), (360, 360, 360)))
         angle_error = ((rot[0]-res.x[0])**2+(rot[1]-res.x[1])**2+(rot[2]-res.x[2])**2)**0.5
         print("iteration (%d/%d) target %.3f %.3f %.3f result %.3f %.3f %.3f b-field error %.3f, angle_error %.3f"%(iter,iterations,rot[0],rot[1],rot[2],res.x[0],res.x[1],res.x[2],res.cost,angle_error))
         c = Collection(gen_magnets())
