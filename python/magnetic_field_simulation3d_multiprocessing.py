@@ -23,26 +23,114 @@ for pos in sensor_pos:
     # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
     sensors.append(Sensor(pos=pos))
 
-iterations = 360
+all = True
+iterations = 180
 num_processes = 60
 printouts = False
-movie_path = '/home/letrend/Videos/magnetic_arrangements/cylindrical_60degrees_ring'
+axis = 0
+movie_path = '/home/letrend/Videos/magnetic_arrangements/hallbach'
+
+# def gen_magnets():
+#     magnets = [Box(mag=(0,0,2000),dim=(5,5,5),pos=(0,0,10))]
+#     return magnets
 
 def gen_magnets():
-    # return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,0,10)), Box(mag=(0,500,0),dim=(10,10,10),pos=(0,0,-10))]
-    # return [Box(mag=(0,0,500),dim=(10,10,10),pos=(0,0,12)), Box(mag=(0,500,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,500,0),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
     magnets = []
-    for i in range(0,360,60):
-        magnets.append(Cylinder(mag=(500,0,0),dim=(4,4),angle=i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+    magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,0)))
+    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,5,0)))
+    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,0,0)))
+    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,-5,0)))
+    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,0,0)))
+    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,-5,0)))
+    magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,-5,0)))
+    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,5,0)))
+    magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,5,0)))
+
+    # magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(0,0,-10)))
+    # magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,-5)))
+    # magnets.append(Box(mag=(0,0,500),dim=(5,5,5),pos=(0,0,-15)))
+    # magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,5,-10)))
+    # magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,-5,-10)))
     return magnets
+# def gen_magnets():
+#     magnets = []
+#     j = 0
+#     for i in range(0,360,15):
+#         if j%2==0:
+#             magnets.append(Box(mag=(0,500,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         else:
+#             magnets.append(Box(mag=(500,0,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         if i!=60 and i!=240:
+#             if j%2==0:
+#                 magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),angle=-i,axis=(1,0,0),pos=(0,math.sin((i+30)/180.0*math.pi)*12,math.cos((i+30)/180.0*math.pi)*12)))
+#             else:
+#                 magnets.append(Box(mag=(0,500,0),dim=(5,5,5),angle=-i,axis=(1,0,0),pos=(0,math.sin((i+30)/180.0*math.pi)*12,math.cos((i+30)/180.0*math.pi)*12)))
+#         j=j+1
+#     return magnets
+
+# def gen_magnets():
+#     magnets = []
+#     j = 0
+#     k = 0
+#     for i in range(0,360,60):
+#         if j<3:
+#             magnets.append(Box(mag=(0,500,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         else:
+#             magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         j = j+1
+#         if i!=60 and i!=240:
+#             if k<2:
+#                 magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),angle=-i-30,axis=(1,0,0),pos=(0,math.sin((i+30)/180.0*math.pi)*12,math.cos((i+30)/180.0*math.pi)*12)))
+#             else:
+#                 magnets.append(Box(mag=(0,0,500),dim=(5,5,5),angle=-i-30,axis=(1,0,0),pos=(0,math.sin((i+30)/180.0*math.pi)*12,math.cos((i+30)/180.0*math.pi)*12)))
+#             k = k+1
+#     return magnets
+
+# # alternating 2rings
+# def gen_magnets():
+#     magnets = []
+#     j = 0
+#     k = 0
+#     for i in range(0,360,120):
+#         if j%2==0:
+#             magnets.append(Box(mag=(0,500,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         else:
+#             magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         if j%2==0:
+#             magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),angle=-i-90,axis=(1,0,0),pos=(0,math.sin((i+90)/180.0*math.pi)*12,math.cos((i+90)/180.0*math.pi)*12)))
+#         else:
+#             magnets.append(Box(mag=(0,0,500),dim=(5,5,5),angle=-i-90,axis=(1,0,0),pos=(0,math.sin((i+90)/180.0*math.pi)*12,math.cos((i+90)/180.0*math.pi)*12)))
+#         j = j+1
+#     return magnets
+
+# #two rings not alterating
+# def gen_magnets():
+#     magnets = []
+#     j= 0
+#     for i in range(0,360,120):
+#         if j==0:
+#             magnets.append(Box(mag=(0,500,0),dim=(5,5,5),angle=-i,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         elif j==1:
+#             magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),angle=-i+j*10,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         else:
+#             magnets.append(Box(mag=(500,0,0),dim=(5,5,5),angle=-i+j*10,axis=(0,0,1),pos=(math.sin(i/180.0*math.pi)*12,math.cos(i/180.0*math.pi)*12,0)))
+#         if j!=1:
+#             magnets.append(Box(mag=(0,0,500),dim=(5,5,5),angle=j*10,axis=(1,0,0),pos=(0,math.sin((i)/180.0*math.pi)*12,math.cos((i)/180.0*math.pi)*12)))
+#         j = j+1
+#
+#     return magnets
 
 matplotlib.use('Agg')
 mlab.options.offscreen = True
 
-
 def func1(iter):
     c = Collection(gen_magnets())
-    rot = [0,iter,0]
+    if axis==0:
+        rot = [iter-90,0,0]
+    if axis==1:
+        rot = [0,iter-90,0]
+    if axis==2:
+        rot = [0,0,iter-90]
     c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
     c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
     c.rotate(rot[2],(0,0,1), anchor=(0,0,0))
@@ -105,7 +193,12 @@ def func1(iter):
     fig.scene.disable_render = False
     mayavi.mlab.view(azimuth=-50, elevation=70)
     mlab.axes(extent = [x_lower, x_upper, y_lower, y_upper, z_lower, z_upper],figure=fig)
-    mlab.savefig(movie_path+'/movie001/'+'anim%05d.png'%(iter))
+    if axis==0:
+        mlab.savefig(movie_path+'/x-axis/movie001/'+'anim%05d.png'%(iter))
+    if axis==1:
+        mlab.savefig(movie_path+'/y-axis/movie001/'+'anim%05d.png'%(iter))
+    if axis==2:
+        mlab.savefig(movie_path+'/z-axis/movie001/'+'anim%05d.png'%(iter))
     mlab.clf(fig)
     fig = mlab.figure(bgcolor=(1,1,1), size=(1500, 1500), fgcolor=(0, 0, 0))
     fig.scene.disable_render = True
@@ -130,7 +223,12 @@ def func1(iter):
     fig.scene.disable_render = False
     mayavi.mlab.view(azimuth=-50, elevation=70)
     mlab.axes(extent = [x_lower, x_upper, y_lower, y_upper, z_lower, z_upper],figure=fig)
-    mlab.savefig(movie_path+'/movie002/'+'anim%05d.png'%(iter))
+    if axis==0:
+        mlab.savefig(movie_path+'/x-axis/movie002/'+'anim%05d.png'%(iter))
+    if axis==1:
+        mlab.savefig(movie_path+'/y-axis/movie002/'+'anim%05d.png'%(iter))
+    if axis==2:
+        mlab.savefig(movie_path+'/z-axis/movie002/'+'anim%05d.png'%(iter))
     mlab.clf(fig)
 
 angle_error = np.zeros(360)
@@ -138,7 +236,12 @@ b_field_error = np.zeros(360)
 
 def func2(iter):
     c = Collection(gen_magnets())
-    rot = [0,iter,0]
+    if axis==0:
+        rot = [iter-90,0,0]
+    if axis==1:
+        rot = [0,iter-90,0]
+    if axis==2:
+        rot = [0,0,iter-90]
     c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
     c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
     c.rotate(rot[2],(0,0,1), anchor=(0,0,0))
@@ -191,66 +294,121 @@ def func2(iter):
     result.rotate(res.x[1],(0,1,0), anchor=(0,0,0))
     result.rotate(res.x[2],(0,0,1), anchor=(0,0,0))
     d = Collection(c,result)
-    displaySystem(d, subplotAx=ax1, suppress=True, sensors=sensors)
-    fig.savefig(movie_path+'/movie003/'+'anim%05d.png'%(iter))
+    displaySystem(d, subplotAx=ax1, suppress=True, sensors=sensors, direc=True)
+    if axis==0:
+        fig.savefig(movie_path+'/x-axis/movie003/'+'anim%05d.png'%(iter))
+    if axis==1:
+        fig.savefig(movie_path+'/y-axis/movie003/'+'anim%05d.png'%(iter))
+    if axis==2:
+        fig.savefig(movie_path+'/z-axis/movie003/'+'anim%05d.png'%(iter))
     return (angle_error[iter],b_field_error[iter])
 
 def func3(iter):
     fig = plt.figure(figsize=(6,15))
     ax1 = plt.subplot(211)
     ax1.set_ylim(0, 360)
-    plt.plot(angle_error[0:iter],color='r',linewidth=3)
+    plt.plot(range(-90,iter-90),angle_error[0:iter],color='r',linewidth=3)
     plt.ylabel('angle error in degree')
     plt.xlabel('angle in degree')
     plt.subplot(212)
-    plt.plot(b_field_error[0:iter],color='r',linewidth=3)
+    plt.plot(range(-90,iter-90),b_field_error[0:iter],color='r',linewidth=3)
     plt.ylabel('b-field error')
     plt.xlabel('angle in degree')
-    fig.savefig(movie_path+'/movie004/'+'anim%05d.png'%(iter))
+    if axis==0:
+        fig.savefig(movie_path+'/x-axis/movie004/'+'anim%05d.png'%(iter))
+    if axis==1:
+        fig.savefig(movie_path+'/y-axis/movie004/'+'anim%05d.png'%(iter))
+    if axis==2:
+        fig.savefig(movie_path+'/z-axis/movie004/'+'anim%05d.png'%(iter))
 
 def main():
+    global axis
     Path(movie_path).mkdir(parents=True, exist_ok=True)
 
-    Path(movie_path+'/movie001').mkdir(parents=True, exist_ok=True)
-    Path(movie_path+'/movie002').mkdir(parents=True, exist_ok=True)
-    Path(movie_path+'/movie003').mkdir(parents=True, exist_ok=True)
-    Path(movie_path+'/movie004').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/x-axis/movie001').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/x-axis/movie002').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/x-axis/movie003').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/x-axis/movie004').mkdir(parents=True, exist_ok=True)
+
+    Path(movie_path+'/y-axis/movie001').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/y-axis/movie002').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/y-axis/movie003').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/y-axis/movie004').mkdir(parents=True, exist_ok=True)
+
+    Path(movie_path+'/z-axis/movie001').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/z-axis/movie002').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/z-axis/movie003').mkdir(parents=True, exist_ok=True)
+    Path(movie_path+'/z-axis/movie004').mkdir(parents=True, exist_ok=True)
+
     start_time = time.time()
+    for j in range(0,3):
+        if all:
+            print("starting flow plot")
+            for i in range(0,iterations,num_processes):
+                args = range(i,i+num_processes,1)
+                with Pool(processes=num_processes) as pool:
+                    results = pool.starmap(func1, zip(args))
+                elapsed_time = time.time() - start_time
+                print("done batch %d-%d, \t\t\telapsed time %ds"%(i,i+num_processes,elapsed_time))
+            elapsed_time = time.time() - start_time
+            print("done flow plot, \t\t\telapsed time %ds"%elapsed_time)
 
-    print("starting flow plot")
-    for i in range(0,iterations,num_processes):
-        args = range(i,i+num_processes,1)
+        print("starting poseestimator")
+        args = range(0,iterations,1)
         with Pool(processes=num_processes) as pool:
-            results = pool.starmap(func1, zip(args))
+            results = pool.starmap(func2, zip(args))
+            for i in range(0,iterations):
+                angle_error[i] = results[i][0]
+                b_field_error[i] = results[i][1]
+
         elapsed_time = time.time() - start_time
-        print("done batch %d-%d, elapsed time %.3f"%(i,i+num_processes,elapsed_time))
-    elapsed_time = time.time() - start_time
-    print("done flow plot, elapsed time %.3f"%elapsed_time)
+        print("done poseestimator, \t\telapsed time %ds"%elapsed_time)
 
-    print("starting poseestimator")
-    args = range(0,iterations,1)
-    with Pool(processes=num_processes) as pool:
-        results = pool.starmap(func2, zip(args))
-        for i in range(0,iterations):
-            angle_error[i] = results[i][0]
-            b_field_error[i] = results[i][1]
+        print("starting error plot")
+        with Pool(processes=num_processes) as pool:
+            results = pool.starmap(func3, zip(args))
+        elapsed_time = time.time() - start_time
+        print("done error plot, \t\t\telapsed time %ds"%elapsed_time)
+        axis = axis +1
+    if all:
+        os.system("ffmpeg -framerate 20 -i " + movie_path+"/x-axis/movie001/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/x-axis/movie001.mp4 -y")
+        os.system("ffmpeg -framerate 20 -i " + movie_path+"/y-axis/movie001/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/y-axis/movie001.mp4 -y")
+        os.system("ffmpeg -framerate 20 -i " + movie_path+"/z-axis/movie001/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/z-axis/movie001.mp4 -y")
 
-    elapsed_time = time.time() - start_time
-    print("done poseestimator, elapsed time %.3f"%elapsed_time)
+        os.system("ffmpeg -framerate 20 -i " + movie_path+"/x-axis/movie002/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/x-axis/movie002.mp4 -y")
+        os.system("ffmpeg -framerate 20 -i " + movie_path+"/y-axis/movie002/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/y-axis/movie002.mp4 -y")
+        os.system("ffmpeg -framerate 20 -i " + movie_path+"/z-axis/movie002/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/z-axis/movie002.mp4 -y")
 
-    with Pool(processes=num_processes) as pool:
-        results = pool.starmap(func3, zip(args))
-    elapsed_time = time.time() - start_time
-    print("done error plot, elapsed time %.3f"%elapsed_time)
+    os.system("ffmpeg -framerate 20 -i " + movie_path+"/x-axis/movie003/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/x-axis/movie003.mp4 -y")
+    os.system("ffmpeg -framerate 20 -i " + movie_path+"/y-axis/movie003/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/y-axis/movie003.mp4 -y")
+    os.system("ffmpeg -framerate 20 -i " + movie_path+"/z-axis/movie003/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/z-axis/movie003.mp4 -y")
 
-    os.system("ffmpeg -framerate 20 -i " + movie_path+"/movie001/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/movie001.mp4 -y")
-    os.system("ffmpeg -framerate 20 -i " + movie_path+"/movie002/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/movie002.mp4 -y")
-    os.system("ffmpeg -framerate 20 -i " + movie_path+"/movie003/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/movie003.mp4 -y")
-    os.system("ffmpeg -framerate 20 -i " + movie_path+"/movie004/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/movie004.mp4 -y")
-    os.system("ffmpeg -i "+movie_path+"/movie001.mp4 -i "+movie_path+"/movie002.mp4 -filter_complex hstack "+movie_path+"/combined0.mp4 -y")
-    os.system("ffmpeg -i "+movie_path+"/movie004.mp4 -i "+movie_path+"/movie003.mp4 -filter_complex hstack "+movie_path+"/combined1.mp4 -y")
-    os.system("ffmpeg -i "+movie_path+"/combined1.mp4 -i "+movie_path+"/combined0.mp4 -filter_complex vstack "+movie_path+"/result.mp4 -y")
+    os.system("ffmpeg -framerate 20 -i " + movie_path+"/x-axis/movie004/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/x-axis/movie004.mp4 -y")
+    os.system("ffmpeg -framerate 20 -i " + movie_path+"/y-axis/movie004/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/y-axis/movie004.mp4 -y")
+    os.system("ffmpeg -framerate 20 -i " + movie_path+"/z-axis/movie004/anim%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+ movie_path+"/z-axis/movie004.mp4 -y")
+
+    if all:
+        os.system("ffmpeg -i "+movie_path+"/x-axis/movie001.mp4 -i "+movie_path+"/x-axis/movie002.mp4 -filter_complex hstack "+movie_path+"/x-axis/combined0.mp4 -y")
+        os.system("ffmpeg -i "+movie_path+"/y-axis/movie001.mp4 -i "+movie_path+"/y-axis/movie002.mp4 -filter_complex hstack "+movie_path+"/y-axis/combined0.mp4 -y")
+        os.system("ffmpeg -i "+movie_path+"/z-axis/movie001.mp4 -i "+movie_path+"/z-axis/movie002.mp4 -filter_complex hstack "+movie_path+"/z-axis/combined0.mp4 -y")
+
+    os.system("ffmpeg -i "+movie_path+"/x-axis/movie004.mp4 -i "+movie_path+"/x-axis/movie003.mp4 -filter_complex hstack "+movie_path+"/x-axis/combined1.mp4 -y")
+    os.system("ffmpeg -i "+movie_path+"/y-axis/movie004.mp4 -i "+movie_path+"/y-axis/movie003.mp4 -filter_complex hstack "+movie_path+"/y-axis/combined1.mp4 -y")
+    os.system("ffmpeg -i "+movie_path+"/z-axis/movie004.mp4 -i "+movie_path+"/z-axis/movie003.mp4 -filter_complex hstack "+movie_path+"/z-axis/combined1.mp4 -y")
+
+    if all:
+        os.system("ffmpeg -i "+movie_path+"/x-axis/combined1.mp4 -i "+movie_path+"/x-axis/combined0.mp4 -filter_complex vstack "+movie_path+"/x-axis/result.mp4 -y")
+        os.system("ffmpeg -i "+movie_path+"/y-axis/combined1.mp4 -i "+movie_path+"/y-axis/combined0.mp4 -filter_complex vstack "+movie_path+"/y-axis/result.mp4 -y")
+        os.system("ffmpeg -i "+movie_path+"/z-axis/combined1.mp4 -i "+movie_path+"/z-axis/combined0.mp4 -filter_complex vstack "+movie_path+"/z-axis/result.mp4 -y")
+
+        os.system("ffmpeg -i "+movie_path+"/x-axis/result.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate1.ts -y")
+        os.system("ffmpeg -i "+movie_path+"/y-axis/result.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate2.ts -y")
+        os.system("ffmpeg -i "+movie_path+"/z-axis/result.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate3.ts -y")
+
+        os.system('ffmpeg -i "concat:intermediate1.ts|intermediate2.ts|intermediate3.ts" -c copy -bsf:a aac_adtstoasc '+movie_path+'/result.mp4 -y')
+
     print("finished, elapsed time %.3f"%elapsed_time)
+    # os.system("vlc "+movie_path+"/result.mp4")
 if __name__=="__main__":
     freeze_support()
     main()
