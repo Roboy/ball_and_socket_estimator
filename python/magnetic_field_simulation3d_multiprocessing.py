@@ -19,7 +19,7 @@ iterations = 180
 num_processes = 30
 printouts = False
 axis = 0
-movie_path = '/home/letrend/Videos/magnetic_arrangements/hallbach1'
+movie_path = '/home/letrend/Videos/magnetic_arrangements/more_sensors'
 
 # def gen_magnets():
 #     magnets = [Box(mag=(0,0,2000),dim=(5,5,5),pos=(0,0,10))]
@@ -29,42 +29,71 @@ movie_path = '/home/letrend/Videos/magnetic_arrangements/hallbach1'
 sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]#[[22.7,7.7,0],[14.7,-19.4,0],[-14.7,-19.4,0],[-22.7,7.7,0]]
 # sensor_rot = [[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]]]
 sensors = []
-i = 0
 for pos in sensor_pos:
     # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
     s = Sensor(pos=pos,angle=90,axis=(0,0,1))
     sensors.append(s)
+# for i in np.linspace(0,360,10):
+#     # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
+#     s = Sensor(pos=(math.sin(i)*15,math.cos(i)*15,15),angle=90,axis=(0,0,1))
+#     sensors.append(s)
 # def gen_magnets():
 #     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
 
-field_strenght = -1000
-# hallbach 0, works well
-def gen_magnets():
-    magnets = []
-    magnets.append(Box(mag=(0,0,-field_strenght),dim=(5,5,5),pos=(0,0,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,5,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,0,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,-5,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,0,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,-5,0)))
-    magnets.append(Box(mag=(0,-field_strenght,0),dim=(5,5,5),pos=(0,-5,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,5,0)))
-    magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,5,0)))
-    return magnets
-
+cs = 5
+dimx,dimy,dimz = 3,3,3
+mag_pos = [4, 0, 1, 0, 0, 4, 1, 3, 5, 6, 0, 4, 6, 1, 6, 0, 6, 5, 5, 4, 5, 1, 5, 2, 3, 5, 1,]
+field_strength = 1000
 # # hallbach 0, works well
-# def gen_magnets():
+# def gen_magnets(mag_pos):
 #     magnets = []
-#     magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,0)))
-#     magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,5,0)))
-#     magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,0,0)))
-#     magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,-5,0)))
-#     magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,0,0)))
-#     magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,-5,0)))
-#     magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,-5,0)))
-#     magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,5,0)))
-#     magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,5,0)))
+#     for i in range(0,dimx):
+#         for j in range(0,dimy):
+#             for k in range(0,dimz):
+#                 if mag_pos[i*dimx+j*dimy+k*dimz]==1:
+#                     magnets.append(Box(mag=(field_strength,0,0),dim=(cs,cs,cs),pos=((i-dimx//2)*(cs+1),(j-dimy//2)*(cs+1),(k-dimz//2)*(cs+1))))
+#                 if mag_pos[i*dimx+j*dimy+k*dimz]==2:
+#                     magnets.append(Box(mag=(-field_strength,0,0),dim=(cs,cs,cs),pos=((i-dimx//2)*(cs+1),(j-dimy//2)*(cs+1),(k-dimz//2)*(cs+1))))
+#                 if mag_pos[i*dimx+j*dimy+k*dimz]==3:
+#                     magnets.append(Box(mag=(0,field_strength,0),dim=(cs,cs,cs),pos=((i-dimx//2)*(cs+1),(j-dimy//2)*(cs+1),(k-dimz//2)*(cs+1))))
+#                 if mag_pos[i*dimx+j*dimy+k*dimz]==4:
+#                     magnets.append(Box(mag=(0,-field_strength,0),dim=(cs,cs,cs),pos=((i-dimx//2)*(cs+1),(j-dimy//2)*(cs+1),(k-dimz//2)*(cs+1))))
+#                 if mag_pos[i*dimx+j*dimy+k*dimz]==5:
+#                     magnets.append(Box(mag=(0,0,field_strength),dim=(cs,cs,cs),pos=((i-dimx//2)*(cs+1),(j-dimy//2)*(cs+1),(k-dimz//2)*(cs+1))))
+#                 if mag_pos[i*dimx+j*dimy+k*dimz]==6:
+#                     magnets.append(Box(mag=(0,0,-field_strength),dim=(cs,cs,cs),pos=((i-dimx//2)*(cs+1),(j-dimy//2)*(cs+1),(k-dimz//2)*(cs+1))))
 #     return magnets
+
+cs = 10
+field_strenght = 1000
+# # hallbach 0, works well
+# def gen_magnets(mag_pos):
+#     magnets = []
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(cs,cs,cs),pos=(0,0,15)))
+#     # magnets.append(Box(mag=(0,-field_strenght,0),dim=(cs,cs,cs),pos=(-(cs+1),0,0)))
+#     # magnets.append(Box(mag=(0,field_strenght,0),dim=(cs,cs,cs),pos=(cs+1,0,0)))
+#     # magnets.append(Box(mag=(0,-field_strenght,0),dim=(cs,cs,cs),pos=(0,-(cs+1),0)))
+#     # magnets.append(Box(mag=(0,field_strenght,0),dim=(cs,cs,cs),pos=(0,cs+1,0)))
+#     # magnets.append(Box(mag=(0,-field_strenght,0),dim=(cs,cs,cs),pos=(-(cs+1),(cs+1),0)))
+#     # magnets.append(Box(mag=(0,field_strenght,0),dim=(cs,cs,cs),pos=(-(cs+1),-(cs+1),0)))
+#     # magnets.append(Box(mag=(0,0,field_strenght),dim=(cs,cs,cs),pos=((cs+1),-(cs+1),0)))
+#     # magnets.append(Box(mag=(0,field_strenght,0),dim=(cs,cs,cs),pos=((cs+1),(cs+1),0)))
+#
+#     return magnets
+
+# hallbach 0, works well
+def gen_magnets(mag_pos):
+    magnets = []
+    magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,0)))
+    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,5,0)))
+    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,0,0)))
+    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,-5,0)))
+    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,0,0)))
+    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,-5,0)))
+    magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,-5,0)))
+    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,5,0)))
+    magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,5,0)))
+    return magnets
 
 # def gen_magnets():
 #     magnets = []
@@ -138,7 +167,7 @@ matplotlib.use('Agg')
 mlab.options.offscreen = True
 
 def func1(iter):
-    c = Collection(gen_magnets())
+    c = Collection(gen_magnets(mag_pos))
     if axis==0:
         rot = [iter-90,0,0]
     if axis==1:
@@ -249,7 +278,7 @@ angle_error = np.zeros(360)
 b_field_error = np.zeros(360)
 
 def func2(iter):
-    c = Collection(gen_magnets())
+    c = Collection(gen_magnets(mag_pos))
     if axis==0:
         rot = [iter-90,0,0]
     if axis==1:
@@ -280,7 +309,7 @@ def func2(iter):
     ax2.streamplot(X,Y,U,V, color=np.log(U**2+V**2))
 
     def func(x):
-        c = Collection(gen_magnets())
+        c = Collection(gen_magnets(mag_pos))
         c.rotate(x[0],(1,0,0), anchor=(0,0,0))
         c.rotate(x[1],(0,1,0), anchor=(0,0,0))
         c.rotate(x[2],(0,0,1), anchor=(0,0,0))
@@ -299,11 +328,11 @@ def func2(iter):
     b_field_error[iter] = res.cost
     if printouts:
         print("target %.3f %.3f %.3f result %.3f %.3f %.3f b-field error %.3f, angle_error %.3f"%(rot[0],rot[1],rot[2],res.x[0],res.x[1],res.x[2],res.cost,angle_error[iter]))
-    c = Collection(gen_magnets())
+    c = Collection(gen_magnets(mag_pos))
     c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
     c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
     c.rotate(rot[2],(0,0,1), anchor=(0,0,0))
-    result = Collection(gen_magnets())
+    result = Collection(gen_magnets(mag_pos))
     result.rotate(res.x[0],(1,0,0), anchor=(0,0,0))
     result.rotate(res.x[1],(0,1,0), anchor=(0,0,0))
     result.rotate(res.x[2],(0,0,1), anchor=(0,0,0))
@@ -320,7 +349,7 @@ def func2(iter):
 def func3(iter):
     fig = plt.figure(figsize=(6,15))
     ax1 = plt.subplot(211)
-    ax1.set_ylim(0, 360)
+    ax1.set_ylim(0, 1)
     plt.plot(range(-90,iter-90),angle_error[0:iter],color='r',linewidth=3)
     plt.ylabel('angle error in degree')
     plt.xlabel('angle in degree')

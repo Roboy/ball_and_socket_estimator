@@ -61,14 +61,14 @@ def func(x):
     b_error = 0
     i = 0
     for sens in sensors:
-        b_error = b_error + np.linalg.norm(sens.getB(c)-b_target[i])
+        b_error = b_error + np.dot(sens.getB(c),b_target[i])#,np.linalg.norm(sens.getB(c)-b_target[i])
         i=i+1
     # print(b_error)
     return [b_error,b_error,b_error]
 
 def magneticsCallback(data):
     for i in range(0,4):
-        b_target[i] = (data.x[i],data.y[i],-data.z[i])
+        b_target[i] = (data.x[i],data.y[i],data.z[i])
     res = least_squares(func, [0,0,0], bounds = ((-360,-360,-360), (360, 360, 360)))
     b_field_error = res.cost
     print("result %.3f %.3f %.3f b-field error %.3f\nb_target %.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f"%(res.x[0],res.x[1],res.x[2],res.cost,b_target[0][0],b_target[0][1],b_target[0][2],b_target[1][0],b_target[1][1],b_target[1][2],b_target[2][0],b_target[2][1],b_target[2][2],b_target[3][0],b_target[3][1],b_target[3][2]))

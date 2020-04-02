@@ -6,7 +6,7 @@ from scipy.optimize import fsolve, least_squares
 import matplotlib.animation as manimation
 import random, math
 
-iterations = 100
+iterations = 300000
 
 # define sensor
 sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]#[[22.7,7.7,0],[14.7,-19.4,0],[-14.7,-19.4,0],[-22.7,7.7,0]]
@@ -20,19 +20,28 @@ for pos in sensor_pos:
 # def gen_magnets():
 #     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
 
-field_strenght = -1000
+field_strenght = 1000
+# # hallbach 0, works well
+# def gen_magnets():
+#     magnets = []
+#     magnets.append(Box(mag=(0,0,-field_strenght),dim=(5,5,5),pos=(0,0,0)))
+#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,6,0)))
+#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,0,0)))
+#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,-6,0)))
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,0,0)))
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,-6,0)))
+#     magnets.append(Box(mag=(0,-field_strenght,0),dim=(5,5,5),pos=(0,-6,0)))
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,6,0)))
+#     magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,6,0)))
+#     return magnets
+
+field_strenght = 1000
 # hallbach 0, works well
 def gen_magnets():
     magnets = []
-    magnets.append(Box(mag=(0,0,-field_strenght),dim=(5,5,5),pos=(0,0,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,5,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,0,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,-5,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,0,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,-5,0)))
-    magnets.append(Box(mag=(0,-field_strenght,0),dim=(5,5,5),pos=(0,-5,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,5,0)))
-    magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,5,0)))
+    magnets.append(Box(mag=(0,0,field_strenght),dim=(10,10,10),pos=(0,0,0)))
+    magnets.append(Box(mag=(0,field_strenght,0),dim=(10,10,10),pos=(-(10+1),0,0)))
+    magnets.append(Box(mag=(0,-field_strenght,0),dim=(10,10,10),pos=(10+1,0,0)))
     return magnets
 
 # calculate B-field on a grid
@@ -50,15 +59,20 @@ record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
 first = True
 
 for iter in range(iterations):
-    #rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-90,90)]
-    rot = [0,0,random.uniform(-1,1)]
+    # rot = [random.uniform(-80,80),random.uniform(-80,80),random.uniform(-80,80)]
+    rot = [0,0,0]
 
     c = Collection(gen_magnets())
     c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
     c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
     c.rotate(rot[2],(0,0,1), anchor=(0,0,0))
-
+    data = []
+    for sens in sensors:
+        val = sens.getB(c)
+        val /= np.linalg.norm(val)
+        data.append(val)
     if first:
+        print("\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f"%(data[0][0],data[0][1],data[0][2],data[1][0],data[1][1],data[1][2],data[2][0],data[2][1],data[2][2],data[3][0],data[3][1],data[3][2]))
         # create figure
         fig = plt.figure(figsize=(18,7))
         ax1 = fig.add_subplot(131, projection='3d')  # 3D-axis
@@ -83,14 +97,8 @@ for iter in range(iterations):
         plt.show()
         first = False
 
-    data = []
-    for sens in sensors:
-        val = sens.getB(c)
-        val[2] = -val[2]
-        data.append(val)
     record.write(str(data[0][0])+ " " + str(data[0][1]) + " " + str(data[0][2])+ " " + str(data[1][0])+ " " + str(data[1][1])+ " " + str(data[1][2])+ " " + str(data[2][0])+ " " + str(data[2][1])+ " " + str(data[2][2])  + " " + str(data[3][0])+ " " + str(data[3][1])+ " " + str(data[3][2])+ " " + str(rot[0]/180.0*math.pi) + " " + str(rot[1]/180.0*math.pi) + " " + str(rot[2]/180.0*math.pi) + "\n")
-    print("\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f"%(data[0][0],data[0][1],data[0][2],data[1][0],data[1][1],data[1][2],data[2][0],data[2][1],data[2][2],data[3][0],data[3][1],data[3][2]))
 
-    if iter%10==0:
+    if iter%1000==0:
         print("(%d/%d)"%(iter,iterations))
 record.close()

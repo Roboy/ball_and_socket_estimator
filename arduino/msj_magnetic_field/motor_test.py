@@ -9,7 +9,7 @@ command.append(rospy.Publisher('/motor_command/motor0', Int16, queue_size=1))
 command.append(rospy.Publisher('/motor_command/motor1', Int16, queue_size=1))
 command.append(rospy.Publisher('/motor_command/motor2', Int16, queue_size=1))
 
-rate = rospy.Rate(1)
+rate = rospy.Rate(10)
 
 pos = []
 # pos.append(np.linspace(120,270,100))
@@ -20,13 +20,13 @@ pos = []
 # pos.append(np.linspace(200,90,100))
 # pos.append(np.linspace(97,97,100))
 
-pos.append(np.linspace(190,190,100))
-pos.append(np.linspace(170,170,100))
-pos.append(np.linspace(60,120,100))
+# pos.append(np.linspace(190,190,100))
+# pos.append(np.linspace(170,170,100))
+# pos.append(np.linspace(60,120,100))
 
-# pos.append(np.concatenate([np.linspace(120,270,100),np.linspace(170,170,100),np.linspace(170,170,100)]))
-# pos.append(np.concatenate([np.linspace(170,170,100),np.linspace(270,120,100),np.linspace(170,170,100)]))
-# pos.append(np.concatenate([np.linspace(95,95,100),np.linspace(95,95,100),np.linspace(50,120,100)]))
+pos.append(np.concatenate([np.linspace(90,270,100),np.linspace(190,190,100),np.linspace(190,190,100)]))
+pos.append(np.concatenate([np.linspace(190,190,100),np.linspace(200,90,100),np.linspace(190,190,100)]))
+pos.append(np.concatenate([np.linspace(95,95,100),np.linspace(95,95,100),np.linspace(50,120,100)]))
 
 for i in range(0,len(pos[0])):
     if rospy.is_shutdown():

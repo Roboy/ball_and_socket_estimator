@@ -268,7 +268,7 @@ class ball_in_socket_estimator:
             mcp_save = ModelCheckpoint(self.body_part+'model.h5', save_best_only=True, monitor='val_loss', mode='min')
 
             # fit network
-            history = self.model.fit(data_in_train, data_out_train, epochs=1000, batch_size=1000,
+            history = self.model.fit(data_in_train, data_out_train, epochs=1000, batch_size=200,
                                      validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True,
                                      callbacks=[earlyStopping, mcp_save])
 
@@ -378,9 +378,9 @@ class ball_in_socket_estimator:
         text=string)
         self.prediction_pub.publish(marker)
     def listener(self):
-        rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, self.magentic_data_callback)
+        rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, self.magentic_data_callback, queue_size=1)
 
-        trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
+        trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback, queue_size=1)
         rospy.spin()
 
 

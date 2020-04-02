@@ -23,8 +23,9 @@ class ball_in_socket_estimator:
     base_path = rospack.get_path('ball_in_socket_estimator')+'/python/'
 
     # base_path= '/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'
-    network_name = 'shoulder_left'
-    model_name = 'shoulder_left'
+    network_name = 'testmodel'
+    model_name = 'testmodel'
+    model_to_publish_name = 'head'
     offset = [0,0,0]
     graph = tensorflow.get_default_graph()
     # base_path= '/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'
@@ -43,7 +44,14 @@ class ball_in_socket_estimator:
         self.listener()
 
     def magneticsCallback(self, data):
-        x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
+        values = []
+        for i in range(0,4):
+            val = np.array((data.x[i], data.y[i], data.z[i]))
+            val /= np.linalg.norm(val)
+            values.append(val[0])
+            values.append(val[1])
+            values.append(val[2])
+        x_test = np.array(values)#np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
         x_test=x_test.reshape((1,12))
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             euler = self.model.predict(x_test)
@@ -52,7 +60,7 @@ class ball_in_socket_estimator:
 
             self.msg.header = std_msgs.msg.Header()
             self.msg.header.stamp = rospy.Time.now()
-            self.msg.name = [self.model_name+'_axis0', self.model_name+'_axis1', self.model_name+'_axis2']
+            self.msg.name = [self.model_to_publish_name+'_axis0', self.model_to_publish_name+'_axis1', self.model_to_publish_name+'_axis2']
             self.msg.position = [0.9*self.msg.position[0]+0.1*euler[0,0], 0.9*self.msg.position[1]+0.1*euler[0,1], 0.9*self.msg.position[2]+0.1*euler[0,2]]
             for i in range(len(self.msg.position)):
                 self.msg.position[i] += self.offset[i]

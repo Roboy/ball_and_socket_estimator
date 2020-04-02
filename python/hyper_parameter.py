@@ -101,7 +101,7 @@ activation = ['relu']
 dropout = [0,0.05,0.1]
 batch_size = [200,400,600,800]
 param_grid = dict(neurons=neurons,activation=activation, batch_size=batch_size, dropout=dropout)
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=30, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=60, verbose=50, scoring='neg_mean_squared_error',fit_params={'callbacks': cbs})#,fit_params={'log_dir': './log_hyperparameter'}
 grid_result = grid.fit(x, y)
 # summarize results
 print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))

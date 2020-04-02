@@ -10,16 +10,48 @@ import random, math
 import sensor_msgs.msg, std_msgs
 
 # define sensor
-sensor_pos = [(-22.7,7.7,0,'origin'),(-14.7,-19.4,0),(14.7,-19.4,0),(22.7,7.7,0)]
+sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]#[[22.7,7.7,0],[14.7,-19.4,0],[-14.7,-19.4,0],[-22.7,7.7,0]]
 # sensor_rot = [[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]]]
 sensors = []
 i = 0
 for pos in sensor_pos:
     # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
-    sensors.append(Sensor(pos=pos))
+    s = Sensor(pos=pos,angle=90,axis=(0,0,1))
+    sensors.append(s)
+# def gen_magnets():
+#     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
 
+cs = 10
+field_strenght = 1000
+# hallbach 0, works well
 def gen_magnets():
-    return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
+    magnets = []
+    magnets.append(Box(mag=(0,0,-field_strenght),dim=(cs,cs,cs),pos=(0,0,0)))
+    magnets.append(Box(mag=(-field_strenght,0,0),dim=(cs,cs,cs),pos=(-(cs+1),0,0)))
+    magnets.append(Box(mag=(field_strenght,0,0),dim=(cs,cs,cs),pos=(cs+1,0,0)))
+    magnets.append(Box(mag=(0,-field_strenght,0),dim=(cs,cs,cs),pos=(0,-(cs+1),0)))
+    magnets.append(Box(mag=(0,field_strenght,0),dim=(cs,cs,cs),pos=(0,cs+1,0)))
+    magnets.append(Box(mag=(0,0,-field_strenght),dim=(cs,cs,cs),pos=(-(cs+1),(cs+1),0)))
+    magnets.append(Box(mag=(0,0,-field_strenght),dim=(cs,cs,cs),pos=(-(cs+1),-(cs+1),0)))
+    magnets.append(Box(mag=(0,0,field_strenght),dim=(cs,cs,cs),pos=((cs+1),-(cs+1),0)))
+    magnets.append(Box(mag=(0,0,field_strenght),dim=(cs,cs,cs),pos=((cs+1),(cs+1),0)))
+
+    return magnets
+
+# field_strenght = -1000
+# # hallbach 0, works well
+# def gen_magnets():
+#     magnets = []
+#     magnets.append(Box(mag=(0,0,-field_strenght),dim=(5,5,5),pos=(0,0,0)))
+#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,6,0)))
+#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,0,0)))
+#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,-6,0)))
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,0,0)))
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,-6,0)))
+#     magnets.append(Box(mag=(0,-field_strenght,0),dim=(5,5,5),pos=(0,-6,0)))
+#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,6,0)))
+#     magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,6,0)))
+#     return magnets
 
 # calculate B-field on a grid
 xs = np.linspace(-40,40,33)
@@ -34,8 +66,24 @@ rospy.init_node('magnetic_field_simulation_publisher')
 magneticSensor_pub = rospy.Publisher('roboy/middleware/MagneticSensor', MagneticSensor, queue_size=1)
 joint_state_pub = rospy.Publisher('joint_states_training', sensor_msgs.msg.JointState, queue_size=1)
 rate = rospy.Rate(10)
+iter = 0
+position = 0#-90
+dir = True
+rot = [0,0,0]
 while(not rospy.is_shutdown()):
-    rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-90,90)]
+    if iter==0:
+        rot = [position,0,0]
+    elif iter==1:
+        rot = [0,position,0]
+    elif iter==2:
+        rot = [0,0,position]
+    print(rot)
+    position +=0.01
+    if position>90:
+        position = -90
+        iter = iter +1
+        if iter>2:
+            iter =0
 
     c = Collection(gen_magnets())
     c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
@@ -75,12 +123,6 @@ while(not rospy.is_shutdown()):
         X,Z = np.meshgrid(xs,zs)
         U,V = Bs[:,:,0], Bs[:,:,2]
         ax3.streamplot(X, Z, U, V, color=np.log(U**2+V**2))
-        sensor_visualization = []
-        i = 0
-        for pos in sensor_pos:
-             sensor_visualization.append(Box(mag=(0,0,0.001),dim=(1,1,1),pos=sensor_pos[i]))
-             i = i+1
-        d = Collection(c,sensor_visualization)
-        displaySystem(d, subplotAx=ax1, suppress=True)
+        displaySystem(c, subplotAx=ax1, sensors=sensors, suppress=True, direc=True)
         plt.show()
         first = False
