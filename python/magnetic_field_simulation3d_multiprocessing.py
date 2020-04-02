@@ -14,44 +14,58 @@ import math, os, time
 from multiprocessing import Pool, freeze_support
 from pathlib import Path
 
-# define sensor
-sensor_pos = [(-22.7,7.7,0),(-14.7,-19.4,0),(14.7,-19.4,0),(22.7,7.7,0)]
-# sensor_rot = [[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]]]
-sensors = []
-i = 0
-for pos in sensor_pos:
-    # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
-    sensors.append(Sensor(pos=pos))
-
 all = True
 iterations = 180
-num_processes = 60
+num_processes = 30
 printouts = False
 axis = 0
-movie_path = '/home/letrend/Videos/magnetic_arrangements/hallbach'
+movie_path = '/home/letrend/Videos/magnetic_arrangements/hallbach1'
 
 # def gen_magnets():
 #     magnets = [Box(mag=(0,0,2000),dim=(5,5,5),pos=(0,0,10))]
 #     return magnets
 
+# define sensor
+sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]#[[22.7,7.7,0],[14.7,-19.4,0],[-14.7,-19.4,0],[-22.7,7.7,0]]
+# sensor_rot = [[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]]]
+sensors = []
+i = 0
+for pos in sensor_pos:
+    # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
+    s = Sensor(pos=pos,angle=90,axis=(0,0,1))
+    sensors.append(s)
+# def gen_magnets():
+#     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
+
+field_strenght = -1000
+# hallbach 0, works well
 def gen_magnets():
     magnets = []
-    magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,0)))
-    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,5,0)))
-    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,0,0)))
-    magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,-5,0)))
-    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,0,0)))
-    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,-5,0)))
-    magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,-5,0)))
-    magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,5,0)))
-    magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,5,0)))
-
-    # magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(0,0,-10)))
-    # magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,-5)))
-    # magnets.append(Box(mag=(0,0,500),dim=(5,5,5),pos=(0,0,-15)))
-    # magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,5,-10)))
-    # magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,-5,-10)))
+    magnets.append(Box(mag=(0,0,-field_strenght),dim=(5,5,5),pos=(0,0,0)))
+    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,5,0)))
+    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,0,0)))
+    magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-5,-5,0)))
+    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,0,0)))
+    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,-5,0)))
+    magnets.append(Box(mag=(0,-field_strenght,0),dim=(5,5,5),pos=(0,-5,0)))
+    magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(5,5,0)))
+    magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,5,0)))
     return magnets
+
+# # hallbach 0, works well
+# def gen_magnets():
+#     magnets = []
+#     magnets.append(Box(mag=(0,0,-500),dim=(5,5,5),pos=(0,0,0)))
+#     magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,5,0)))
+#     magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,0,0)))
+#     magnets.append(Box(mag=(-500,0,0),dim=(5,5,5),pos=(-5,-5,0)))
+#     magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,0,0)))
+#     magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,-5,0)))
+#     magnets.append(Box(mag=(0,-500,0),dim=(5,5,5),pos=(0,-5,0)))
+#     magnets.append(Box(mag=(500,0,0),dim=(5,5,5),pos=(5,5,0)))
+#     magnets.append(Box(mag=(0,500,0),dim=(5,5,5),pos=(0,5,0)))
+#     return magnets
+
 # def gen_magnets():
 #     magnets = []
 #     j = 0
