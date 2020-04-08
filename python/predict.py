@@ -7,7 +7,7 @@ import std_msgs.msg, sensor_msgs.msg
 import rospkg
 
 rospy.init_node('shoulder_predictor')
-
+normalize_magnetic_strength = True
 # # load json and create model
 # json_file = open(base_path+network_name+'.json', 'r')
 # loaded_model_json = json_file.read()
@@ -47,7 +47,8 @@ class ball_in_socket_estimator:
         values = []
         for i in range(0,4):
             val = np.array((data.x[i], data.y[i], data.z[i]))
-            val /= np.linalg.norm(val)
+            if normalize_magnetic_strength:
+                val /= np.linalg.norm(val)
             values.append(val[0])
             values.append(val[1])
             values.append(val[2])

@@ -7,9 +7,10 @@ import matplotlib.animation as manimation
 import random, math
 
 iterations = 300000
+normalize_magnetic_strength = True
 
 # define sensor
-sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]#[[22.7,7.7,0],[14.7,-19.4,0],[-14.7,-19.4,0],[-22.7,7.7,0]]
+sensor_pos = [[-22.4, 7.25, 0.25],[-14.0, -19.5, 0.25],[14.3, -19.6, 0.25],[22.325, 6.675, 0.25]]#[[-22.4, 7.25, 0.9],[-14.0, -19.5, 0.9],[14.3, -19.6, 0.9],[22.325, 6.675, 0.9]]
 # sensor_rot = [[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]]]
 sensors = []
 i = 0
@@ -20,7 +21,6 @@ for pos in sensor_pos:
 # def gen_magnets():
 #     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
 
-field_strenght = 1000
 # # hallbach 0, works well
 # def gen_magnets():
 #     magnets = []
@@ -35,13 +35,13 @@ field_strenght = 1000
 #     magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,6,0)))
 #     return magnets
 
-field_strenght = 1000
+field_strenght = 1300
 # hallbach 0, works well
 def gen_magnets():
     magnets = []
     magnets.append(Box(mag=(0,0,field_strenght),dim=(10,10,10),pos=(0,0,0)))
-    magnets.append(Box(mag=(0,field_strenght,0),dim=(10,10,10),pos=(-(10+1),0,0)))
-    magnets.append(Box(mag=(0,-field_strenght,0),dim=(10,10,10),pos=(10+1,0,0)))
+    magnets.append(Box(mag=(0,field_strenght,0),dim=(10,10,10),pos=(-(10+0.5),0,0)))
+    magnets.append(Box(mag=(0,-field_strenght,0),dim=(10,10,10),pos=(10+0.5,0,0)))
     return magnets
 
 # calculate B-field on a grid
@@ -59,8 +59,8 @@ record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
 first = True
 
 for iter in range(iterations):
-    # rot = [random.uniform(-80,80),random.uniform(-80,80),random.uniform(-80,80)]
-    rot = [0,0,0]
+    rot = [random.uniform(-80,80),random.uniform(-80,80),random.uniform(-80,80)]
+    # rot = [0,0,0]
 
     c = Collection(gen_magnets())
     c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
@@ -69,7 +69,8 @@ for iter in range(iterations):
     data = []
     for sens in sensors:
         val = sens.getB(c)
-        val /= np.linalg.norm(val)
+        if normalize_magnetic_strength:
+            val /= np.linalg.norm(val)
         data.append(val)
     if first:
         print("\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f"%(data[0][0],data[0][1],data[0][2],data[1][0],data[1][1],data[1][2],data[2][0],data[2][1],data[2][2],data[3][0],data[3][1],data[3][2]))

@@ -37,6 +37,7 @@ import pdb
 
 record = False
 train = True
+normalize_magnetic_strength = False
 
 
 use_sftp = False
@@ -61,29 +62,6 @@ rospy.init_node(body_part+'_magnetics_training_training',anonymous=True)
 rospy.loginfo("collecting data for %s"%body_part)
 listener = tf.TransformListener()
 rate = rospy.Rate(60.0)
-
-def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
-    n_vars = 1 if type(data) is list else data.shape[1]
-    df = DataFrame(data)
-    cols, names = list(), list()
-    # input sequence (t-n, ... t-1)
-    for i in range(n_in, 0, -1):
-        cols.append(df.shift(i))
-        names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
-    # forecast sequence (t, t+1, ... t+n)
-    for i in range(0, n_out):
-        cols.append(df.shift(-i))
-        if i == 0:
-            names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
-        else:
-            names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
-    # put it all together
-    agg = concat(cols, axis=1)
-    agg.columns = names
-    # drop rows with NaN values
-    if dropnan:
-        agg.dropna(inplace=True)
-    return agg
 
 if record is True:
     print("recording training data for %s"%body_part)
@@ -116,16 +94,10 @@ if record is True:
     sample = 0
 
     def magneticsCallback(data):
-        # if (data.id == id):
         global sample
         global samples
         global numberOfSamples
         global record
-        # try:
-        #     (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
-        #     (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
-        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-        #     return
 
         s0_norm = ((data.x[0]+data.y[0]+data.z[0])**2)**(0.5)
         s1_norm = ((data.x[1]+data.y[1]+data.z[1])**2)**(0.5)
@@ -135,14 +107,8 @@ if record is True:
             return
 
         record.write(str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2])  + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3])+ " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
-
-        # record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
         rospy.loginfo_throttle(5,str(sample) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
         sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
-        # q = np.array([rot[0], rot[1], rot[2], rot[3]])
-        # sensors_set[sample,:] = sensor.reshape(1,9)
-        # quaternion_set[sample,:] = q.reshape(1,4)
-        # samples[sample,:]= sample
         sample = sample + 1
         rospy.loginfo_throttle(5, "%s: \n Data collection progress: %f%%"%(body_part, float(sample)/float(numberOfSamples)*100.0))
 
@@ -219,30 +185,18 @@ class ball_in_socket_estimator:
             # dataset = dataset[abs(dataset[:,12])<=0.7,:]
             # dataset = dataset[abs(dataset[:,13])<=0.7,:]
             # dataset = dataset[abs(dataset[:,14])<=1.5,:]
-            dataset = dataset[abs(dataset[:,12])!=0.0,:]
-            dataset = dataset[abs(dataset[:,13])!=0.0,:]
-            dataset = dataset[abs(dataset[:,14])!=0.0,:]
-            print('%d values after filtering outliers'%(len(dataset)))
-            # dataset = dataset[0:200000,:]
+            # dataset = dataset[abs(dataset[:,12])!=0.0,:]
+            # dataset = dataset[abs(dataset[:,13])!=0.0,:]
+            # dataset = dataset[abs(dataset[:,14])!=0.0,:]
+            # print('%d values after filtering outliers'%(len(dataset)))
             euler_set = np.array(dataset[:,12:15])
-            # mean_euler = euler_set.mean(axis=0)
-            # std_euler = euler_set.std(axis=0)
-            # euler_set = (euler_set - mean_euler) / std_euler
             print('max euler ' + str(np.amax(euler_set)))
             print('min euler ' + str(np.amin(euler_set)))
             sensors_set = np.array([dataset[:,0],dataset[:,1],dataset[:,2],dataset[:,3],dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11]])
-            # sensors_set = np.array([dataset[:,4],dataset[:,5],dataset[:,7],dataset[:,8],dataset[:,10],dataset[:,11]])
             sensors_set = np.transpose(sensors_set)
-
-            # mean_sensor = sensors_set.mean(axis=0)
-            # std_sensor = sensors_set.std(axis=0)
-            # sensors_set = (sensors_set - mean_sensor) / std_sensor
             np.set_printoptions(precision=8)
-            # print(mean_sensor)
-            # print(std_sensor)
             print(sensors_set[0,:])
             print(euler_set[0,:])
-            # sensors_set = wr.mean_zero(pandas.DataFrame(sensors_set)).values
 
             data_split = 0.7
 
@@ -309,15 +263,9 @@ class ball_in_socket_estimator:
 
         # self.listener()
     def magentic_data_callback(self, data):
-        # if (self.body_part == "shoulder_right" and data.id == 4) or (self.body_part == "shoulder_left" and data.id == 3):
         x_test = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
-        # x_test = np.array([data.x[0], data.y[0], data.x[1], data.y[1], data.x[2], data.y[2]])
         x_test=x_test.reshape((1,len(x_test)))
         show_ground_truth = True
-        # try:
-        #     (trans,rot2) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
-        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-        #     return
         with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
             euler = self.model.predict(x_test)
             error_roll = (((self.roll-euler[0,0])*180.0/math.pi)**2)**0.5
@@ -327,15 +275,7 @@ class ball_in_socket_estimator:
 
             self.publishErrorCube(error_roll,error_pitch,error_yaw)
             self.publishErrorText(error_roll,error_pitch,error_yaw)
-            # self.joint_state.publish(msg)
-#             norm = numpy.linalg.norm(quat)
-#             q = (quat[0,0]/norm,quat[0,1]/norm,quat[0,2]/norm,quat[0,3]/norm)
-# #            print "predicted: ",(pos[0,0],pos[0,1],pos[0,2])
-#             self.br.sendTransform(trans,
-#                      (q[0],q[1],q[2],q[3]),
-#                      rospy.Time.now(),
-#                      "top_NN",
-#                      "world")
+
     def trackingCallback(self,data):
         # if (self.body_part == "shoulder_right" and data.id == 4) or (self.body_part == "shoulder_left" and data.id == 3):
         self.roll = data.position[0]
