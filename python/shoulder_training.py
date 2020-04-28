@@ -37,8 +37,7 @@ import pdb
 
 record = False
 train = True
-normalize_magnetic_strength = False
-
+normalize_magnetic_strength = True
 
 use_sftp = False
 
