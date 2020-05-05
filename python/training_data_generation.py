@@ -10,59 +10,65 @@ from multiprocessing import Pool, freeze_support
 num_processes = 60
 iterations = 300000
 normalize_magnetic_strength = True
+field_strenght = 1300
 
 body_part = "shoulder_left"
 
-if body_part=="neck":
+# SENSOR POSITIONS
+
+if body_part=="wrist_left":
     # define sensor
     sensor_pos = [[-22.4, 7.25, 0.25],[-14.0, -19.5, 0.25],[14.3, -19.6, 0.25],[22.325, 6.675, 0.25]]
     sensors = []
     i = 0
     for pos in sensor_pos:
-        # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
+        s = Sensor(pos=pos,angle=90,axis=(0,0,1))
+        sensors.append(s)
+
+if body_part=="head":
+    # define sensor
+    sensor_pos = [[-22.4, 7.25, 0.25],[-14.0, -19.5, 0.25],[14.3, -19.6, 0.25],[22.325, 6.675, 0.25]]
+    sensors = []
+    i = 0
+    for pos in sensor_pos:
         s = Sensor(pos=pos,angle=90,axis=(0,0,1))
         sensors.append(s)
 
 if body_part=="shoulder_left":
     # define sensor
-    sensor_pos = [[-10.91, 22.4, -5.438],[-6.265, 14.0, 20.906],[-6.248, -14.3, 21.004],[-10.81, -22.325, -4.872]]
+    x_offset = 0
+    sensor_pos = [[-10.91+x_offset, 22.4, -5.438],[-6.265+x_offset, 14.0, 20.906],[-6.248+x_offset, -14.3, 21.004],[-10.81+x_offset, -22.325, -4.872]]
     sensors = []
     i = 0
     for pos in sensor_pos:
-        # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
         s = Sensor(pos=pos,angle=100,axis=(0,1,0))
-        # s.rotate(angle=10,axis=(0,1,0))
         sensors.append(s)
 
-field_strenght = 1300
-# # hallbach 0, works well
-# def gen_magnets():
-#     magnets = []
-#     # magnets.append(Box(mag=(0,-field_strenght,0),dim=(10,10,10),pos=(0,0,0)))
-#     magnets.append(Box(mag=(0,0,field_strenght),dim=(10,10,10),pos=(-(10+0.5),0,0)))
-#     magnets.append(Box(mag=(field_strenght,0,0),dim=(10,10,10),pos=(10+0.5,0,0)))
-#     return magnets
+# MAGNET POSITIONS
 
-# def gen_magnets():
-#     magnets = []
-#     angles = [-90,-90,-120,-150,-180,-210,30,0]
-#     for i in range(0,8):
-#         magnets.append(Box(mag=(field_strenght,0,0),dim=(1,5,5),pos=(16*math.cos((8-i)*45/180.0*math.pi),16*math.sin((8-i)*45/180.0*math.pi),0),angle=angles[i]))
-#     return magnets
+if body_part=="wrist_left":
+    def gen_magnets():
+        magnets = []
+        field = [(0,field_strenght,0),(0,0,-field_strenght),(0,0,field_strenght)]
+        for i in range(0,3):
+            magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(12*math.sin(i*(360/3)/180.0*math.pi),12*math.cos(i*(360/3)/180.0*math.pi),0),angle=i*(360/3)))
+        return magnets
 
-# def gen_magnets():
-#     magnets = []
-#     field = [(field_strenght,0,0),(0,field_strenght,0),(0,0,field_strenght),(-field_strenght,0,0),(0,-field_strenght,0)]
-#     for i in range(0,5):
-#         magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(-13*math.cos(i*(360/5)/180.0*math.pi),-13*math.sin(i*(360/5)/180.0*math.pi),0),angle=i*(360/5)))
-#     return magnets
+if body_part=="head":
+    def gen_magnets():
+        magnets = []
+        field = [(0,field_strenght,0),(0,0,-field_strenght),(0,0,field_strenght)]
+        for i in range(0,3):
+            magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(-13*math.sin(i*(360/3)/180.0*math.pi),-13*math.cos(i*(360/3)/180.0*math.pi),0),angle=i*(360/3)))
+        return magnets
 
-def gen_magnets():
-    magnets = []
-    field = [(0,field_strenght,0),(0,0,-field_strenght),(0,0,field_strenght)]
-    for i in range(0,3):
-        magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(12*math.sin(i*(360/3)/180.0*math.pi),12*math.cos(i*(360/3)/180.0*math.pi),0),angle=i*(360/3)))
-    return magnets
+if body_part=="shoulder_left":
+    def gen_magnets():
+        magnets = []
+        field = [(-field_strenght,0,0),(0,0,field_strenght),(0,0,-field_strenght)]
+        for i in range(0,3):
+            magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(12*math.sin((i*(360/3)+60)/180.0*math.pi),12*math.cos((i*(360/3)+60)/180.0*math.pi),0),angle=-i*30+30))
+        return magnets
 
 # calculate B-field on a grid
 xs = np.linspace(-40,40,33)
@@ -77,13 +83,16 @@ c = Collection(gen_magnets())
 c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
 c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
 c.rotate(rot[2],(0,0,1), anchor=(0,0,0))
+data_norm = []
 data = []
 for sens in sensors:
-    val = sens.getB(c)
-    if normalize_magnetic_strength:
-        val /= np.linalg.norm(val)
-    data.append(val)
-print("\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f"%(data[0][0],data[0][1],data[0][2],data[1][0],data[1][1],data[1][2],data[2][0],data[2][1],data[2][2],data[3][0],data[3][1],data[3][2]))
+    val0 = sens.getB(c)
+    val1 = sens.getB(c)
+    data.append(val0)
+    val1 /= np.linalg.norm(val1)
+    data_norm.append(val1)
+print("sensor values:\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n"%(data[0][0],data[0][1],data[0][2],data[1][0],data[1][1],data[1][2],data[2][0],data[2][1],data[2][2],data[3][0],data[3][1],data[3][2]))
+print("sensor values normalized:\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n"%(data_norm[0][0],data_norm[0][1],data_norm[0][2],data_norm[1][0],data_norm[1][1],data_norm[1][2],data_norm[2][0],data_norm[2][1],data_norm[2][2],data_norm[3][0],data_norm[3][1],data_norm[3][2]))
 # create figure
 fig = plt.figure(figsize=(18,7))
 ax1 = fig.add_subplot(131, projection='3d')  # 3D-axis
@@ -111,7 +120,12 @@ record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
 record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
 
 def generateMagneticData(iter):
-    rot = [random.uniform(-80,80),random.uniform(-80,80),random.uniform(-80,80)]
+    if body_part=="wrist_left":
+        rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-80,80)]
+    if body_part=="head":
+        rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-80,80)]
+    if body_part=="shoulder_left":
+        rot = [random.uniform(-100,30),random.uniform(-120,20),random.uniform(-60,60)]
     # rot = [0,0,0]
 
     c = Collection(gen_magnets())
@@ -130,6 +144,7 @@ args = range(0,iterations,1)
 with Pool(processes=num_processes) as pool:
     results = pool.starmap(generateMagneticData, zip(args))
     for i in range(0,iterations):
-        print("rot %f %f %f"%(results[i][1][0],results[i][1][1],results[i][1][2]))
+        if(i%10000==0):
+            print("%d/%d"%(i,iterations))
         record.write(str(results[i][0][0][0])+ " " + str(results[i][0][0][1]) + " " + str(results[i][0][0][2])+ " " + str(results[i][0][1][0])+ " " + str(results[i][0][1][1])+ " " + str(results[i][0][1][2])+ " " + str(results[i][0][2][0])+ " " + str(results[i][0][2][1])+ " " + str(results[i][0][2][2])  + " " + str(results[i][0][3][0])+ " " + str(results[i][0][3][1])+ " " + str(results[i][0][3][2])+ " " + str(results[i][1][0]/180.0*math.pi) + " " + str(results[i][1][1]/180.0*math.pi) + " " + str(results[i][1][2]/180.0*math.pi) + "\n")
 record.close()
