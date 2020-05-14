@@ -117,7 +117,7 @@ class ball_in_socket_estimator:
                 elif self.model_to_publish_name=="wrist_left":
                     self.msg.position = [-euler[1], -euler[0], -euler[2]]
                 elif self.model_to_publish_name=="shoulder_left":
-                    self.msg.position = [euler[0], euler[1], euler[2]]
+                    self.msg.position = [euler[1]-10/180.0*math.pi, euler[0]-30/180.0*math.pi, euler[2]]
                 else:
                     self.msg.position = [euler[0], euler[1], euler[2]]
 

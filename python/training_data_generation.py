@@ -15,6 +15,14 @@ field_strenght = 1300
 body_part = "shoulder_left"
 
 # SENSOR POSITIONS
+if body_part=="head":
+    # define sensor
+    sensor_pos = [[-22.4, 7.25, 0.25],[-14.0, -19.5, 0.25],[14.3, -19.6, 0.25],[22.325, 6.675, 0.25]]
+    sensors = []
+    i = 0
+    for pos in sensor_pos:
+        s = Sensor(pos=pos,angle=90,axis=(0,0,1))
+        sensors.append(s)
 
 if body_part=="wrist_left":
     # define sensor
@@ -25,23 +33,13 @@ if body_part=="wrist_left":
         s = Sensor(pos=pos,angle=90,axis=(0,0,1))
         sensors.append(s)
 
-if body_part=="head":
+if body_part=="shoulder_left":
     # define sensor
     sensor_pos = [[-22.4, 7.25, 0.25],[-14.0, -19.5, 0.25],[14.3, -19.6, 0.25],[22.325, 6.675, 0.25]]
     sensors = []
     i = 0
     for pos in sensor_pos:
         s = Sensor(pos=pos,angle=90,axis=(0,0,1))
-        sensors.append(s)
-
-if body_part=="shoulder_left":
-    # define sensor
-    x_offset = 0
-    sensor_pos = [[-10.91+x_offset, 22.4, -5.438],[-6.265+x_offset, 14.0, 20.906],[-6.248+x_offset, -14.3, 21.004],[-10.81+x_offset, -22.325, -4.872]]
-    sensors = []
-    i = 0
-    for pos in sensor_pos:
-        s = Sensor(pos=pos,angle=100,axis=(0,1,0))
         sensors.append(s)
 
 # MAGNET POSITIONS
@@ -65,9 +63,9 @@ if body_part=="head":
 if body_part=="shoulder_left":
     def gen_magnets():
         magnets = []
-        field = [(-field_strenght,0,0),(0,0,field_strenght),(0,0,-field_strenght)]
+        field = [(0,-field_strenght,0),(0,0,field_strenght),(0,0,-field_strenght)]
         for i in range(0,3):
-            magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(12*math.sin((i*(360/3)+60)/180.0*math.pi),12*math.cos((i*(360/3)+60)/180.0*math.pi),0),angle=-i*30+30))
+            magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(-13*math.sin(i*(360/3)/180.0*math.pi),-13*math.cos(i*(360/3)/180.0*math.pi),0),angle=i*(360/3)))
         return magnets
 
 # calculate B-field on a grid
@@ -125,7 +123,7 @@ def generateMagneticData(iter):
     if body_part=="head":
         rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-80,80)]
     if body_part=="shoulder_left":
-        rot = [random.uniform(-100,30),random.uniform(-120,20),random.uniform(-60,60)]
+        rot = [random.uniform(-80,80),random.uniform(-80,80),random.uniform(-80,80)]
     # rot = [0,0,0]
 
     c = Collection(gen_magnets())
