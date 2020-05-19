@@ -63,7 +63,7 @@ if body_part=="head":
 if body_part=="shoulder_left":
     def gen_magnets():
         magnets = []
-        field = [(0,-field_strenght,0),(0,0,field_strenght),(0,0,-field_strenght)]
+        field = [(0,field_strenght,0),(0,0,field_strenght),(0,0,-field_strenght)]
         for i in range(0,3):
             magnets.append(Box(mag=field[i],dim=(10,10,10),pos=(13*math.sin(i*(360/3)/180.0*math.pi),13*math.cos(i*(360/3)/180.0*math.pi),0),angle=i*(360/3)))
         return magnets
