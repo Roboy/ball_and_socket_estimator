@@ -8,121 +8,80 @@ from scipy.optimize import fsolve, least_squares
 import matplotlib.animation as manimation
 import random, math
 import sensor_msgs.msg, std_msgs
+from yaml import load,dump,Loader,Dumper
+import sys
+from os import path
 
-# define sensor
-sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]#[[22.7,7.7,0],[14.7,-19.4,0],[-14.7,-19.4,0],[-22.7,7.7,0]]
-# sensor_rot = [[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]],[0,[0,0,1]]]
-sensors = []
-i = 0
-for pos in sensor_pos:
-    # sensors.append(Sensor(pos=pos,angle=sensor_rot[i][0], axis=sensor_rot[i][1]))
-    s = Sensor(pos=pos,angle=90,axis=(0,0,1))
-    sensors.append(s)
-# def gen_magnets():
-#     return [Box(mag=(500,0,0),dim=(10,10,10),pos=(0,12,0)), Box(mag=(0,500,0),dim=(10,10,10),pos=(10.392304845,-6,0),angle=60, axis=(0,0,1)), Box(mag=(0,0,500),dim=(10,10,10),pos=(-10.392304845,-6,0),angle=-60, axis=(0,0,1))]
+if len(sys.argv) < 3:
+    print("\nUSAGE: python3 magnetic_field_simulation_publisher.py balljoint_config_yaml sensor_log_file, e.g. \n python3 magnetic_field_simulation_publisher.py test.yaml sensor_log.yaml\n")
+    sys.exit()
 
-cs = 10
-field_strenght = 1000
-# hallbach 0, works well
-def gen_magnets():
+balljoint_config = load(open(sys.argv[1], 'r'), Loader=Loader)
+print(dump(balljoint_config, Dumper=Dumper))
+sensor_log_file = sys.argv[2]
+
+def gen_sensors(offset,angles):
+    sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]
+    sensors = []
+    i = 0
+    for pos in sensor_pos:
+        s = Sensor(pos=(pos[0]+offset[i][0],pos[1]+offset[i][1],pos[2]+offset[i][2]),angle=90,axis=(0,0,1))
+        s.rotate(angle=angles[i][0],axis=(1,0,0))
+        s.rotate(angle=angles[i][1],axis=(0,1,0))
+        s.rotate(angle=angles[i][2],axis=(0,0,1))
+        sensors.append(s)
+        i = i+1
+    return sensors
+
+def gen_magnets(fieldstrength,offset,angles):
     magnets = []
-    magnets.append(Box(mag=(0,0,-field_strenght),dim=(cs,cs,cs),pos=(0,0,0)))
-    magnets.append(Box(mag=(-field_strenght,0,0),dim=(cs,cs,cs),pos=(-(cs+1),0,0)))
-    magnets.append(Box(mag=(field_strenght,0,0),dim=(cs,cs,cs),pos=(cs+1,0,0)))
-    magnets.append(Box(mag=(0,-field_strenght,0),dim=(cs,cs,cs),pos=(0,-(cs+1),0)))
-    magnets.append(Box(mag=(0,field_strenght,0),dim=(cs,cs,cs),pos=(0,cs+1,0)))
-    magnets.append(Box(mag=(0,0,-field_strenght),dim=(cs,cs,cs),pos=(-(cs+1),(cs+1),0)))
-    magnets.append(Box(mag=(0,0,-field_strenght),dim=(cs,cs,cs),pos=(-(cs+1),-(cs+1),0)))
-    magnets.append(Box(mag=(0,0,field_strenght),dim=(cs,cs,cs),pos=((cs+1),-(cs+1),0)))
-    magnets.append(Box(mag=(0,0,field_strenght),dim=(cs,cs,cs),pos=((cs+1),(cs+1),0)))
-
+    field = [(0,-fieldstrength[0],0),(0,0,fieldstrength[1]),(0,0,-fieldstrength[2])]
+    for i in range(0,3):
+        magnet = Box(mag=field[i],dim=(10,10,10),\
+        pos=(13*math.sin(i*(360/3)/180.0*math.pi)+offset[i][0],13*math.cos(i*(360/3)/180.0*math.pi+offset[i][1]),offset[i][2]),\
+        angle=i*(360/3))
+        magnet.rotate(angle=angles[i][0],axis=(1,0,0))
+        magnet.rotate(angle=angles[i][1],axis=(0,1,0))
+        magnet.rotate(angle=angles[i][2],axis=(0,0,1))
+        magnets.append(magnet)
     return magnets
 
-# field_strenght = -1000
-# # hallbach 0, works well
-# def gen_magnets():
-#     magnets = []
-#     magnets.append(Box(mag=(0,0,-field_strenght),dim=(5,5,5),pos=(0,0,0)))
-#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,6,0)))
-#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,0,0)))
-#     magnets.append(Box(mag=(-field_strenght,0,0),dim=(5,5,5),pos=(-6,-6,0)))
-#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,0,0)))
-#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,-6,0)))
-#     magnets.append(Box(mag=(0,-field_strenght,0),dim=(5,5,5),pos=(0,-6,0)))
-#     magnets.append(Box(mag=(field_strenght,0,0),dim=(5,5,5),pos=(6,6,0)))
-#     magnets.append(Box(mag=(0,field_strenght,0),dim=(5,5,5),pos=(0,6,0)))
-#     return magnets
-
-# calculate B-field on a grid
-xs = np.linspace(-40,40,33)
-ys = np.linspace(-40,40,44)
-zs = np.linspace(-40,40,44)
-POS0 = np.array([(x,0,z) for z in zs for x in xs])
-POS1 = np.array([(x,y,0) for y in ys for x in xs])
-
-first = True
-
+sensors = gen_sensors(balljoint_config['sensor_offsets'],balljoint_config['sensor_angles'])
 rospy.init_node('magnetic_field_simulation_publisher')
 magneticSensor_pub = rospy.Publisher('roboy/middleware/MagneticSensor', MagneticSensor, queue_size=1)
-joint_state_pub = rospy.Publisher('joint_states_training', sensor_msgs.msg.JointState, queue_size=1)
-rate = rospy.Rate(10)
-iter = 0
-position = 0#-90
-dir = True
-rot = [0,0,0]
-while(not rospy.is_shutdown()):
-    if iter==0:
-        rot = [position,0,0]
-    elif iter==1:
-        rot = [0,position,0]
-    elif iter==2:
-        rot = [0,0,position]
-    print(rot)
-    position +=0.01
-    if position>90:
-        position = -90
-        iter = iter +1
-        if iter>2:
-            iter =0
 
-    c = Collection(gen_magnets())
-    c.rotate(rot[0],(1,0,0), anchor=(0,0,0))
-    c.rotate(rot[1],(0,1,0), anchor=(0,0,0))
-    c.rotate(rot[2],(0,0,1), anchor=(0,0,0))
+if(path.exists(sensor_log_file)):
+    sensor_log = load(open(sensor_log_file, 'r'), Loader=Loader)
+else:
+    sensor_log = {'position':[],'sensor_values':[]}
 
-    msg = sensor_msgs.msg.JointState()
-    msg.header = std_msgs.msg.Header()
-    msg.name = ['head_axis0', 'head_axis1', 'head_axis2']
-    msg.velocity = [0,0,0]
-    msg.effort = [0,0,0]
-    msg.position = [rot[0]/180.0*math.pi,rot[1]/180.0*math.pi,rot[2]/180.0*math.pi]
-    joint_state_pub.publish(msg)
-    rate.sleep()
+
+def JointTarget(data):
+    rospy.loginfo("new joint target: %f %f %f"%(data.position[0],data.position[1],data.position[2]))
+    magnets = Collection(gen_magnets(balljoint_config['field_strength'],balljoint_config['magnet_offsets'], balljoint_config['magnet_angles']))
+    magnets.rotate(angle=data.position[0]*180.0/math.pi,axis = (1,0,0), anchor=(0,0,0))
+    magnets.rotate(angle=data.position[1]*180.0/math.pi,axis = (0,1,0), anchor=(0,0,0))
+    magnets.rotate(angle=data.position[2]*180.0/math.pi,axis = (0,0,1), anchor=(0,0,0))
     msg = MagneticSensor()
-    msg.id = 0
-    msg.sensor_id = [0, 1, 2, 3]
+    msg.id = int(balljoint_config['id'])
+    values = []
     for sens in sensors:
-        data = sens.getB(c)
-        msg.x.append(data[0])
-        msg.y.append(data[1])
-        msg.z.append(data[2])
+        val = sens.getB(magnets)
+        msg.x.append(val[0])
+        msg.y.append(val[1])
+        msg.z.append(val[2])
+        values.append((val[0],val[1],val[2]))
     magneticSensor_pub.publish(msg)
+    sensor_log['position'].append((data.position[0]*180.0/math.pi,data.position[1]*180.0/math.pi,data.position[2]*180.0/math.pi))
+    sensor_log['sensor_values'].append(values)
+    print(sensor_log)
 
-    if first:
-        # create figure
-        fig = plt.figure(figsize=(18,7))
-        ax1 = fig.add_subplot(131, projection='3d')  # 3D-axis
-        ax2 = fig.add_subplot(132)                   # 2D-axis
-        ax3 = fig.add_subplot(133)                   # 2D-axis
-        Bs = c.getB(POS0).reshape(44,33,3)     #<--VECTORIZED
-        X,Y = np.meshgrid(xs,ys)
-        U,V = Bs[:,:,0], Bs[:,:,2]
-        ax2.streamplot(X, Y, U, V, color=np.log(U**2+V**2))
+joint_state_sub = rospy.Subscriber('joint_targets', sensor_msgs.msg.JointState, JointTarget, queue_size=1)
 
-        Bs = c.getB(POS1).reshape(44,33,3)     #<--VECTORIZED
-        X,Z = np.meshgrid(xs,zs)
-        U,V = Bs[:,:,0], Bs[:,:,2]
-        ax3.streamplot(X, Z, U, V, color=np.log(U**2+V**2))
-        displaySystem(c, subplotAx=ax1, sensors=sensors, suppress=True, direc=True)
-        plt.show()
-        first = False
+rospy.spin()
+
+rospy.loginfo('writing sensor log to file %s'%sensor_log_file)
+with open(sensor_log_file, 'w') as file:
+    documents = dump(sensor_log, file, default_flow_style=False)
+
+rospy.loginfo('done')

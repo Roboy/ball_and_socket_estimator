@@ -6,12 +6,21 @@ from magpylib import Collection, displaySystem, Sensor
 from scipy.optimize import fsolve, least_squares
 import matplotlib.animation as manimation
 import random
-import math, os, time
+import math, os, time, sys
 import geometry_msgs
 from multiprocessing import Pool, freeze_support
 from pathlib import Path
+from yaml import load,dump,Loader,Dumper
 
-b_target = [[6.235,5.522,16.281],[-1.474,2.147,37.418],[-5.472,-2.943,-36.025],[7.067,-6.949,-17.665]]
+if len(sys.argv) < 3:
+    print("\nUSAGE: python3 magnetic_field_calibration.py balljoint_config_yaml sensor_log_file, e.g. \n python3 magnetic_field_calibration.py test.yaml sensor_log.yaml\n")
+    sys.exit()
+
+balljoint_config = load(open(sys.argv[1], 'r'), Loader=Loader)
+print(dump(balljoint_config, Dumper=Dumper))
+sensor_log = load(open(sys.argv[2], 'r'), Loader=Loader)
+print(sensor_log['position'])
+print(sensor_log['sensor_values'])
 
 def gen_sensors(offset,angles):
     sensor_pos = [[-22.7,7.7,0],[-14.7,-19.4,0],[14.7,-19.4,0],[22.7,7.7,0]]
@@ -45,13 +54,20 @@ def func(x):
     magnet_angles = [[x[12],x[13],x[14]],[x[15],x[16],x[17]],[x[18],x[19],x[20]]]
     sensor_offsets = [[x[21],x[22],x[23]],[x[24],x[25],x[26]],[x[27],x[28],x[29]],[x[30],x[31],x[32]]]
     sensor_angles = [[x[33],x[34],x[35],x[36]],[x[37],x[38],x[39],x[40]],[x[41],x[42],x[43],x[44]]]
-    sensors = gen_sensors(sensor_offsets,sensor_angles)
-    c = Collection(gen_magnets(x,magnet_offsets,magnet_angles))
     b_error = 0
-    i = 0
-    for sens in sensors:
-        b_error = b_error + np.linalg.norm(sens.getB(c)-b_target[i])
-        i=i+1
+    j =0
+    for pos in sensor_log['position']:
+        sensors = gen_sensors(sensor_offsets,sensor_angles)
+        c = Collection(gen_magnets(x,magnet_offsets,magnet_angles))
+        c.rotate(angle=pos[0],axis=(1,0,0), anchor=(0,0,0))
+        c.rotate(angle=pos[1],axis=(0,1,0), anchor=(0,0,0))
+        c.rotate(angle=pos[2],axis=(0,0,1), anchor=(0,0,0))
+        # print("%f %f %f"%(pos[0],pos[1],pos[2]))
+        i = 0
+        for sens in sensors:
+            b_error = b_error + np.linalg.norm(sens.getB(c)-sensor_log['sensor_values'][j][i])
+            i=i+1
+        j =j +1
     # print(b_error)
     return [b_error,b_error,b_error]
 
@@ -74,7 +90,7 @@ bounds = \
 5,5,5,5,5,5,5,5,5,\
 1,1,1,1,1,1,1,1,1,1,1,1,\
 1,1,1,1,1,1,1,1,1,1,1,1\
-)), ftol=1e-10, xtol=1e-10,verbose=2)
+)), ftol=1e-9, xtol=1e-9,verbose=2)
 
 magnet_offsets = [[res.x[3],res.x[4],res.x[5]],[res.x[6],res.x[7],res.x[8]],[res.x[9],res.x[10],res.x[11]]]
 magnet_angles = [[res.x[12],res.x[13],res.x[14]],[res.x[15],res.x[16],res.x[17]],[res.x[18],res.x[19],res.x[20]]]
@@ -99,11 +115,6 @@ for sens in sensors:
     print(sens.getB(c))
     i = i+1
 print("b_field_error with calibration: %f\n"%func(res.x)[0])
-print("b_field target:")
-i = 0
-for sens in sensors:
-    print(b_target[i])
-    i = i+1
 print("\noptimization results: \n\
 fieldstrength %.3f %.3f %.3f\n\
 magnet offsets:\n \
