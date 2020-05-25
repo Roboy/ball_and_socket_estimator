@@ -81,7 +81,7 @@ class MagneticFieldCalibrator:
 
         print('number_of_magnets: %d\nnumber_of_sensors: %d\nnumber_of_parameters: %d'\
             %(self.number_of_magnets,self.number_of_sensors,self.number_of_parameters))
-        self.visualizeSetup()
+        # self.visualizeSetup()
         self.optimize()
 
     def gen_sensors(self,pos,pos_offset,angle,angle_offset):
@@ -164,9 +164,9 @@ class MagneticFieldCalibrator:
         for pos in self.sensor_log['position']:
             c = Collection(self.gen_magnets(field_strength,magnet_pos,magnet_pos_offsets,\
                 magnet_angle,magnet_angle_offsets))
-            c.rotate(angle=pos[0],axis=(1,0,0), anchor=(0,0,0))
-            c.rotate(angle=pos[1],axis=(0,1,0), anchor=(0,0,0))
-            c.rotate(angle=pos[2],axis=(0,0,1), anchor=(0,0,0))
+            c.rotate(angle=pos[0]*180.0/math.pi,axis=(1,0,0), anchor=(0,0,0))
+            c.rotate(angle=pos[1]*180.0/math.pi,axis=(0,1,0), anchor=(0,0,0))
+            c.rotate(angle=pos[2]*180.0/math.pi,axis=(0,0,1), anchor=(0,0,0))
             # print("%f %f %f"%(pos[0],pos[1],pos[2]))
             i = 0
             for sens in sensors:
@@ -192,18 +192,29 @@ class MagneticFieldCalibrator:
 
         field_strength, magnet_pos_offsets, magnet_angle_offsets, sensor_pos_offsets, sensor_angle_offsets = self.decode(res.x)
 
-        print("b_field with calibration:")
-        c = Collection(self.gen_magnets(field_strength,magnet_pos,magnet_pos_offsets, \
-                                        magnet_angle,magnet_angle_offsets))
         sensors = self.gen_sensors(sensor_pos,sensor_pos_offsets,sensor_angle,sensor_angle_offsets)
-        for sens in sensors:
-            print(sens.getB(c))
+
         print("b_field_error with calibration: %f\n"%self.func(res.x)[0])
-        print("target b_field:")
-        i = 0
-        for sens in sensors:
-            print(self.sensor_log['sensor_values'][0][i])
-            i = i+1
+
+        j = 0
+        pos = self.sensor_log['position']
+        for target in self.sensor_log['sensor_values']:
+            print("target b_field for %f %f %f"%(pos[j][0],pos[j][1],pos[j][2]))
+            i = 0
+            for sens in sensors:
+                print(target[i])
+                i = i+1
+            print("b_field with calibration:")
+            c = Collection(self.gen_magnets(field_strength,magnet_pos,magnet_pos_offsets, \
+                                            magnet_angle,magnet_angle_offsets))
+            c.rotate(angle=pos[j][0]*180.0/math.pi,axis=(1,0,0), anchor=(0,0,0))
+            c.rotate(angle=pos[j][1]*180.0/math.pi,axis=(0,1,0), anchor=(0,0,0))
+            c.rotate(angle=pos[j][2]*180.0/math.pi,axis=(0,0,1), anchor=(0,0,0))
+            for sens in sensors:
+                print(sens.getB(c))
+            print('----------------------------------\n')
+            j = j+1
+
         print("\noptimization results:\n")
         for c in self.calib:
             if c==0:
@@ -232,36 +243,42 @@ class MagneticFieldCalibrator:
 
         field_strength, magnet_pos_offsets, magnet_angle_offsets, sensor_pos_offsets, sensor_angle_offsets = self.decode(self.initial)
 
-        magnets = Collection(self.gen_magnets(field_strength,magnet_pos,magnet_pos_offsets, \
-                                        magnet_angle,magnet_angle_offsets))
-        sensors = self.gen_sensors(sensor_pos,sensor_pos_offsets,sensor_angle,sensor_angle_offsets)
+        for pos in self.sensor_log['position']:
 
-        # calculate B-field on a grid
-        xs = np.linspace(-40,40,33)
-        ys = np.linspace(-40,40,44)
-        zs = np.linspace(-40,40,44)
-        POS0 = np.array([(x,0,z) for z in zs for x in xs])
-        POS1 = np.array([(x,y,0) for y in ys for x in xs])
+            magnets = Collection(self.gen_magnets(field_strength,magnet_pos,magnet_pos_offsets, \
+                                            magnet_angle,magnet_angle_offsets))
+            magnets.rotate(angle=pos[0]*180.0/math.pi,axis=(1,0,0), anchor=(0,0,0))
+            magnets.rotate(angle=pos[1]*180.0/math.pi,axis=(0,1,0), anchor=(0,0,0))
+            magnets.rotate(angle=pos[2]*180.0/math.pi,axis=(0,0,1), anchor=(0,0,0))
 
-        fig = plt.figure(figsize=(18,7))
-        ax1 = fig.add_subplot(131, projection='3d')  # 3D-axis
-        ax2 = fig.add_subplot(132)                   # 2D-axis
-        ax3 = fig.add_subplot(133)                   # 2D-axis
-        Bs = magnets.getB(POS0).reshape(44,33,3)     #<--VECTORIZED
-        X,Y = np.meshgrid(xs,ys)
-        U,V = Bs[:,:,0], Bs[:,:,2]
-        ax2.streamplot(X, Y, U, V, color=np.log(U**2+V**2))
+            sensors = self.gen_sensors(sensor_pos,sensor_pos_offsets,sensor_angle,sensor_angle_offsets)
 
-        Bs = magnets.getB(POS1).reshape(44,33,3)     #<--VECTORIZED
-        X,Z = np.meshgrid(xs,zs)
-        U,V = Bs[:,:,0], Bs[:,:,2]
-        ax3.streamplot(X, Z, U, V, color=np.log(U**2+V**2))
-        displaySystem(magnets, subplotAx=ax1, suppress=True, sensors=sensors, direc=True)
+            # calculate B-field on a grid
+            xs = np.linspace(-40,40,33)
+            ys = np.linspace(-40,40,44)
+            zs = np.linspace(-40,40,44)
+            POS0 = np.array([(x,0,z) for z in zs for x in xs])
+            POS1 = np.array([(x,y,0) for y in ys for x in xs])
 
-        for sens in sensors:
-            print(sens.getB(magnets))
+            fig = plt.figure(figsize=(18,7))
+            ax1 = fig.add_subplot(131, projection='3d')  # 3D-axis
+            ax2 = fig.add_subplot(132)                   # 2D-axis
+            ax3 = fig.add_subplot(133)                   # 2D-axis
+            Bs = magnets.getB(POS0).reshape(44,33,3)     #<--VECTORIZED
+            X,Y = np.meshgrid(xs,ys)
+            U,V = Bs[:,:,0], Bs[:,:,2]
+            ax2.streamplot(X, Y, U, V, color=np.log(U**2+V**2))
 
-        plt.show()
+            Bs = magnets.getB(POS1).reshape(44,33,3)     #<--VECTORIZED
+            X,Z = np.meshgrid(xs,zs)
+            U,V = Bs[:,:,0], Bs[:,:,2]
+            ax3.streamplot(X, Z, U, V, color=np.log(U**2+V**2))
+            displaySystem(magnets, subplotAx=ax1, suppress=True, sensors=sensors, direc=True)
+
+            for sens in sensors:
+                print(sens.getB(magnets))
+
+            plt.show()
 
 MagneticFieldCalibrator(sys.argv[1],sys.argv[2])
     #

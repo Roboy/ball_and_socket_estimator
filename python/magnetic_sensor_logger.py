@@ -28,6 +28,11 @@ k = 0
 
 def MagneticSensorCallback(data):
     global k
+
+    if k>=len(ball_pos):
+        rospy.signal_shutdown("no more")
+        return
+
     msg = MagneticSensor()
     if data.id is not int(balljoint_config['id']):
         return
@@ -41,6 +46,7 @@ def MagneticSensorCallback(data):
     sensor_log['sensor_values'].append(values)
     k = k+1
     print(sensor_log)
+
     input("Press Enter for next ball position: %f %f %f"%(ball_pos[k][0],ball_pos[k][1],ball_pos[k][2]))
 
 rospy.init_node('magnetic_sensor_logger')
