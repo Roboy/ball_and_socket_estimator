@@ -35,7 +35,7 @@ def gen_sensors(offset,angles):
 
 def gen_magnets(fieldstrength,offset,angles):
     magnets = []
-    field = [(0,-fieldstrength[0],0),(0,0,fieldstrength[1]),(0,0,-fieldstrength[2])]
+    field = [(0,fieldstrength[0],0),(0,0,fieldstrength[1]),(0,0,fieldstrength[2])]
     for i in range(0,3):
         magnet = Box(mag=field[i],dim=(10,10,10),\
         pos=(13*math.sin(i*(360/3)/180.0*math.pi)+offset[i][0],13*math.cos(i*(360/3)/180.0*math.pi+offset[i][1]),offset[i][2]),\
@@ -55,6 +55,32 @@ if(path.exists(sensor_log_file)):
 else:
     sensor_log = {'position':[],'sensor_values':[]}
 
+def plotMagnets(magnets):
+    # calculate B-field on a grid
+    xs = np.linspace(-40,40,33)
+    ys = np.linspace(-40,40,44)
+    zs = np.linspace(-40,40,44)
+    POS0 = np.array([(x,0,z) for z in zs for x in xs])
+    POS1 = np.array([(x,y,0) for y in ys for x in xs])
+
+    fig = plt.figure(figsize=(18,7))
+    ax1 = fig.add_subplot(131, projection='3d')  # 3D-axis
+    ax2 = fig.add_subplot(132)                   # 2D-axis
+    ax3 = fig.add_subplot(133)                   # 2D-axis
+    Bs = magnets.getB(POS0).reshape(44,33,3)     #<--VECTORIZED
+    X,Y = np.meshgrid(xs,ys)
+    U,V = Bs[:,:,0], Bs[:,:,2]
+    ax2.streamplot(X, Y, U, V, color=np.log(U**2+V**2))
+
+    Bs = magnets.getB(POS1).reshape(44,33,3)     #<--VECTORIZED
+    X,Z = np.meshgrid(xs,zs)
+    U,V = Bs[:,:,0], Bs[:,:,2]
+    ax3.streamplot(X, Z, U, V, color=np.log(U**2+V**2))
+    displaySystem(magnets, subplotAx=ax1, suppress=True, sensors=sensors, direc=True)
+    plt.show()
+
+magnets = Collection(gen_magnets(balljoint_config['field_strength'],balljoint_config['magnet_offsets'], balljoint_config['magnet_angles']))
+plotMagnets(magnets)
 
 def JointTarget(data):
     rospy.loginfo("new joint target: %f %f %f"%(data.position[0],data.position[1],data.position[2]))

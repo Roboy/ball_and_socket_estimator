@@ -37,7 +37,7 @@ def gen_sensors(offset,angles):
 
 def gen_magnets(fieldstrength,offset,angles):
     magnets = []
-    field = [(0,-fieldstrength[0],0),(0,0,fieldstrength[1]),(0,0,-fieldstrength[2])]
+    field = [(0,fieldstrength[0],0),(0,0,fieldstrength[1]),(0,0,fieldstrength[2])]
     for i in range(0,3):
         magnet = Box(mag=field[i],dim=(10,10,10),\
         pos=(13*math.sin(i*(360/3)/180.0*math.pi)+offset[i][0],13*math.cos(i*(360/3)/180.0*math.pi+offset[i][1]),offset[i][2]),\
@@ -97,11 +97,11 @@ magnet_angles = [[res.x[12],res.x[13],res.x[14]],[res.x[15],res.x[16],res.x[17]]
 sensor_offsets = [[res.x[21],res.x[22],res.x[23]],[res.x[24],res.x[25],res.x[26]],[res.x[27],res.x[28],res.x[29]],[res.x[30],res.x[31],res.x[32]]]
 sensor_angles = [[res.x[33],res.x[34],res.x[35],res.x[36]],[res.x[37],res.x[38],res.x[39],res.x[40]],[res.x[41],res.x[42],res.x[43],res.x[44]]]
 print("b_field without calibration:")
-c = Collection(gen_magnets([1300,1300,1300],[[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]))
+c = Collection(gen_magnets(balljoint_config['field_strength'],[[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]))
 sensors = gen_sensors([[0,0,0],[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0]])
 for sens in sensors:
     print(sens.getB(c))
-print("b_field_error without calibration: %f\n"%func([1300,1300,1300,\
+print("b_field_error without calibration: %f\n"%func([balljoint_config['field_strength'][0],balljoint_config['field_strength'][1],balljoint_config['field_strength'][2],\
 0,0,0,0,0,0,0,0,0,\
 0,0,0,0,0,0,0,0,0,\
 0,0,0,0,0,0,0,0,0,0,0,0,\
