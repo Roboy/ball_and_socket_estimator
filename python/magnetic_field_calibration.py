@@ -26,13 +26,14 @@ class MagneticFieldCalibrator:
     upper_bound = []
     lower_bound = []
     calib = []
+    config_file = None
 
     def __init__(self, ball_joint_config_file, sensor_log_file):
         self.balljoint_config = load(open(ball_joint_config_file, 'r'), Loader=Loader)
         print(self.balljoint_config)
         self.sensor_log = load(open(sensor_log_file, 'r'), Loader=Loader)
         print(self.sensor_log)
-
+        self.config_file = ball_joint_config_file
         self.number_of_magnets = len(self.balljoint_config['field_strength'])
         self.number_of_sensors = len(self.balljoint_config['sensor_pos'])
 
@@ -50,32 +51,32 @@ class MagneticFieldCalibrator:
                 self.number_of_parameters = self.number_of_parameters+self.number_of_magnets*3
                 for i in range(0,self.number_of_magnets*3):
                     self.initial.append(0)
-                    self.upper_bound.append(1)
-                    self.lower_bound.append(-1)
+                    self.upper_bound.append(5)
+                    self.lower_bound.append(-5)
                 self.calib.append(1)
                 print('\tmagnet_pos')
             if c=='magnet_angle':
                 self.number_of_parameters = self.number_of_parameters+self.number_of_magnets*3
                 for i in range(0,self.number_of_magnets*3):
                     self.initial.append(0)
-                    self.upper_bound.append(5)
-                    self.lower_bound.append(-5)
+                    self.upper_bound.append(10)
+                    self.lower_bound.append(-10)
                 self.calib.append(2)
                 print('\tmagnet_angle')
             if c=='sensor_pos':
                 self.number_of_parameters = self.number_of_parameters+self.number_of_sensors*3
                 for i in range(0,self.number_of_sensors*3):
                     self.initial.append(0)
-                    self.upper_bound.append(1)
-                    self.lower_bound.append(-1)
+                    self.upper_bound.append(5)
+                    self.lower_bound.append(-5)
                 self.calib.append(3)
                 print('\tsensor_pos')
             if c=='sensor_angle':
                 self.number_of_parameters = self.number_of_parameters+self.number_of_sensors*3
                 for i in range(0,self.number_of_sensors*3):
                     self.initial.append(0)
-                    self.upper_bound.append(5)
-                    self.lower_bound.append(-5)
+                    self.upper_bound.append(10)
+                    self.lower_bound.append(-10)
                 self.calib.append(4)
                 print('\tsensor_angle')
 
@@ -202,7 +203,7 @@ class MagneticFieldCalibrator:
             print("target b_field for %f %f %f"%(pos[j][0],pos[j][1],pos[j][2]))
             i = 0
             for sens in sensors:
-                print(target[i])
+                print('%.4f    %.4f    %.4f'%(target[i][0],target[i][1],target[i][2]))
                 i = i+1
             print("b_field with calibration:")
             c = Collection(self.gen_magnets(field_strength,magnet_pos,magnet_pos_offsets, \
@@ -211,8 +212,9 @@ class MagneticFieldCalibrator:
             c.rotate(angle=pos[j][1]*180.0/math.pi,axis=(0,1,0), anchor=(0,0,0))
             c.rotate(angle=pos[j][2]*180.0/math.pi,axis=(0,0,1), anchor=(0,0,0))
             for sens in sensors:
-                print(sens.getB(c))
-            print('----------------------------------\n')
+                mag = sens.getB(c)
+                print('%.4f    %.4f    %.4f'%(mag[0],mag[1],mag[2]))
+            print('----------------------------------')
             j = j+1
 
         print("\noptimization results:\n")
@@ -220,18 +222,29 @@ class MagneticFieldCalibrator:
             if c==0:
                 print('field_strength')
                 print(field_strength)
+                self.balljoint_config['field_strength'] = field_strength
             if c==1:
                 print('magnet_pos_offsets')
                 print(magnet_pos_offsets)
+                self.balljoint_config['magnet_pos_offsets'] = magnet_pos_offsets
             if c==2:
                 print('magnet_angle_offsets')
                 print(magnet_angle_offsets)
+                self.balljoint_config['magnet_angle_offsets'] = magnet_angle_offsets
             if c==3:
                 print('sensor_pos_offsets')
                 print(sensor_pos_offsets)
+                self.balljoint_config['sensor_pos_offsets'] = sensor_pos_offsets
             if c==4:
                 print('sensor_angle_offsets')
                 print(sensor_angle_offsets)
+                self.balljoint_config['sensor_angle_offsets'] = sensor_angle_offsets
+
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        input("Enter to write optimization to config file %s_%s..."%(timestamp,self.config_file))
+
+        with open(timestamp+'_'+self.config_file, 'w') as file:
+            documents = dump(self.balljoint_config, file)
 
     def visualizeSetup(self):
         field_strength = self.balljoint_config['field_strength']

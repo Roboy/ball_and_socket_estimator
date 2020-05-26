@@ -11,7 +11,7 @@ from visualization_msgs.msg import Marker
 import geometry_msgs.msg
 
 rospy.init_node('shoulder_predictor',anonymous=True)
-normalize_magnetic_strength = True
+normalize_magnetic_strength = False
 
 if len(sys.argv) < 2:
     print("\nUSAGE: python predict.py body_part id, e.g. \n python predict.py shoulder_left 0\n")
@@ -117,7 +117,7 @@ class ball_in_socket_estimator:
                 elif self.model_to_publish_name=="wrist_left":
                     self.msg.position = [-euler[1], -euler[0], -euler[2]]
                 elif self.model_to_publish_name=="shoulder_left":
-                    self.msg.position = [euler[1]-10/180.0*math.pi, euler[0]-30/180.0*math.pi, euler[2]]
+                    self.msg.position = [euler[1], euler[0], euler[2]]
                 else:
                     self.msg.position = [euler[0], euler[1], euler[2]]
 
