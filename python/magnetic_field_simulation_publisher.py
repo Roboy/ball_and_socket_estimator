@@ -122,9 +122,9 @@ def JointTarget(data):
         msg.z.append(val[2])
         values.append((val[0],val[1],val[2]))
     magneticSensor_pub.publish(msg)
-    sensor_log['position'].append((data.position[0]*180.0/math.pi,data.position[1]*180.0/math.pi,data.position[2]*180.0/math.pi))
-    sensor_log['sensor_values'].append(values)
-    print(sensor_log)
+    # sensor_log['position'].append((data.position[0]*180.0/math.pi,data.position[1]*180.0/math.pi,data.position[2]*180.0/math.pi))
+    # sensor_log['sensor_values'].append(values)
+    # print(sensor_log)
 
 joint_state_sub = rospy.Subscriber('joint_targets', sensor_msgs.msg.JointState, JointTarget, queue_size=1)
 

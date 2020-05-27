@@ -24,14 +24,15 @@ rospy.init_node('magnetic_field_pose_estimation')
 joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
 b_target = [(0,0,0),(0,0,0),(0,0,0),(0,0,0)]
 
-body_part = "shoulder_left"
-normalize_magnetic_strength = True
 
-if len(sys.argv) < 2:
-    print("\nUSAGE: python3 magnetic_field_simulation_pose_estimation.py balljoint_config_yaml, e.g. \n python3 magnetic_field_simulation_pose_estimation.py test.yaml \n")
+normalize_magnetic_strength = False
+
+if len(sys.argv) < 3:
+    print("\nUSAGE: python3 magnetic_field_simulation_pose_estimation.py balljoint_config_yaml body_part, e.g. \n python3 magnetic_field_simulation_pose_estimation.py test.yaml head\n")
     sys.exit()
 
 balljoint_config = load(open(sys.argv[1], 'r'), Loader=Loader)
+body_part = sys.argv[2]
 
 def gen_sensors(pos,pos_offset,angle,angle_offset):
     sensors = []
@@ -80,18 +81,22 @@ def func(x):
     # print(b_error)
     return [b_error]
 
+pos_estimate_prev = [0,0,0]
+
 def magneticsCallback(data):
     if(data.id != balljoint_config['id']):
         return
+    global pos_estimate_prev
     for i in range(0,4):
         val = np.array((data.x[i], data.y[i], data.z[i]))
         if normalize_magnetic_strength:
             val /= np.linalg.norm(val)
         b_target[i] = val
-    print(b_target)
-    res = least_squares(func, [0,0,0], bounds = ((-360,-360,-360), (360, 360, 360)))
+    # print(b_target)
+    res = least_squares(func, [0,0,0], bounds = ((-90,-90,-90), (90, 90, 90)),ftol=1e-8, xtol=1e-8)#,max_nfev=20
     b_field_error = res.cost
-    print("result %.3f %.3f %.3f b-field error %.3f\nb_target %.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f"%(res.x[0],res.x[1],res.x[2],res.cost,b_target[0][0],b_target[0][1],b_target[0][2],b_target[1][0],b_target[1][1],b_target[1][2],b_target[2][0],b_target[2][1],b_target[2][2],b_target[3][0],b_target[3][1],b_target[3][2]))
+    rospy.loginfo_throttle(1,"result %.3f %.3f %.3f b-field error %.3f"%(res.x[0],res.x[1],res.x[2],res.cost))
+    # print("result %.3f %.3f %.3f b-field error %.3f\nb_target %.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f"%(res.x[0],res.x[1],res.x[2],res.cost,b_target[0][0],b_target[0][1],b_target[0][2],b_target[1][0],b_target[1][1],b_target[1][2],b_target[2][0],b_target[2][1],b_target[2][2],b_target[3][0],b_target[3][1],b_target[3][2]))
     msg = sensor_msgs.msg.JointState()
     msg.header = std_msgs.msg.Header()
     msg.header.stamp = rospy.Time.now()
@@ -108,6 +113,7 @@ def magneticsCallback(data):
     else:
         msg.position = [euler[0], euler[1], euler[2]]
     joint_state.publish(msg)
+    pos_estimate_prev = res.x
 
 rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, magneticsCallback,queue_size=1)
 rospy.spin()

@@ -149,12 +149,12 @@ class ball_in_socket_estimator:
         if train:
             self.model = Sequential()
             self.model.add(Dense(units=100, input_dim=12,kernel_initializer='normal', activation='relu'))
-            # self.model.add(Dropout(0.01))
+            self.model.add(Dropout(0.01))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
             self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            # self.model.add(Dropout(0.01))
+            self.model.add(Dropout(0.01))
             #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
             # self.model.add(Dropout(0.1))
@@ -217,7 +217,7 @@ class ball_in_socket_estimator:
             # out = self.model.predict(train_X)
             # print(out)
 
-            earlyStopping = EarlyStopping(monitor='val_loss', patience=50, verbose=2, mode='min')
+            earlyStopping = EarlyStopping(monitor='val_loss', patience=20, verbose=2, mode='min')
             mcp_save = ModelCheckpoint(self.body_part+'model.h5', save_best_only=True, monitor='val_loss', mode='min')
 
             # fit network

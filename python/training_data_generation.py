@@ -8,18 +8,24 @@ import random, math
 from multiprocessing import Pool, freeze_support, get_context, set_start_method
 from yaml import load,dump,Loader,Dumper
 import sys
+import rospy
 
 num_processes = 60
-iterations = 1000000
-normalize_magnetic_strength = False
+iterations = 100000
 
-body_part = "shoulder_left"
-
-if len(sys.argv) < 2:
-    print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml, e.g. \n python3 training_data_generation.py test.yaml \n")
+if len(sys.argv) < 5:
+    print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml body_part normalize_magnetic_strength visualize_only , e.g. \n python3 training_data_generation.py test.yaml head 1 0\n")
     sys.exit()
 
 balljoint_config = load(open(sys.argv[1], 'r'), Loader=Loader)
+body_part = sys.argv[2]
+normalize_magnetic_strength = sys.argv[3]=='1'
+visualize_only = sys.argv[4]=='1'
+
+if normalize_magnetic_strength:
+    rospy.logwarn("normalizing magnetic field")
+else:
+    rospy.logwarn("NOT! normalizing magnetic field")
 
 print("id: %d"%balljoint_config['id'])
 print("calibration")
@@ -94,13 +100,17 @@ def plotMagnets(magnets):
     displaySystem(magnets, subplotAx=ax1, suppress=True, sensors=sensors, direc=True)
     plt.show()
 
+sensors = gen_sensors(balljoint_config['sensor_pos'],balljoint_config['sensor_pos_offsets'],balljoint_config['sensor_angle'],balljoint_config['sensor_angle_offsets'])
+
 def generateMagneticData(iter):
     if body_part=="wrist_left":
-        rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-80,80)]
-    if body_part=="head":
-        rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-80,80)]
-    if body_part=="shoulder_left":
-        rot = [random.uniform(-80,80),random.uniform(-80,80),random.uniform(-80,80)]
+        rot = [random.uniform(-40,40),random.uniform(-40,40),random.uniform(-40,40)]
+    elif body_part=="head":
+        rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-90,90)]
+    elif body_part=="shoulder_left":
+        rot = [random.uniform(-70,70),random.uniform(-70,70),random.uniform(-45,45)]
+    else:
+        rot = [random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)]
     # rot = [0,0,0]
 
     magnets = Collection(gen_magnets(balljoint_config['field_strength'],balljoint_config['magnet_dimension'],balljoint_config['magnet_pos'],balljoint_config['magnet_pos_offsets'], \
@@ -118,10 +128,8 @@ def generateMagneticData(iter):
         print("%d/%d"%(iter,iterations))
     return (data, rot)
 
-sensors = gen_sensors(balljoint_config['sensor_pos'],balljoint_config['sensor_pos_offsets'],balljoint_config['sensor_angle'],balljoint_config['sensor_angle_offsets'])
 magnets = Collection(gen_magnets(balljoint_config['field_strength'],balljoint_config['magnet_dimension'],balljoint_config['magnet_pos'],balljoint_config['magnet_pos_offsets'], \
                                 balljoint_config['magnet_angle'],balljoint_config['magnet_angle_offsets']))
-# plotMagnets(magnets)
 
 data_norm = []
 data = []
@@ -134,6 +142,10 @@ for sens in sensors:
 print("sensor values:\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n"%(data[0][0],data[0][1],data[0][2],data[1][0],data[1][1],data[1][2],data[2][0],data[2][1],data[2][2],data[3][0],data[3][1],data[3][2]))
 print("sensor values normalized:\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n"%(data_norm[0][0],data_norm[0][1],data_norm[0][2],data_norm[1][0],data_norm[1][1],data_norm[1][2],data_norm[2][0],data_norm[2][1],data_norm[2][2],data_norm[3][0],data_norm[3][1],data_norm[3][2]))
 
+if visualize_only:
+    plotMagnets(magnets)
+    sys.exit()
+
 record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
 record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
 
@@ -144,5 +156,11 @@ with Pool(processes=num_processes) as pool:
     for i in range(0,iterations):
         if(i%10000==0):
             print("%d/%d"%(i,iterations))
-        record.write(str(results[i][0][0][0])+ " " + str(results[i][0][0][1]) + " " + str(results[i][0][0][2])+ " " + str(results[i][0][1][0])+ " " + str(results[i][0][1][1])+ " " + str(results[i][0][1][2])+ " " + str(results[i][0][2][0])+ " " + str(results[i][0][2][1])+ " " + str(results[i][0][2][2])  + " " + str(results[i][0][3][0])+ " " + str(results[i][0][3][1])+ " " + str(results[i][0][3][2])+ " " + str(results[i][1][0]/180.0*math.pi) + " " + str(results[i][1][1]/180.0*math.pi) + " " + str(results[i][1][2]/180.0*math.pi) + "\n")
+        record.write(\
+            str(results[i][0][0][0])+ " " + str(results[i][0][0][1]) + " " + str(results[i][0][0][2])+ " " + \
+            str(results[i][0][1][0])+ " " + str(results[i][0][1][1])+ " " + str(results[i][0][1][2])+ " " + \
+            str(results[i][0][2][0])+ " " + str(results[i][0][2][1])+ " " + str(results[i][0][2][2])  + " " + \
+            str(results[i][0][3][0])+ " " + str(results[i][0][3][1])+ " " + str(results[i][0][3][2])+ " " + \
+            str(results[i][1][0]/180.0*math.pi) + " " + str(results[i][1][1]/180.0*math.pi) + " " + str(results[i][1][2]/180.0*math.pi) + "\n")
 record.close()
+print('data saved to /home/letrend/workspace/roboy3/'+body_part+'_data0.log')

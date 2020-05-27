@@ -19,7 +19,7 @@ field_strength:
 id: 0
 magnet_angle:
 - [90, 0, 0]
-- [0, 90, 30]
+- [0, -180, 30]
 - [0, 0, 60]
 magnet_angle_offsets:
 - [0.0, 0.0, 0.0]

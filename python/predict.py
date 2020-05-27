@@ -21,6 +21,8 @@ body_part = sys.argv[1]
 id = int(sys.argv[2])
 
 print("prediction for %s with id %d"%(body_part,id))
+if normalize_magnetic_strength:
+    rospy.logwarn("normalizing magnetic field")
 
 class ball_in_socket_estimator:
     rospack = rospkg.RosPack()
@@ -46,7 +48,7 @@ class ball_in_socket_estimator:
         self.model = model_from_json(loaded_model_json)
         # load weights into new model
         self.model.load_weights(self.base_path+self.model_name+".h5")
-        print("Loaded model from disk")
+        print("Loaded model from disk: "+self.base_path+self.model_name+".h5")
         self.msg.position = [0,0,0]
         self.listener()
 
@@ -105,6 +107,12 @@ class ball_in_socket_estimator:
                 values.append(val[2])
             x_test = np.array(values)#np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
             x_test=x_test.reshape((1,12))
+            rospy.loginfo_throttle(5,"mag data: \n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f\n%.3f %.3f %.3f"%(\
+                values[0],values[1],values[2],\
+                values[3],values[4],values[5],\
+                values[6],values[7],values[8],\
+                values[9],values[10],values[11])\
+            )
             with self.graph.as_default(): # we need this otherwise the precition does not work ros callback
                 euler = self.model.predict(x_test)
                 euler = [euler[0,0],euler[0,1],euler[0,2]]
@@ -117,7 +125,7 @@ class ball_in_socket_estimator:
                 elif self.model_to_publish_name=="wrist_left":
                     self.msg.position = [-euler[1], -euler[0], -euler[2]]
                 elif self.model_to_publish_name=="shoulder_left":
-                    self.msg.position = [euler[1], euler[0], euler[2]]
+                    self.msg.position = [euler[1], euler[0], euler[2]]#[euler[1]+51.94/180*math.pi, euler[0]+70.96/180*math.pi, euler[2]-35.95/180*math.pi]
                 else:
                     self.msg.position = [euler[0], euler[1], euler[2]]
 
@@ -132,7 +140,7 @@ class ball_in_socket_estimator:
                 error_roll = (((self.roll-euler[0])*180.0/math.pi)**2)**0.5
                 error_pitch = (((self.pitch-euler[1])*180.0/math.pi)**2)**0.5
                 error_yaw = (((self.yaw-euler[2])**2)*180.0/math.pi)**0.5
-                rospy.loginfo_throttle(1, "predict: %f %f %f, truth %f %f %f\nerror %f %f %f"%(euler[0]*180.0/math.pi,euler[1]*180.0/math.pi,euler[2]*180.0/math.pi,self.roll*180.0/math.pi,self.pitch*180.0/math.pi,self.yaw*180.0/math.pi,error_roll,error_pitch,error_yaw))
+                rospy.loginfo_throttle(1, "predict: %f %f %f, truth %f %f %f\nerror %f %f %f"%(self.msg.position[0]*180.0/math.pi,self.msg.position[1]*180.0/math.pi,self.msg.position[2]*180.0/math.pi,self.roll*180.0/math.pi,self.pitch*180.0/math.pi,self.yaw*180.0/math.pi,error_roll,error_pitch,error_yaw))
 
                 self.publishErrorCube(error_roll,error_pitch,error_yaw)
                 self.publishErrorText(error_roll,error_pitch,error_yaw)
