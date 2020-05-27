@@ -28,111 +28,28 @@ magnet_pos:
 magnet_pos_offsets:
 - [0.0, 0.0, 0.0]
 - [0.0, 0.0, 0.0]
+sensor_pos:
+- [-22.4,7.25,0]
+- [-14,-19.5,0]
+- [14.3,-19.6,0]
+- [22.325,6.675,0]
 sensor_angle:
 - [0, 0, 90]
 - [0, 0, 90]
 - [0, 0, 90]
 - [0, 0, 90]
-sensor_angle_offsets:
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      couY0RskN7w=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      rB0GF2kAArw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      yjTNkhYz6L8=
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      4wPlqNg9IDw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      xRAzi0ssEDw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      YC+sy5qiDcA=
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      n+Mab34vNrw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      zQg7aLJDMrw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      oYTYtFvL978=
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      hDZKiBGeJjw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      2vk8fyasCTw=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      QvYJxsUY/j8=
-sensor_pos:
-- [-22.7, 7.7, 0.9]
-- [-14.7, -19.4, 0.9]
-- [14.7, -19.4, 0.9]
-- [22.7, 7.7, 0.9]
 sensor_pos_offsets:
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      URMwbEQ8uT8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      H8UT8ittyb8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      aowNkPpT7b8=
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      pvVFOaDS8T8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      94jAysXL4D8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      fVLQMSxB+r8=
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      03suQtDGw78=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      6d9Po7xd4L8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      p7IFAe8L8r8=
-- - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      /X38pTJWzL8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      ZGPa6hOp1L8=
-  - !!python/object/apply:numpy.core.multiarray.scalar
-    - *id001
-    - !!binary |
-      wvpTANHS6b8=
+- [0,0,0]
+- [0,0,0]
+- [0,0,0]
+- [0,0,0]
+sensor_angle:
+- [0,0,90]
+- [0,0,90]
+- [0,0,90]
+- [0,0,90]
+sensor_angle_offsets:
+- [0,0,0]
+- [0,0,0]
+- [0,0,0]
+- [0,0,0]

@@ -11,7 +11,7 @@ import sys
 import rospy
 
 num_processes = 60
-iterations = 100000
+iterations = 10000
 
 if len(sys.argv) < 5:
     print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml body_part normalize_magnetic_strength visualize_only , e.g. \n python3 training_data_generation.py test.yaml head 1 0\n")
