@@ -9,18 +9,22 @@ import matplotlib.animation as manimation
 import random, math
 import sensor_msgs.msg, std_msgs
 from yaml import load,dump,Loader,Dumper
-import sys
+import sys, time
 from os import path
 import pandas
 from pandas import DataFrame
 from pandas import concat
 from tqdm import tqdm
+from multiprocessing import Pool, freeze_support, get_context, set_start_method
 
-if len(sys.argv) < 2:
-    print("\nUSAGE: python3 magnetic_field_collision.py body_part, e.g. \n python3 magnetic_field_collision.py head \n")
+num_processes = 62
+
+if len(sys.argv) < 3:
+    print("\nUSAGE: python3 magnetic_field_collision.py body_part multi_processing, e.g. \n python3 magnetic_field_collision.py head 0\n")
     sys.exit()
 
 body_part = sys.argv[1]
+multi_processing = sys.argv[2]=='1'
 
 dataset = pandas.read_csv('/home/letrend/workspace/roboy3/'+body_part+'_data0.log', delim_whitespace=True)
 dataset = dataset.values[0:len(dataset),0:]
@@ -41,38 +45,94 @@ print(pos[0])
 
 number_of_samples = len(pos)
 print('number of samples %d'%number_of_samples)
-position_difference_sensitivity = 5/180*math.pi
-magnetic_field_difference_sensitivity = 10
+position_difference_sensitivity = 1/180*math.pi
+magnetic_field_difference_sensitivity = 1.44
 
-comparisons = 0
+comparisons = (number_of_samples-1)*number_of_samples/2
+print('comparisons %d'%comparisons)
+print('approx time %d seconds or %f minutes'%(comparisons/1283370,comparisons/1283370/60))
+timestamp = time.strftime("%H:%M:%S")
+print('start time: %s'%timestamp)
 magnetic_field_difference = []
 position_difference = []
-
-for i in range(0,number_of_samples):
-    for j in range(i+1,number_of_samples):
-        mag_diff = 0
-        for k in range(0,4):
-            mag_diff += np.linalg.norm(sensor_values[k][i]-sensor_values[k][j])
-        magnetic_field_difference.append(mag_diff)
-        pos_diff = np.linalg.norm(pos[i]-pos[j])
-        position_difference.append(pos_diff)
-        if pos_diff>position_difference_sensitivity and mag_diff<magnetic_field_difference_sensitivity:
+collisions = 0
+if multi_processing: 
+    def collisionFunc(i):
+        collision_j = []
+        global iterations
+        collisions = 0
+        for j in range(i+1,number_of_samples):
+            mag_diff = 0
             for k in range(0,4):
-                print(k)
-                print(sensor_values[k][i])
-                print(sensor_values[k][j])
-            print('positions in degree')
-            print(pos[i]*180/math.pi)
-            print(pos[j]*180/math.pi)
-            print('mag_diff')
-            print(mag_diff)
-            print('pos_diff in degree')
-            print(pos_diff*180/math.pi)
-            print('oh oh')
+                mag_diff += np.linalg.norm(sensor_values[k][i]-sensor_values[k][j])
+            # magnetic_field_difference.append(mag_diff)
+            # pos_diff = np.linalg.norm(pos[i]-pos[j])
+            # position_difference.append(pos_diff)
+            if mag_diff<magnetic_field_difference_sensitivity:# and pos_diff>position_difference_sensitivity:
+                collisions+=1
+                collision_j.append(j)
+                if(collisions%100==0):
+                    print("collisions: %d"%collisions)
 
-        comparisons += 1
+        return (collisions,i,collision_j)
+    args = range(0,number_of_samples,1)
+    with Pool(processes=num_processes) as pool:
+        start = time.time()
+        results = pool.starmap(collisionFunc, zip(args))
+        end = time.time()
+        collisions = 0
+        for n in range(0,number_of_samples):
+            collisions += results[n][0]
+            for j in results[n][2]:
+                print("%d--%d"%(n,j))
+                print(pos[n])
+                print(pos[j])
+                print("---")
 
 
-print('comparisons: %d'%comparisons)
-# print(magnetic_field_difference)
-# print(position_difference)
+    print('comparisons: %d'%comparisons)
+    print('collisions: %d'%collisions)
+    print('actual time: %d'%(end - start))
+
+
+    # print(magnetic_field_difference)
+    # print(position_difference)
+else:
+    status = tqdm(total=comparisons, desc='comparisons', position=0)
+
+    iter = 0
+    for i in range(0,number_of_samples):
+        for j in range(i+1,number_of_samples):
+            mag_diff = 0
+            for k in range(0,4):
+                mag_diff += np.linalg.norm(sensor_values[k][i]-sensor_values[k][j])
+            # magnetic_field_difference.append(mag_diff)
+            pos_diff = np.linalg.norm(pos[i]-pos[j])
+            # position_difference.append(pos_diff)
+            if mag_diff<magnetic_field_difference_sensitivity and pos_diff>position_difference_sensitivity:
+                collisions+=1
+                p0 = pos[i]
+                p1 = pos[j]
+                if(collisions%100==0):
+                    print("collisions: %d"%collisions)
+                # for k in range(0,4):
+                #     print(k)
+                #     print(sensor_values[k][i])
+                #     print(sensor_values[k][j])
+                # print('positions in degree')
+                # print(pos[i]*180/math.pi)
+                # print(pos[j]*180/math.pi)
+                # print('mag_diff')
+                # print(mag_diff)
+                # print('pos_diff in degree')
+                # print(pos_diff*180/math.pi)
+                # print('oh oh')
+
+            iter+=1
+            status.update(1)
+
+
+    print('comparisons: %d'%comparisons)
+    print('collisions: %d'%collisions)
+    # print(magnetic_field_difference)
+    # print(position_difference)

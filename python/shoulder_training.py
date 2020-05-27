@@ -163,6 +163,8 @@ class ball_in_socket_estimator:
             self.model.compile(loss='mean_squared_error',
                           optimizer='adam',
                           metrics=['acc'])
+            self.model.summary()
+
             global quaternion_set
             global sensors_set
             global record

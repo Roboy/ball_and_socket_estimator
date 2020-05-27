@@ -11,16 +11,17 @@ import sys
 import rospy
 
 num_processes = 60
-iterations = 10000
+iterations = 1000
 
-if len(sys.argv) < 5:
-    print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml body_part normalize_magnetic_strength visualize_only , e.g. \n python3 training_data_generation.py test.yaml head 1 0\n")
+if len(sys.argv) < 6:
+    print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml body_part normalize_magnetic_strength sampling_method visualize_only , e.g. \n python3 training_data_generation.py test.yaml head 0 random 0\n")
     sys.exit()
 
 balljoint_config = load(open(sys.argv[1], 'r'), Loader=Loader)
 body_part = sys.argv[2]
 normalize_magnetic_strength = sys.argv[3]=='1'
-visualize_only = sys.argv[4]=='1'
+sampling_method = sys.argv[4]
+visualize_only = sys.argv[5]=='1'
 
 if normalize_magnetic_strength:
     rospy.logwarn("normalizing magnetic field")
@@ -102,15 +103,20 @@ def plotMagnets(magnets):
 
 sensors = gen_sensors(balljoint_config['sensor_pos'],balljoint_config['sensor_pos_offsets'],balljoint_config['sensor_angle'],balljoint_config['sensor_angle_offsets'])
 
+grid_position = []
+
 def generateMagneticData(iter):
-    if body_part=="wrist_left":
-        rot = [random.uniform(-40,40),random.uniform(-40,40),random.uniform(-40,40)]
-    elif body_part=="head":
-        rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-90,90)]
-    elif body_part=="shoulder_left":
-        rot = [random.uniform(-70,70),random.uniform(-70,70),random.uniform(-45,45)]
-    else:
-        rot = [random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)]
+    if sampling_method=='random':
+        if body_part=="wrist_left":
+            rot = [random.uniform(-40,40),random.uniform(-40,40),random.uniform(-40,40)]
+        elif body_part=="head":
+            rot = [random.uniform(-50,50),random.uniform(-50,50),random.uniform(-90,90)]
+        elif body_part=="shoulder_left":
+            rot = [random.uniform(-70,70),random.uniform(-70,70),random.uniform(-45,45)]
+        else:
+            rot = [random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)]
+    elif sampling_method=='grid':
+        rot = grid_position[iter]
     # rot = [0,0,0]
 
     magnets = Collection(gen_magnets(balljoint_config['field_strength'],balljoint_config['magnet_dimension'],balljoint_config['magnet_pos'],balljoint_config['magnet_pos_offsets'], \
@@ -148,6 +154,14 @@ if visualize_only:
 
 record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
 record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
+
+if sampling_method=='grid':
+    iterations = 0
+    for i in range(-60,60,3):
+        for j in range(-60,60,3):
+            for k in range(-70,70,3):
+                grid_position.append([i,j,k])
+                iterations+=1
 
 set_start_method('fork',True)
 args = range(0,iterations,1)
