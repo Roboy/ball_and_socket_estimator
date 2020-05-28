@@ -93,7 +93,7 @@ def magneticsCallback(data):
             val /= np.linalg.norm(val)
         b_target[i] = val
     # print(b_target)
-    res = least_squares(func, [0,0,0], bounds = ((-90,-90,-90), (90, 90, 90)),ftol=1e-8, xtol=1e-8)#,max_nfev=20
+    res = least_squares(func, pos_estimate_prev, bounds = ((-90,-90,-90), (90, 90, 90)),ftol=1e-8, xtol=1e-8)#,max_nfev=20
     b_field_error = res.cost
     rospy.loginfo_throttle(1,"result %.3f %.3f %.3f b-field error %.3f"%(res.x[0],res.x[1],res.x[2],res.cost))
     # print("result %.3f %.3f %.3f b-field error %.3f\nb_target %.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f\t%.3f %.3f %.3f"%(res.x[0],res.x[1],res.x[2],res.cost,b_target[0][0],b_target[0][1],b_target[0][2],b_target[1][0],b_target[1][1],b_target[1][2],b_target[2][0],b_target[2][1],b_target[2][2],b_target[3][0],b_target[3][1],b_target[3][2]))
