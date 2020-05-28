@@ -31,5 +31,5 @@ sensor_angle_offsets:
   - [0,0,0]
   - [0,0,0]
 calibration:
-  optimize: ['field_strength','magnet_angle','magnet_pos','sensor_pos','sensor_angle']
+  optimize: ['field_strength','magnet_pos','sensor_angle']
   max_nfev: 2000

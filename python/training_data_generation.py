@@ -12,16 +12,29 @@ import rospy
 
 num_processes = 60
 iterations = 1000
+grid_x_min = -20
+grid_x_max = 20
+grid_y_min = -20
+grid_y_max = 20
+grid_z_min = -20
+grid_z_max = 20
+grid_step_x = 1
+grid_step_y = 1
+grid_step_z = 1
 
-if len(sys.argv) < 6:
-    print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml body_part normalize_magnetic_strength sampling_method visualize_only , e.g. \n python3 training_data_generation.py test.yaml head 0 random 0\n")
+if len(sys.argv) < 7:
+    print("\nUSAGE: python3 training_data_generation.py balljoint_config_yaml body_part normalize_magnetic_strength sampling_method number_of_samples visualize_only , e.g. \n python3 training_data_generation.py test.yaml head 0 random 100000 0\n")
     sys.exit()
 
 balljoint_config = load(open(sys.argv[1], 'r'), Loader=Loader)
 body_part = sys.argv[2]
 normalize_magnetic_strength = sys.argv[3]=='1'
 sampling_method = sys.argv[4]
-visualize_only = sys.argv[5]=='1'
+iterations = int(sys.argv[5])
+visualize_only = sys.argv[6]=='1'
+
+if(sampling_method=='random'):
+    print('generating %d sampled'%iterations)
 
 if normalize_magnetic_strength:
     rospy.logwarn("normalizing magnetic field")
@@ -157,9 +170,9 @@ record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
 
 if sampling_method=='grid':
     iterations = 0
-    for i in range(-60,60,3):
-        for j in range(-60,60,3):
-            for k in range(-70,70,3):
+    for i in np.arange(grid_x_min,grid_x_max,grid_step_x):
+        for j in np.arange(grid_y_min,grid_y_max,grid_step_y):
+            for k in np.arange(grid_z_min,grid_z_max,grid_step_z):
                 grid_position.append([i,j,k])
                 iterations+=1
 

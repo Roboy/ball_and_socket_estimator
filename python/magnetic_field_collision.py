@@ -19,14 +19,15 @@ from multiprocessing import Pool, freeze_support, get_context, set_start_method
 
 num_processes = 62
 
-if len(sys.argv) < 3:
-    print("\nUSAGE: python3 magnetic_field_collision.py body_part multi_processing, e.g. \n python3 magnetic_field_collision.py head 0\n")
+if len(sys.argv) < 4:
+    print("\nUSAGE: python3 magnetic_field_collision.py dataset_name ball_joint_config multi_processing, e.g. \n python3 magnetic_field_collision.py head_data0.log two_magnets.yaml 0\n")
     sys.exit()
 
-body_part = sys.argv[1]
-multi_processing = sys.argv[2]=='1'
+dataset_name = sys.argv[1]
+balljoint_config = load(open(sys.argv[2], 'r'), Loader=Loader)
+multi_processing = sys.argv[3]=='1'
 
-dataset = pandas.read_csv('/home/letrend/workspace/roboy3/'+body_part+'_data0.log', delim_whitespace=True)
+dataset = pandas.read_csv('/home/letrend/workspace/roboy3/'+dataset, delim_whitespace=True)
 dataset = dataset.values[0:len(dataset),0:]
 
 sensor_values = []
@@ -53,19 +54,19 @@ print('comparisons %d'%comparisons)
 print('approx time %d seconds or %f minutes'%(comparisons/1283370,comparisons/1283370/60))
 timestamp = time.strftime("%H:%M:%S")
 print('start time: %s'%timestamp)
-magnetic_field_difference = []
-position_difference = []
 collisions = 0
-if multi_processing: 
+if multi_processing:
     def collisionFunc(i):
         collision_j = []
+        magnetic_field_difference = 0
+        # position_difference = []
         global iterations
         collisions = 0
         for j in range(i+1,number_of_samples):
             mag_diff = 0
             for k in range(0,4):
                 mag_diff += np.linalg.norm(sensor_values[k][i]-sensor_values[k][j])
-            # magnetic_field_difference.append(mag_diff)
+            magnetic_field_difference+=mag_diff
             # pos_diff = np.linalg.norm(pos[i]-pos[j])
             # position_difference.append(pos_diff)
             if mag_diff<magnetic_field_difference_sensitivity:# and pos_diff>position_difference_sensitivity:
@@ -74,15 +75,17 @@ if multi_processing:
                 if(collisions%100==0):
                     print("collisions: %d"%collisions)
 
-        return (collisions,i,collision_j)
+        return (collisions,i,collision_j,magnetic_field_difference)
     args = range(0,number_of_samples,1)
     with Pool(processes=num_processes) as pool:
         start = time.time()
         results = pool.starmap(collisionFunc, zip(args))
         end = time.time()
         collisions = 0
+        magnetic_field_difference = 0
         for n in range(0,number_of_samples):
             collisions += results[n][0]
+            magnetic_field_difference += results[n][3]
             for j in results[n][2]:
                 print("%d--%d"%(n,j))
                 print(pos[n])
@@ -90,8 +93,10 @@ if multi_processing:
                 print("---")
 
 
+
     print('comparisons: %d'%comparisons)
     print('collisions: %d'%collisions)
+    print('average magnetic_field_difference: %f'%(magnetic_field_difference/comparisons))
     print('actual time: %d'%(end - start))
 
 
