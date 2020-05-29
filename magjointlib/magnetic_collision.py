@@ -3,13 +3,12 @@ import magjoint
 import sys
 import numpy as np
 
-if len(sys.argv) < 3:
-    print("\nUSAGE: ./magnetic_collision.py dataset_name ball_joint_config visualize_only, e.g. \n python3 magnetic_collision.py head_data0.log two_magnets.yaml 1\n")
+if len(sys.argv) < 2:
+    print("\nUSAGE: ./magnetic_collision.py ball_joint_config visualize_only, e.g. \n python3 magnetic_collision.py two_magnets.yaml 1\n")
     sys.exit()
 
-dataset_name = sys.argv[1]
-balljoint_config = sys.argv[2]
-visualize_only = sys.argv[3]=='1'
+balljoint_config = sys.argv[1]
+visualize_only = sys.argv[2]=='1'
 
 ball = magjoint.BallJoint(balljoint_config)
 
@@ -42,11 +41,11 @@ if len(colliders)>0:
             print(c)
             print("magnetic dif %f"%dif)
             print("pos_dif %f"%pos_diff)
-            magnet_A = ball.gen_magnets()
-            ball.rotateMagnets(magnet_A,c[0])
-            magnet_B = ball.gen_magnets()
-            ball.rotateMagnets(magnet_B,c[1])
-            ball.compareMagnets(magnet_A,magnet_B)
+            # magnet_A = ball.gen_magnets()
+            # ball.rotateMagnets(magnet_A,c[0])
+            # magnet_B = ball.gen_magnets()
+            # ball.rotateMagnets(magnet_B,c[1])
+            # ball.compareMagnets(magnet_A,magnet_B)
 else:
     print('no collisions detected in course search, congrats!')
 

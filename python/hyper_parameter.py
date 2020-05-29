@@ -66,18 +66,18 @@ class KerasRegressorTB(KerasRegressor):
 seed = 7
 numpy.random.seed(seed)
 # load dataset
-dataset = pd.read_csv(os.environ['HOME']+"/workspace/roboy3/test_data0.log", delim_whitespace=True, header=1)
+dataset = pd.read_csv(os.environ['HOME']+"/workspace/roboy3/head_data0.log", delim_whitespace=True, header=1)
 dataset = dataset.values[1:len(dataset)-1,0:]
 print('%d values'%(len(dataset)))
-dataset = dataset[abs(dataset[:,12])<=0.7,:]
-dataset = dataset[abs(dataset[:,13])<=0.7,:]
-dataset = dataset[abs(dataset[:,14])<=1.5,:]
+# dataset = dataset[abs(dataset[:,12])<=0.7,:]
+# dataset = dataset[abs(dataset[:,13])<=0.7,:]
+# dataset = dataset[abs(dataset[:,14])<=1.5,:]
 # dataset = dataset[abs(dataset[:,12])!=0.0,:]
 # dataset = dataset[abs(dataset[:,13])!=0.0,:]
 # dataset = dataset[abs(dataset[:,14])!=0.0,:]
-print('%d values after filtering outliers'%(len(dataset)))
-data_split = 1
-train_set = dataset[:int(len(dataset)*data_split),:]
+# print('%d values after filtering outliers'%(len(dataset)))
+# data_split = 1
+# train_set = dataset[:int(len(dataset)*data_split),:]
 # numpy.random.shuffle(train_set)
 euler_set = numpy.array(dataset[:,12:15])
 sensors_set = numpy.array([dataset[:,0],dataset[:,1],dataset[:,2],dataset[:,3],dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11]])

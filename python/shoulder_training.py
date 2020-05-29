@@ -31,6 +31,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import Adam
 import paramiko
 import pdb
+from keras import backend as K; K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=64, inter_op_parallelism_threads=64)))
 
 # record = True
 # train = False
@@ -148,13 +149,13 @@ class ball_in_socket_estimator:
         self.trackingPublisher = rospy.Publisher("/external_joint_states", sensor_msgs.msg.JointState)
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=100, input_dim=12,kernel_initializer='normal', activation='relu'))
-            self.model.add(Dropout(0.01))
+            self.model.add(Dense(units=150, input_dim=12,kernel_initializer='normal', activation='relu'))
+            # self.model.add(Dropout(0.01))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dropout(0.01))
+            self.model.add(Dense(units=150, kernel_initializer='normal', activation='relu'))
+            # self.model.add(Dropout(0.01))
             #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
             # self.model.add(Dropout(0.1))
@@ -180,9 +181,10 @@ class ball_in_socket_estimator:
                 dataset = pandas.read_csv('/home/letrend/workspace/roboy3/'+self.body_part+'_data0.log', delim_whitespace=True, header=1)
 
 
-            dataset = dataset.values[1:len(dataset)-1,0:]
+            dataset = dataset.values[1:len(dataset),0:]
             numpy.random.shuffle(dataset)
-            print('%d values'%(len(dataset)))
+            number_of_samples = len(dataset)
+            print('%d values'%number_of_samples)
             # dataset = dataset[abs(dataset[:,12])<=0.7,:]
             # dataset = dataset[abs(dataset[:,13])<=0.7,:]
             # dataset = dataset[abs(dataset[:,14])<=1.5,:]
@@ -195,21 +197,15 @@ class ball_in_socket_estimator:
             print('min euler ' + str(np.amin(euler_set)))
             sensors_set = np.array([dataset[:,0],dataset[:,1],dataset[:,2],dataset[:,3],dataset[:,4],dataset[:,5],dataset[:,6],dataset[:,7],dataset[:,8],dataset[:,9],dataset[:,10],dataset[:,11]])
             sensors_set = np.transpose(sensors_set)
-            np.set_printoptions(precision=8)
-            print(sensors_set[0,:])
             print(euler_set[0,:])
+            print(sensors_set[0,:])
 
             data_split = 0.7
 
-            sensor_train_set = sensors_set[:int(len(sensors_set)*data_split),:]
-            euler_train_set = euler_set[:int(len(sensors_set)*data_split),:]
-            sensor_test_set = sensors_set[int(len(sensors_set)*data_split):,:]
-            euler_test_set = euler_set[int(len(sensors_set)*data_split):,:]
-
-            data_in_train = sensor_train_set[:int(len(sensor_train_set)*0.7),:]
-            data_in_test = sensor_train_set[int(len(sensor_train_set)*0.7):,:]
-            data_out_train = euler_train_set[:int(len(sensor_train_set)*0.7),:]
-            data_out_test = euler_train_set[int(len(sensor_train_set)*0.7):,:]
+            data_in_train = sensors_set[:int(number_of_samples*data_split),:]
+            data_in_test = sensors_set[int(number_of_samples*data_split):,:]
+            data_out_train = euler_set[:int(number_of_samples*data_split),:]
+            data_out_test = euler_set[int(number_of_samples*data_split):,:]
 
             # self.model = Sequential()
             # self.model.add(CuDNNLSTM(units=100, input_shape=(train_X.shape[1], train_X.shape[2])))
@@ -223,7 +219,7 @@ class ball_in_socket_estimator:
             mcp_save = ModelCheckpoint(self.body_part+'model.h5', save_best_only=True, monitor='val_loss', mode='min')
 
             # fit network
-            history = self.model.fit(data_in_train, data_out_train, epochs=1000, batch_size=200,
+            history = self.model.fit(data_in_train, data_out_train, epochs=1000, batch_size=600,
                                      validation_data=(data_in_test, data_out_test), verbose=2, shuffle=True,
                                      callbacks=[earlyStopping, mcp_save])
 
@@ -234,9 +230,9 @@ class ball_in_socket_estimator:
             # serialize weights to HDF5
             # self.model.save("model.h5")
             print("Saved model to disk")
-            euler_predict = self.model.predict(sensor_test_set)
-            mse = numpy.linalg.norm(euler_predict-euler_test_set)/len(euler_predict)*180.0/math.pi
-            print("mse on test_set %f degrees"%(mse))
+            # euler_predict = self.model.predict(sensor_test_set)
+            # mse = numpy.linalg.norm(euler_predict-euler_test_set)/len(euler_predict)*180.0/math.pi
+            # print("mse on test_set %f degrees"%(mse))
             # plot history
             pyplot.plot(history.history['loss'], label='train')
             pyplot.plot(history.history['val_loss'], label='test')

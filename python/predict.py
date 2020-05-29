@@ -49,6 +49,7 @@ class ball_in_socket_estimator:
         # load weights into new model
         self.model.load_weights(self.base_path+self.model_name+".h5")
         print("Loaded model from disk: "+self.base_path+self.model_name+".h5")
+        self.model.summary()
         self.msg.position = [0,0,0]
         self.listener()
 
