@@ -8,10 +8,11 @@ import random, math
 from multiprocessing import Pool, freeze_support, get_context, set_start_method
 from yaml import load,dump,Loader,Dumper
 import sys, time
-import rospy
 from tqdm import tqdm
 import pcl
 import pcl.pcl_visualization
+import rospy
+from roboy_middleware_msgs.msg import MagneticSensor
 
 class BallJoint:
     config = {}
@@ -26,11 +27,148 @@ class BallJoint:
     pos_values = []
     number_of_samples = 0
     magnetic_field_difference_sensitivity = 1.44
+    number_of_sensors = 0
+    number_of_magnets = 0
+    positions = []
+    type = 'angle'
 
     def __init__(self,config_file_path):
         self.config = load(open(config_file_path, 'r'), Loader=Loader)
         self.printConfig()
+        self.number_of_sensors = len(self.config['sensor_pos'])
+        self.number_of_magnets = len(self.config['field_strength'])
         self.sensors = self.gen_sensors()
+        rospy.init_node('BallJoint',anonymous=True)
+    def decodeX(self,x,type):
+        positions = []
+        angles = []
+        if type=='posangle':
+            for j in range(0,len(x),3):
+                if j<len(x)/2:
+                    positions.append([x[j],x[j+1],x[j+2]])
+                else:
+                    angles.append([x[j],x[j+1],x[j+2]])
+        if type=='angle':
+            for j in range(0,len(x),3):
+                angles.append([x[j],x[j+1],x[j+2]])
+            positions = self.positions
+        return positions,angles
+
+    def optimizeMagnetArrangement(self,type):
+        positions = []
+        angles = []
+        for i in np.arange(0,360,30):
+            for j in np.arange(0,360,30):
+                positions.append([\
+                    25*math.sin(i/180.0*math.pi)*math.cos(j/180.0*math.pi),\
+                    25*math.sin(i/180.0*math.pi)*math.sin(j/180.0*math.pi),\
+                    25*math.cos(i/180.0*math.pi)\
+                ])
+                angles.append([0,0,90])
+        self.sensors = self.gen_sensors_custom(positions,angles)
+        # magnets = self.gen_magnets()
+        # print('number of sensors %d'%len(positions))
+        # displaySystem(magnets, suppress=False, sensors=self.sensors, direc=True)
+        positions = []
+        if type=='posangle':
+            x_init = [0]*self.number_of_magnets*3*2
+            x_lower_bound = [0]*self.number_of_magnets*3*2
+            x_upper_bound = [0]*self.number_of_magnets*3*2
+            for i in range(0,self.number_of_magnets*3):
+                x_init[i] = random.uniform(-12,12)
+                x_lower_bound[i] = -12
+                x_upper_bound[i] = 12
+            for i in range(self.number_of_magnets*3,self.number_of_magnets*3*2):
+                x_init[i] = random.uniform(-90,90)
+                x_lower_bound[i] = -90
+                x_upper_bound[i] = 90
+        elif type=='angle':
+            self.config['field_strength']=[]
+            self.config['magnet_dimension'] = []
+            for i in range(0,360,100):
+                for j in range(60,300,100):
+                    positions.append([\
+                        10*math.sin(i/180.0*math.pi)*math.cos(j/180.0*math.pi),\
+                        10*math.sin(i/180.0*math.pi)*math.sin(j/180.0*math.pi),\
+                        10*math.cos(i/180.0*math.pi)\
+                    ])
+                    self.config['field_strength'].append(1300)
+                    self.config['magnet_dimension'].append([7,7,7])
+            self.number_of_magnets=len(positions)
+            x_init = [0]*self.number_of_magnets*3
+            x_lower_bound = [0]*self.number_of_magnets*3
+            x_upper_bound = [0]*self.number_of_magnets*3
+            for i in range(0,self.number_of_magnets*3):
+                x_init[i] = 0#random.uniform(-90,90)
+                x_lower_bound[i] = -90
+                x_upper_bound[i] = 90
+            self.positions = positions
+        print("number_of_magnets: %d"%self.number_of_magnets)
+        positions,angles = self.decodeX(x_init,type)
+        magnets = self.gen_magnets_custom(positions,angles)
+        displaySystem(magnets, suppress=False,direc=True)
+        self.type = type
+        def optimizeFun(x):
+            positions,angles = self.decodeX(x,self.type)
+            magnets = self.gen_magnets_custom(positions,angles)
+            sensor_values = []
+            for sens in self.sensors:
+                sensor_values.append(sens.getB(magnets))
+            b_error = 0
+            for i in range(0,len(sensor_values)):
+                for j in range(i+1,len(sensor_values)):
+                    norm = np.linalg.norm(sensor_values[i]-sensor_values[j])
+                    if(norm>0.001):
+                        b_error += -math.log(norm)
+                    else:
+                        b_error += 1000
+            return [b_error]
+        res = least_squares(optimizeFun, x_init,\
+            bounds = (x_lower_bound, x_upper_bound),\
+            ftol=1e-8, \
+            xtol=1e-8,verbose=2,\
+            max_nfev=self.config['calibration']['max_nfev'])
+        print(res)
+        positions,angles = self.decodeX(res.x,type)
+        magnets = self.gen_magnets_custom(positions,angles)
+        displaySystem(magnets, suppress=False,direc=True)
+
+    def calibrateSensor(self):
+        print('calibrating sensor')
+        print('calibration magnet positions')
+        print(self.config['calibration']['magnet_pos'])
+        print('calibration magnet angles')
+        print(self.config['calibration']['magnet_angle'])
+        calibration_status = tqdm(total=len(self.config['calibration']['magnet_pos']), desc='calibration_status', position=0)
+        for pos,angle in zip(self.config['calibration']['magnet_pos'],self.config['calibration']['magnet_angle']):
+            self.config['magnet_angle'][0] = angle
+            magnets = self.gen_magnets()
+            self.rotateMagnets(magnets,[0,0,pos])
+            displaySystem(magnets, suppress=False, sensors=self.sensors, direc=True)
+
+            values = []
+            for i in range(0,self.number_of_sensors):
+                values.append([0,0,0])
+            sample = 0
+            sensor_record_status = tqdm(total=100, desc='sensor_record_status', position=1)
+            while sample<100:
+                msg = rospy.wait_for_message("/roboy/middleware/MagneticSensor", MagneticSensor, timeout=None)
+                if(msg.id==self.config['id']):
+                    j = 0
+                    for x,y,z in zip(msg.x,msg.y,msg.z):
+                        values[j][0]+=x
+                        values[j][1]+=y
+                        values[j][2]+=z
+                        j+=1
+                    sample+=1
+                    sensor_record_status.update(1)
+            for j in range(0,self.number_of_sensors):
+                values[j][0]/=sample
+                values[j][1]/=sample
+                values[j][2]/=sample
+
+            calibration_status.update(1)
+            # print(values)
 
     def visualizeCloud(self,magnitudes,pos_values):
         cloud = pcl.PointCloud_PointXYZRGB()
@@ -80,6 +218,7 @@ class BallJoint:
                 #     print("collisions: %d"%collisions)
 
         return (collisions,collision_indices,magnetic_field_difference,magnetic_field_differences)
+
     def calculateCollisions(self,sensor_values,pos_values,magnetic_field_difference_sensitivity):
         self.magnetic_field_difference_sensitivity = magnetic_field_difference_sensitivity
         self.number_of_samples = len(sensor_values)
@@ -110,6 +249,7 @@ class BallJoint:
         print('\ncollisions: %d'%collisions)
         print('average magnetic_field_difference: %f\n'%(magnetic_field_difference/comparisons))
         return colliders,magnetic_field_differences
+
     def generateMagneticDataRandom(self,number_of_samples):
         self.sampling_method = 'random'
         args = range(0,number_of_samples,1)
@@ -167,6 +307,16 @@ class BallJoint:
             data.append(val)
         return data, rot
 
+    def gen_sensors_custom(self,positions,angles):
+        sensors = []
+        for pos,angle in zip(positions, angles):
+            s = Sensor(pos=(pos[0],pos[1],pos[2]))
+            s.rotate(angle=angle[0],axis=(1,0,0))
+            s.rotate(angle=angle[1],axis=(0,1,0))
+            s.rotate(angle=angle[2],axis=(0,0,1))
+            sensors.append(s)
+        return sensors
+
     def gen_sensors(self):
         sensors = []
         for pos,pos_offset,angle,angle_offset in zip(self.config['sensor_pos'],\
@@ -177,7 +327,17 @@ class BallJoint:
             s.rotate(angle=angle[2]+angle_offset[2],axis=(0,0,1))
             sensors.append(s)
         return sensors
-
+    def gen_magnets_custom(self,positions,angles):
+        magnets = []
+        for field,mag_dim,pos,angle in zip(self.config['field_strength'],\
+            self.config['magnet_dimension'],positions,angles):
+            magnet = Box(mag=(0,0,field), dim=mag_dim,\
+                pos=(pos[0],pos[1],pos[2]))
+            magnet.rotate(angle=angle[0],axis=(1,0,0))
+            magnet.rotate(angle=angle[1],axis=(0,1,0))
+            magnet.rotate(angle=angle[2],axis=(0,0,1))
+            magnets.append(magnet)
+        return Collection(magnets)
     def gen_magnets(self):
         magnets = []
         for field,mag_dim,pos,pos_offset,angle,angle_offset in zip(self.config['field_strength'],\
@@ -222,6 +382,7 @@ class BallJoint:
         ax3.streamplot(X, Z, U, V, color=np.log(U**2+V**2))
         displaySystem(magnets, subplotAx=ax1, suppress=True, sensors=self.sensors, direc=True)
         plt.show()
+
     def compareMagnets(self,magnet_A,magnet_B):
         # calculate B-field on a grid
         xs = np.linspace(-25,25,50)
