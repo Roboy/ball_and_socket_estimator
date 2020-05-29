@@ -19,8 +19,8 @@ if visualize_only:
 
 print('\n----------------first course search\n')
 grid_positions = []
-for i in np.arange(-50,50,10):
-    for j in np.arange(-50,50,10):
+for i in np.arange(-70,70,10):
+    for j in np.arange(-70,70,10):
         for k in np.arange(-90,90,10):
             grid_positions.append([i,j,k])
 
