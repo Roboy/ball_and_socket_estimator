@@ -16,6 +16,7 @@ from roboy_middleware_msgs.msg import MagneticSensor
 
 class BallJoint:
     config = {}
+    config_file = None
     sensors = None
     sampling_method = 'grid'
     min_rot_x,min_rot_y,min_rot_z = -50,-50,-50
@@ -29,12 +30,15 @@ class BallJoint:
     magnetic_field_difference_sensitivity = 1.44
     number_of_sensors = 0
     number_of_magnets = 0
+    number_of_parameters = 0
     positions = []
     type = 'angle'
+    calib = []
 
     def __init__(self,config_file_path):
         self.config = load(open(config_file_path, 'r'), Loader=Loader)
         self.printConfig()
+        self.config_file = config_file_path
         self.number_of_sensors = len(self.config['sensor_pos'])
         self.number_of_magnets = len(self.config['field_strength'])
         self.sensors = self.gen_sensors()
@@ -133,6 +137,65 @@ class BallJoint:
         magnets = self.gen_magnets_custom(positions,angles)
         displaySystem(magnets, suppress=False,direc=True)
 
+    def decodeCalibrationX(self,x):
+        field_strength = []
+        magnet_pos_offsets = []
+        magnet_angle_offsets = []
+        sensor_pos_offsets = []
+        sensor_angle_offsets = []
+
+        for i in range(0,self.number_of_magnets):
+            field_strength.append(1300)
+            magnet_pos_offsets.append([0,0,0])
+            magnet_angle_offsets.append([0,0,0])
+        for i in range(0,self.number_of_sensors):
+            sensor_pos_offsets.append([0,0,0])
+            sensor_angle_offsets.append([0,0,0])
+        j = 0
+        for c in self.calib:
+            if c==0:
+                for i in range(0,self.number_of_magnets):
+                    field_strength[i] = x[j]
+                    j = j+1
+            if c==1:
+                for i in range(0,self.number_of_magnets):
+                    magnet_pos_offsets[i] = [x[j],x[j+1],x[j+2]]
+                    j = j+3
+            if c==2:
+                for i in range(0,self.number_of_magnets):
+                    magnet_angle_offsets[i] = [x[j],x[j+1],x[j+2]]
+                    j = j+3
+            if c==3:
+                for i in range(0,self.number_of_sensors):
+                    sensor_pos_offsets[i] = [x[j],x[j+1],x[j+2]]
+                    j = j+3
+            if c==4:
+                for i in range(0,self.number_of_sensors):
+                    sensor_angle_offsets[i] = [x[j],x[j+1],x[j+2]]
+                    j = j+3
+        return field_strength, magnet_pos_offsets, magnet_angle_offsets, sensor_pos_offsets, sensor_angle_offsets
+
+    def calibrationFunc(self, x):
+        sensor_pos = self.config['sensor_pos']
+        sensor_angle = self.config['sensor_angle']
+
+        field_strength, magnet_pos_offsets, magnet_angle_offsets, sensor_pos_offsets, sensor_angle_offsets = self.decodeCalibrationX(x)
+
+        sensors = self.gen_sensors_all(sensor_pos,sensor_pos_offsets,sensor_angle,sensor_angle_offsets)
+
+        b_error = 0
+        j =0
+        for pos,angle in zip(self.config['calibration']['magnet_pos'],self.config['calibration']['magnet_angle']):
+            magnets = self.gen_magnets_all(field_strength,[pos],magnet_pos_offsets,[angle],magnet_angle_offsets)
+            # print("%f %f %f"%(pos[0],pos[1],pos[2]))
+            i = 0
+            for sens in sensors:
+                b_error = b_error + np.linalg.norm(sens.getB(magnets)-self.sensor_values[j][i])
+                i=i+1
+            j =j +1
+        # print(b_error)
+        return [b_error]
+
     def calibrateSensor(self):
         print('calibrating sensor')
         print('calibration magnet positions')
@@ -140,10 +203,17 @@ class BallJoint:
         print('calibration magnet angles')
         print(self.config['calibration']['magnet_angle'])
         calibration_status = tqdm(total=len(self.config['calibration']['magnet_pos']), desc='calibration_status', position=0)
+        self.sensor_values = []
+        sensor_log = {'magnet_pos':[],'magnet_angle':[],'sensor_values':[]}
         for pos,angle in zip(self.config['calibration']['magnet_pos'],self.config['calibration']['magnet_angle']):
-            self.config['magnet_angle'][0] = angle
-            magnets = self.gen_magnets()
-            self.rotateMagnets(magnets,[0,0,pos])
+            print(pos)
+            print(angle)
+            sensor_log['magnet_pos'].append(pos)
+            sensor_log['magnet_angle'].append(angle)
+            magnets = self.gen_magnets_all(self.config['field_strength'],[pos],self.config['magnet_pos_offsets'],[angle],self.config['magnet_angle_offsets'])
+            print('target:')
+            for sens in self.sensors:
+                print(sens.getB(magnets))
             displaySystem(magnets, suppress=False, sensors=self.sensors, direc=True)
 
             values = []
@@ -167,8 +237,122 @@ class BallJoint:
                 values[j][1]/=sample
                 values[j][2]/=sample
 
+            self.sensor_values.append(values)
+            sensor_log['sensor_values'].append(values)
             calibration_status.update(1)
-            # print(values)
+        print("optimizing: ")
+        initial = []
+        upper_bound = []
+        lower_bound = []
+        for c in self.config['calibration']['optimize']:
+            if c=='field_strength':
+                self.number_of_parameters = self.number_of_parameters+self.number_of_magnets
+                for i in range(0,self.number_of_magnets):
+                    initial.append(1300)
+                    upper_bound.append(1600)
+                    lower_bound.append(1000)
+                self.calib.append(0)
+                print('\tfield_strength')
+            if c=='magnet_pos':
+                self.number_of_parameters = self.number_of_parameters+self.number_of_magnets*3
+                for i in range(0,self.number_of_magnets*3):
+                    initial.append(0)
+                    upper_bound.append(5)
+                    lower_bound.append(-5)
+                self.calib.append(1)
+                print('\tmagnet_pos')
+            if c=='magnet_angle':
+                self.number_of_parameters = self.number_of_parameters+self.number_of_magnets*3
+                for i in range(0,self.number_of_magnets*3):
+                    initial.append(0)
+                    upper_bound.append(10)
+                    lower_bound.append(-10)
+                self.calib.append(2)
+                print('\tmagnet_angle')
+            if c=='sensor_pos':
+                self.number_of_parameters = self.number_of_parameters+self.number_of_sensors*3
+                for i in range(0,self.number_of_sensors*3):
+                    initial.append(0)
+                    upper_bound.append(5)
+                    lower_bound.append(-5)
+                self.calib.append(3)
+                print('\tsensor_pos')
+            if c=='sensor_angle':
+                self.number_of_parameters = self.number_of_parameters+self.number_of_sensors*3
+                for i in range(0,self.number_of_sensors*3):
+                    initial.append(0)
+                    upper_bound.append(10)
+                    lower_bound.append(-10)
+                self.calib.append(4)
+                print('\tsensor_angle')
+
+        print('number_of_magnets: %d\nnumber_of_sensors: %d\nnumber_of_parameters: %d'\
+            %(self.number_of_magnets,self.number_of_sensors,self.number_of_parameters))
+        res = least_squares(self.calibrationFunc, initial, bounds = (lower_bound, upper_bound), \
+                            ftol=1e-8, \
+                            xtol=1e-8,verbose=2, \
+                            max_nfev=self.config['calibration']['max_nfev'])
+
+        field_strength = self.config['field_strength']
+        magnet_pos = self.config['magnet_pos']
+        magnet_angle = self.config['magnet_angle']
+
+        sensor_pos = self.config['sensor_pos']
+        sensor_angle = self.config['sensor_angle']
+
+        field_strength, magnet_pos_offsets, magnet_angle_offsets, sensor_pos_offsets, sensor_angle_offsets = self.decodeCalibrationX(res.x)
+
+        sensors = self.gen_sensors_all(sensor_pos,sensor_pos_offsets,sensor_angle,sensor_angle_offsets)
+
+        print("b_field_error with calibration: %f\n"%self.calibrationFunc(res.x)[0])
+
+        j = 0
+        for target,pos,angle in zip(self.sensor_values,self.config['calibration']['magnet_pos'],self.config['calibration']['magnet_angle']):
+            print("target b_field for magnet pos %f %f %f magnet angle %f %f %f"%(pos[0],pos[1],pos[2],angle[0],angle[1],angle[2]))
+            i = 0
+            for sens in sensors:
+                print('%.4f    %.4f    %.4f'%(target[i][0],target[i][1],target[i][2]))
+                i = i+1
+            print("b_field with calibration:")
+            magnets = self.gen_magnets_all(field_strength,[pos],magnet_pos_offsets,[angle],magnet_angle_offsets)
+            for sens in sensors:
+                mag = sens.getB(magnets)
+                print('%.4f    %.4f    %.4f'%(mag[0],mag[1],mag[2]))
+            print('----------------------------------')
+            j = j+1
+
+        print("\noptimization results:\n")
+        for c in self.calib:
+            if c==0:
+                print('field_strength')
+                print(field_strength)
+                self.config['field_strength'] = field_strength
+            if c==1:
+                print('magnet_pos_offsets')
+                print(magnet_pos_offsets)
+                self.config['magnet_pos_offsets'] = magnet_pos_offsets
+            if c==2:
+                print('magnet_angle_offsets')
+                print(magnet_angle_offsets)
+                self.config['magnet_angle_offsets'] = magnet_angle_offsets
+            if c==3:
+                print('sensor_pos_offsets')
+                print(sensor_pos_offsets)
+                self.config['sensor_pos_offsets'] = sensor_pos_offsets
+            if c==4:
+                print('sensor_angle_offsets')
+                print(sensor_angle_offsets)
+                self.config['sensor_angle_offsets'] = sensor_angle_offsets
+
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        sensor_log_file = timestamp+'.log'
+        with open(sensor_log_file, 'w') as file:
+            documents = dump(sensor_log, file)
+        print('sensor log written to '+sensor_log_file)
+        input("Enter to write optimization to config file %s..."%(self.config_file))
+
+        with open(self.config_file, 'w') as file:
+            documents = dump(self.config, file)
 
     def visualizeCloud(self,magnitudes,pos_values):
         cloud = pcl.PointCloud_PointXYZRGB()
@@ -327,6 +511,15 @@ class BallJoint:
             s.rotate(angle=angle[2]+angle_offset[2],axis=(0,0,1))
             sensors.append(s)
         return sensors
+    def gen_sensors_all(self,positions,pos_offsets,angles,angle_offsets):
+        sensors = []
+        for pos,pos_offset,angle,angle_offset in zip(positions,pos_offsets,angles,angle_offsets):
+            s = Sensor(pos=(pos[0]+pos_offset[0],pos[1]+pos_offset[1],pos[2]+pos_offset[2]))
+            s.rotate(angle=angle[0]+angle_offset[0],axis=(1,0,0))
+            s.rotate(angle=angle[1]+angle_offset[1],axis=(0,1,0))
+            s.rotate(angle=angle[2]+angle_offset[2],axis=(0,0,1))
+            sensors.append(s)
+        return sensors
     def gen_magnets_custom(self,positions,angles):
         magnets = []
         for field,mag_dim,pos,angle in zip(self.config['field_strength'],\
@@ -353,7 +546,23 @@ class BallJoint:
             magnet.rotate(angle=angle[2]+angle_offset[2],axis=(0,0,1))
             magnets.append(magnet)
         return Collection(magnets)
-
+    def gen_magnets_all(self,field_strength,positions,position_offsets,angles,angle_offsets):
+        magnets = []
+        i = 0
+        for field,mag_dim,pos,pos_offset,angle,angle_offset in zip(field_strength,\
+                self.config['magnet_dimension'],positions,position_offsets,\
+                angles,angle_offsets):
+            magnet = Box(mag=(0,0,field), dim=mag_dim,\
+                pos=(pos[0]+pos_offset[0],\
+                    pos[1]+pos_offset[1],\
+                    pos[2]+pos_offset[2])\
+                    )
+            magnet.rotate(angle=angle[0]+angle_offset[0],axis=(1,0,0))
+            magnet.rotate(angle=angle[1]+angle_offset[1],axis=(0,1,0))
+            magnet.rotate(angle=angle[2]+angle_offset[2],axis=(0,0,1))
+            magnets.append(magnet)
+            i = i+1
+        return Collection(magnets)
     def plotMagnets(self,magnets):
         # calculate B-field on a grid
         xs = np.linspace(-25,25,50)
