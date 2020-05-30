@@ -13,6 +13,7 @@ import roboy_simulation_msgs.msg
 import sys
 import magjoint
 import copy
+from tqdm import tqdm
 
 class ParticleSwarm():
     n_particles = 0
@@ -29,11 +30,14 @@ class ParticleSwarm():
 
     joint_positions = []
     iteration = 0
+    status_bar = None
+    magnetic_field_difference_sensitivity = 10
 
-    def __init__(self, n_particles, joint_positions, ball_joint):
+    def __init__(self, n_particles, joint_positions, ball_joint, magnetic_field_difference_sensitivity):
         self.n_particles = n_particles
         self.ball_joint = ball_joint
         self.joint_positions = joint_positions
+        self.magnetic_field_difference_sensitivity = magnetic_field_difference_sensitivity
 
         self.global_best_score = 10000
         self.global_best_particle = 0
@@ -54,13 +58,14 @@ class ParticleSwarm():
         i = 0
         for p in self.particles:
             sensor_values = self.ball_joint.generateSensorData(self.joint_positions,p['magnet_angles'])
-            colliders,magnetic_field_differences = self.ball_joint.calculateCollisions(sensor_values,self.joint_positions,30*1.44)
+            colliders,magnetic_field_differences = self.ball_joint.calculateCollisions(sensor_values,self.joint_positions,self.magnetic_field_difference_sensitivity)
             score = len(colliders)
             if score < p['personal_best_score']:
-                print('score of particle %d improved from %d to %d'%(i,p['personal_best_score'],score))
+                # print('score of particle %d improved from %d to %d'%(i,p['personal_best_score'],score))
                 p['personal_best_score'] = score
                 p['personal_best'] = p['magnet_angles']
             i+=1
+            self.status_bar.update(1)
         # calculate global best score
         i = 0
         for p in self.particles:
@@ -80,5 +85,6 @@ class ParticleSwarm():
 
     def step(self):
         self.move()
+        self.status_bar = tqdm(total=self.n_particles, desc='fitness_status', position=0)
         self.fitness()
-        iteration += 1
+        self.iteration += 1
