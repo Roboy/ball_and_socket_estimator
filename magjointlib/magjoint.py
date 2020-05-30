@@ -42,7 +42,25 @@ class BallJoint:
         self.number_of_sensors = len(self.config['sensor_pos'])
         self.number_of_magnets = len(self.config['field_strength'])
         self.sensors = self.gen_sensors()
-        rospy.init_node('BallJoint',anonymous=True)
+        # rospy.init_node('BallJoint',anonymous=True)
+    def generateSensorDataFork(self,i,joint_positions,magnet_angles):
+        magnets = self.gen_magnets_angle(magnet_angles)
+        magnets.rotate(joint_positions[i][0],(1,0,0), anchor=(0,0,0))
+        magnets.rotate(joint_positions[i][1],(0,1,0), anchor=(0,0,0))
+        magnets.rotate(joint_positions[i][2],(0,0,1), anchor=(0,0,0))
+        values = []
+        for sens in self.sensors:
+            values.append(sens.getB(magnets))
+            # displaySystem(magnets, suppress=False, sensors=self.sensors, direc=True)
+        return values
+    def generateSensorData(self,joint_positions,magnet_angles):
+        # print('generating sensor data')
+        number_of_positions = len(joint_positions)
+        sensor_values = []
+        with Pool() as pool:
+            result = pool.starmap(self.generateSensorDataFork, zip(range(0,number_of_positions),\
+                [joint_positions]*number_of_positions,[magnet_angles]*number_of_positions))
+            return result
     def decodeX(self,x,type):
         positions = []
         angles = []
@@ -409,10 +427,10 @@ class BallJoint:
         self.sensor_values = sensor_values
         self.pos_values = pos_values
         comparisons = (self.number_of_samples-1)*self.number_of_samples/2
-        print('\ncomparisons %d'%comparisons)
-        print('approx time %d seconds or %f minutes'%(comparisons/1283370,comparisons/1283370/60))
-        timestamp = time.strftime("%H:%M:%S")
-        print('start time: %s'%timestamp)
+        # print('\ncomparisons %d'%comparisons)
+        # print('approx time %d seconds or %f minutes'%(comparisons/1283370,comparisons/1283370/60))
+        # timestamp = time.strftime("%H:%M:%S")
+        # print('start time: %s'%timestamp)
         args = range(0,self.number_of_samples,1)
         with Pool(processes=self.num_processes) as pool:
             start = time.time()
@@ -429,9 +447,9 @@ class BallJoint:
                     colliders.append([pos_values[indices[0]],pos_values[indices[1]]])
                     magnetic_field_differences.append(results[n][3][i])
         end = time.time()
-        print('actual time: %d'%(end - start))
-        print('\ncollisions: %d'%collisions)
-        print('average magnetic_field_difference: %f\n'%(magnetic_field_difference/comparisons))
+        # print('actual time: %d'%(end - start))
+        # print('\ncollisions: %d'%collisions)
+        # print('average magnetic_field_difference: %f\n'%(magnetic_field_difference/comparisons))
         return colliders,magnetic_field_differences
 
     def generateMagneticDataRandom(self,number_of_samples):
@@ -524,6 +542,17 @@ class BallJoint:
         magnets = []
         for field,mag_dim,pos,angle in zip(self.config['field_strength'],\
             self.config['magnet_dimension'],positions,angles):
+            magnet = Box(mag=(0,0,field), dim=mag_dim,\
+                pos=(pos[0],pos[1],pos[2]))
+            magnet.rotate(angle=angle[0],axis=(1,0,0))
+            magnet.rotate(angle=angle[1],axis=(0,1,0))
+            magnet.rotate(angle=angle[2],axis=(0,0,1))
+            magnets.append(magnet)
+        return Collection(magnets)
+    def gen_magnets_angle(self,angles):
+        magnets = []
+        for field,mag_dim,pos,angle in zip(self.config['field_strength'],\
+            self.config['magnet_dimension'],self.config['magnet_pos'],angles):
             magnet = Box(mag=(0,0,field), dim=mag_dim,\
                 pos=(pos[0],pos[1],pos[2]))
             magnet.rotate(angle=angle[0],axis=(1,0,0))
