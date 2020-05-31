@@ -11,3 +11,5 @@ cmake-build-debug/
 python/hyperparameter_logs
 *.mp4
 *.ts
+*.dat
+*.pos
