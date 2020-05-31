@@ -1,0 +1,45 @@
+id: 0
+field_strength: [1300,1300,1300]
+magnet_dimension:
+  - [10,10,10]
+  - [10,10,10]
+  - [10,10,10]
+magnet_pos:
+- [0,-12,5]
+- [0,-12,-5]
+- [0,12,-5]
+magnet_pos_offsets:
+  - [0,0,0]
+  - [0,0,0]
+  - [0,0,0]
+magnet_angle:
+  - [0,0,0]
+  - [0,90,0]
+  - [90,30,20]
+magnet_angle_offsets:
+  - [0,0,0]
+  - [0,0,0]
+  - [0,0,0]
+sensor_pos:
+  - [-22.4,7.25,0]
+  - [-14,-19.5,0]
+  - [14.3,-19.6,0]
+  - [22.325,6.675,0]
+sensor_pos_offsets:
+  - [0,0,0]
+  - [0,0,0]
+  - [0,0,0]
+  - [0,0,0]
+sensor_angle:
+  - [0,0,90]
+  - [0,0,90]
+  - [0,0,90]
+  - [0,0,90]
+sensor_angle_offsets:
+  - [0,0,0]
+  - [0,0,0]
+  - [0,0,0]
+  - [0,0,0]
+calibration:
+  optimize: ['field_strength','magnet_pos','sensor_angle']
+  max_nfev: 2000

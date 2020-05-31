@@ -19,33 +19,27 @@ if visualize_only:
 
 print('\n----------------first course search\n')
 grid_positions = []
-for i in np.arange(-70,70,10):
-    for j in np.arange(-70,70,10):
-        for k in np.arange(-90,90,10):
+for i in np.arange(-80,80,10):
+    for j in np.arange(-80,80,10):
+        for k in np.arange(-80,80,10):
             grid_positions.append([i,j,k])
 
 sensor_values,pos = ball.generateMagneticDataGrid(grid_positions)
 colliders,magnetic_field_differences = ball.calculateCollisions(sensor_values,pos,1.44*10)
 
 if len(colliders)>0:
-    print('there are collisions')
-    min_value = min(magnetic_field_differences)
-    index = magnetic_field_differences.index(min_value)
-    print('minimum: %f index %d'%(min_value,index))
-    print(colliders[index])
-
+    print('there are %d collisions'%len(colliders))
     for c,dif in zip(colliders,magnetic_field_differences):
         pos_diff = ((c[0][0]-c[1][0])**2+(c[0][0]-c[1][0])**2+(c[0][0]-c[1][0])**2)**1/2
         if pos_diff>20:
-
             print(c)
             print("magnetic dif %f"%dif)
             print("pos_dif %f"%pos_diff)
-            # magnet_A = ball.gen_magnets()
-            # ball.rotateMagnets(magnet_A,c[0])
-            # magnet_B = ball.gen_magnets()
-            # ball.rotateMagnets(magnet_B,c[1])
-            # ball.compareMagnets(magnet_A,magnet_B)
+            magnet_A = ball.gen_magnets()
+            ball.rotateMagnets(magnet_A,c[0])
+            magnet_B = ball.gen_magnets()
+            ball.rotateMagnets(magnet_B,c[1])
+            ball.compareMagnets(magnet_A,magnet_B)
 else:
     print('no collisions detected in course search, congrats!')
 
@@ -60,7 +54,7 @@ sensor_values,pos = ball.generateMagneticDataGrid(grid_positions)
 colliders,magnetic_field_differences = ball.calculateCollisions(sensor_values,pos,1.44*5)
 
 if len(colliders)>0:
-    print('there are collisions')
+    print('there are %d collisions'%len(colliders))
     min_value = min(magnetic_field_differences)
     index = magnetic_field_differences.index(min_value)
     print('minimum: %f index %d'%(min_value,index))
@@ -87,7 +81,7 @@ sensor_values,pos = ball.generateMagneticDataGrid(grid_positions)
 colliders,magnetic_field_differences = ball.calculateCollisions(sensor_values,pos,1.44*3)
 
 if len(colliders)>0:
-    print('there are collisions')
+    print('there are %d collisions'%len(colliders))
     min_value = min(magnetic_field_differences)
     index = magnetic_field_differences.index(min_value)
     print('minimum: %f index %d'%(min_value,index))

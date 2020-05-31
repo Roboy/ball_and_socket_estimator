@@ -450,7 +450,9 @@ class BallJoint:
         # print('actual time: %d'%(end - start))
         # print('\ncollisions: %d'%collisions)
         # print('average magnetic_field_difference: %f\n'%(magnetic_field_difference/comparisons))
-        return colliders,magnetic_field_differences
+        # sort by magnetic field differences, from low to high
+        diffs, coll = zip(*sorted(zip(magnetic_field_differences, colliders)))
+        return coll,diffs
 
     def generateMagneticDataRandom(self,number_of_samples):
         self.sampling_method = 'random'
