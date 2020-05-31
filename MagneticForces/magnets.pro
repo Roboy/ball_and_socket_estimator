@@ -115,6 +115,11 @@ Group{
     Vol_Layer += Region[Layer~{i}];
   EndFor
 
+  For i In {1:NumSensors}
+    Printf("%g",i);
+    Vol_Sensor~{i} = Region[Magnet~{i+NumMagnets}];
+  EndFor
+
   Vol_mu = Region[ {Vol_Air, Vol_Magnet}];
 
   Sur_Dirichlet_phi = Region[ Outer ];
@@ -344,12 +349,16 @@ PostOperation {
   { Name MagSta_phi ; NameOfPostProcessing MagSta_phi;
     Operation {
       Print[ b, OnElementsOf Vol_mu, File "b.pos" ] ;
+      For i In {1:NumSensors}
+        Printf("sensor_%g",i);
+        Print[ b, OnElementsOf Vol_Sensor~{i}, File Sprintf("b_sensor_%g.pos", i) ] ;
+      EndFor
       Echo[ Str["l=PostProcessing.NbViews-1;",
 		"View[l].ArrowSizeMax = 100;",
 		"View[l].CenterGlyphs = 1;",
 		"View[l].VectorType = 1;" ] ,
         File "tmp.geo", LastTimeStepOnly] ;
-      /*For i In {1:NumMagnets+NumSensors}
+      For i In {1:NumMagnets+NumSensors}
         Print[ f~{i}[Vol_Air], OnGlobal, Format Table, File > "F.dat"  ];
         Print[ fx~{i}[Vol_Air], OnGlobal, Format Table, File > "Fx.dat",
           SendToServer Sprintf("Output/Magnet %g/X force [N]", i), Color "Ivory"  ];
@@ -357,12 +366,17 @@ PostOperation {
           SendToServer Sprintf("Output/Magnet %g/Y force [N]", i), Color "Ivory"  ];
         Print[ fz~{i}[Vol_Air], OnGlobal, Format Table, File > "Fz.dat",
           SendToServer Sprintf("Output/Magnet %g/Z force [N]", i), Color "Ivory"  ];
-      EndFor*/
+
     }
   }
   { Name MagSta_a ; NameOfPostProcessing MagSta_a ;
     Operation {
       Print[ b,  OnElementsOf Vol_mu,  File "b.pos" ];
+
+      For i In {1:NumSensors}
+        Printf("sensor_%g",i);
+        Print[ b, OnElementsOf Vol_Sensor~{i}, File Sprintf("b_sensor_%g.pos", i) ] ;
+      EndFor
       Echo[ Str["l=PostProcessing.NbViews-1;",
 		"View[l].ArrowSizeMax = 100;",
 		"View[l].CenterGlyphs = 1;",
@@ -370,7 +384,7 @@ PostOperation {
 	    File "tmp.geo", LastTimeStepOnly] ;
       //Print[ br,  OnElementsOf Vol_Magnet,  File "br.pos" ];
       //Print[ a,  OnElementsOf Vol_mu,  File "a.pos" ];
-      /*For i In {1:NumMagnets+NumSensors}
+      For i In {1:NumMagnets+NumSensors}
       //Print[ un~{i}, OnElementsOf Domain, File "un.pos"  ];
         Print[ f~{i}[Vol_Air], OnGlobal, Format Table, File > "F.dat"  ];
         Print[ fx~{i}[Vol_Air], OnGlobal, Format Table, File > "Fx.dat",
@@ -379,7 +393,7 @@ PostOperation {
           SendToServer Sprintf("Output/Magnet %g/Y force [N]", i), Color "Ivory"  ];
         Print[ fz~{i}[Vol_Air], OnGlobal, Format Table, File > "Fz.dat",
           SendToServer Sprintf("Output/Magnet %g/Z force [N]", i), Color "Ivory"  ];
-      EndFor*/
+      EndFor
     }
   }
 }

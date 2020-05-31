@@ -1,7 +1,7 @@
 mm = 1.e-3;
 deg = Pi/180.;
 DefineConstant[
-  NumMagnets = {1, Min 1, Max 20, Step 1, Name "Parameters/0Number of magnets"}
+  NumMagnets = {3, Min 1, Max 20, Step 1, Name "Parameters/0Number of magnets"}
   NumSensors = {4, Min 1, Max 20, Step 1, Name "Parameters/0Number of sensors"}
   Flag_InfiniteBox = {1, Choices{0,1}, Name "Infinite box/Add infinite box"}
   Flag_FullMenu = {0, Choices{0,1}, Name "Parameters/Show all parameters"}
@@ -17,11 +17,23 @@ SensorPositionY_2 = -19.5;
 SensorPositionY_3 = -19.6;
 SensorPositionY_4 = 6.675;
 
+MagnetRotX_1 = -90;
+MagnetRotY_1 = 30;
+MagnetRotZ_1 = 0;
+
+MagnetRotX_2 = 90;
+MagnetRotY_2 = 30;
+MagnetRotZ_2 = 0;
+
+MagnetRotX_3 = 0;
+MagnetRotY_3 = 0;
+MagnetRotZ_3 = 180;
+
 For i In {1:NumMagnets}
   DefineConstant[
-    X~{i} = {0, Min -100*mm, Max 100*mm, Step mm, Visible 1,
+    X~{i} = {12.5*Sin[Pi/180.0*120*i]*mm, Min -100*mm, Max 100*mm, Step mm, Visible 1,
       Name Sprintf("Parameters/Magnet %g/0X position [m]", i) },
-    Y~{i} = { (i-1)*60*mm, Min -100*mm, Max 100*mm, Step mm, Visible 1,
+    Y~{i} = {12.5*Cos[Pi/180.0*120*i]*mm, Min -100*mm, Max 100*mm, Step mm, Visible 1,
       Name Sprintf("Parameters/Magnet %g/0Y position [m]", i) },
     Z~{i} = {0, Min -100*mm, Max 100*mm, Step mm, Visible 1,
       Name Sprintf("Parameters/Magnet %g/0Z position [m]", i) },
@@ -36,26 +48,26 @@ For i In {1:NumMagnets}
       Name Sprintf("Parameters/Magnet %g/1Length [m]", i),
       Visible (M~{i} == 0) },
 
-    Lx~{i} = {5*mm, Min mm, Max 100*mm, Step mm,
+    Lx~{i} = {10*mm, Min mm, Max 100*mm, Step mm,
       Name Sprintf("Parameters/Magnet %g/1X length [m]", i),
       Visible (M~{i} == 1) },
-    Ly~{i} = {5*mm, Min mm, Max 100*mm, Step mm,Visible Flag_FullMenu,
+    Ly~{i} = {10*mm, Min mm, Max 100*mm, Step mm,Visible Flag_FullMenu,
       Name Sprintf("Parameters/Magnet %g/1XY aspect ratio", i),
       Visible (M~{i} == 1) },
-    Lz~{i} = {5*mm, Min mm, Max 100*mm, Step mm,Visible Flag_FullMenu,
+    Lz~{i} = {10*mm, Min mm, Max 100*mm, Step mm,Visible Flag_FullMenu,
       Name Sprintf("Parameters/Magnet %g/1XZ aspect ration", i),
       Visible (M~{i} == 1) },
 
-    Rx~{i} = {0, Min -Pi, Max Pi, Step Pi/180,
+    Rx~{i} = {MagnetRotX~{i}, Min -180, Max 180, Step 1,
       Name Sprintf("Parameters/Magnet %g/2X rotation [deg]", i) },
-    Ry~{i} = {0, Min -Pi, Max Pi, Step Pi/180,
+    Ry~{i} = {MagnetRotY~{i}, Min -180, Max 180, Step 1,
       Name Sprintf("Parameters/Magnet %g/2Y rotation [deg]", i) },
-    Rz~{i} = {0, Min -Pi, Max Pi, Step Pi/180,
+    Rz~{i} = {MagnetRotZ~{i}, Min -180, Max 180, Step 1,
       Name Sprintf("Parameters/Magnet %g/2Z rotation [deg]", i) },
 
-    MUR~{i} = {(i==1)?1.:1000.,
+    MUR~{i} = {5000,
       Name Sprintf("Parameters/Magnet %g/3Mu relative []", i)},
-    BR~{i} = {(i==1)?1.0:0.0,
+    BR~{i} = {1.3,
       Name Sprintf("Parameters/Magnet %g/3Br [T]", i)}
   ];
 EndFor
@@ -84,16 +96,16 @@ For i In {1:NumSensors}
       Name Sprintf("Parameters/Sensor %g/1XZ aspect ration", i),
       Visible (M~{i+NumMagnets} == 1) },
 
-    Rx~{i+NumMagnets} = {0, Min -Pi, Max Pi, Step Pi/180,
+    Rx~{i+NumMagnets} = {0, Min -180, Max 180, Step 1,
       Name Sprintf("Parameters/Sensor %g/2X rotation [deg]", i) },
-    Ry~{i+NumMagnets} = {0, Min -Pi, Max Pi, Step Pi/180,
+    Ry~{i+NumMagnets} = {0, Min -180, Max 180, Step 1,
       Name Sprintf("Parameters/Sensor %g/2Y rotation [deg]", i) },
-    Rz~{i+NumMagnets} = {90, Min -Pi, Max Pi, Step Pi/180,
+    Rz~{i+NumMagnets} = {0, Min -180, Max 180, Step 1,
       Name Sprintf("Parameters/Sensor %g/2Z rotation [deg]", i) },
 
-    MUR~{i+NumMagnets} = {1.0, Visible Flag_FullMenu,
+    MUR~{i+NumMagnets} = {1.0, Visible 1,
       Name Sprintf("Parameters/Sensor %g/3Mu relative []", i)},
-    BR~{i+NumMagnets} = {0.0, Visible Flag_FullMenu,
+    BR~{i+NumMagnets} = {0.0, Visible 1,
       Name Sprintf("Parameters/Sensor %g/3Br [T]", i)}
   ];
 EndFor
