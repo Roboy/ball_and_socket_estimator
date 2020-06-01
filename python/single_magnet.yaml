@@ -7,7 +7,7 @@ magnet_pos:
 magnet_pos_offsets:
   - [0,0,0]
 magnet_angle:
-  - [-90,0,0]
+  - [-90,0,180]
 magnet_angle_offsets:
   - [0,0,0]
 sensor_pos:

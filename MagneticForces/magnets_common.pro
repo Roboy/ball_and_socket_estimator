@@ -29,6 +29,14 @@ MagnetRotX_3 = 0;
 MagnetRotY_3 = 0;
 MagnetRotZ_3 = 180;
 
+MagnetRotX_4 = 0;
+MagnetRotY_4 = 0;
+MagnetRotZ_4 = 180;
+
+MagnetRotX_5 = 0;
+MagnetRotY_5 = 0;
+MagnetRotZ_5 = 180;
+
 For i In {1:NumMagnets}
   DefineConstant[
     X~{i} = {12.5*Sin[Pi/180.0*120*i]*mm, Min -100*mm, Max 100*mm, Step mm, Visible 1,
@@ -51,10 +59,10 @@ For i In {1:NumMagnets}
     Lx~{i} = {10*mm, Min mm, Max 100*mm, Step mm,
       Name Sprintf("Parameters/Magnet %g/1X length [m]", i),
       Visible (M~{i} == 1) },
-    Ly~{i} = {10*mm, Min mm, Max 100*mm, Step mm,Visible Flag_FullMenu,
+    Ly~{i} = {10*mm, Min mm, Max 100*mm, Step mm,Visible 1,
       Name Sprintf("Parameters/Magnet %g/1XY aspect ratio", i),
       Visible (M~{i} == 1) },
-    Lz~{i} = {10*mm, Min mm, Max 100*mm, Step mm,Visible Flag_FullMenu,
+    Lz~{i} = {10*mm, Min mm, Max 100*mm, Step mm,Visible 1,
       Name Sprintf("Parameters/Magnet %g/1XZ aspect ration", i),
       Visible (M~{i} == 1) },
 

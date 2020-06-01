@@ -34,6 +34,7 @@ class BallJoint:
     positions = []
     type = 'angle'
     calib = []
+    distance = None
 
     def __init__(self,config_file_path):
         self.config = load(open(config_file_path, 'r'), Loader=Loader)
@@ -454,6 +455,24 @@ class BallJoint:
         diffs, coll = zip(*sorted(zip(magnetic_field_differences, colliders)))
         return coll,diffs
 
+    def calculateCollisionsCUDA(self,sensor_values):
+        number_of_samples = len(sensor_values)
+        p1 = np.zeros((number_of_samples,3),dtype=np.float32,order='C')
+        p2 = np.zeros((number_of_samples,3),dtype=np.float32,order='C')
+        p3 = np.zeros((number_of_samples,3),dtype=np.float32,order='C')
+        p4 = np.zeros((number_of_samples,3),dtype=np.float32,order='C')
+        i = 0
+        for val in sensor_values:
+            p1[i] = val[0]
+            p2[i] = val[1]
+            p3[i] = val[2]
+            p4[i] = val[3]
+            i = i+1
+        number_of_samples = np.int32(number_of_samples)
+        distance(number_of_samples, p1_gpu, p2_gpu, p3_gpu, p4_gpu, out_gpu, block=(len(p1),len(p1),1), grid=(1,1))
+        out = np.reshape(out_gpu.get(),(number_of_samples,number_of_samples))
+        print(out)
+
     def generateMagneticDataRandom(self,number_of_samples):
         self.sampling_method = 'random'
         args = range(0,number_of_samples,1)
@@ -499,7 +518,7 @@ class BallJoint:
         elif self.sampling_method=='grid':
             rot = self.grid_positions[iter]
 
-        magnets = self.gen_magnets()
+        magnets = self.gen_magnets(self.config)
         magnets.rotate(rot[0],(1,0,0), anchor=(0,0,0))
         magnets.rotate(rot[1],(0,1,0), anchor=(0,0,0))
         magnets.rotate(rot[2],(0,0,1), anchor=(0,0,0))
@@ -562,11 +581,11 @@ class BallJoint:
             magnet.rotate(angle=angle[2],axis=(0,0,1))
             magnets.append(magnet)
         return Collection(magnets)
-    def gen_magnets(self):
+    def gen_magnets(self,config):
         magnets = []
-        for field,mag_dim,pos,pos_offset,angle,angle_offset in zip(self.config['field_strength'],\
-            self.config['magnet_dimension'],self.config['magnet_pos'],self.config['magnet_pos_offsets'],\
-            self.config['magnet_angle'],self.config['magnet_angle_offsets']):
+        for field,mag_dim,pos,pos_offset,angle,angle_offset in zip(config['field_strength'],\
+            config['magnet_dimension'],config['magnet_pos'],config['magnet_pos_offsets'],\
+            config['magnet_angle'],config['magnet_angle_offsets']):
             magnet = Box(mag=(0,0,field), dim=mag_dim,\
                 pos=(pos[0]+pos_offset[0],\
                     pos[1]+pos_offset[1],\

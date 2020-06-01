@@ -349,10 +349,11 @@ PostOperation {
   { Name MagSta_phi ; NameOfPostProcessing MagSta_phi;
     Operation {
       Print[ b, OnElementsOf Vol_mu, File "b.pos" ] ;
+      /*
       For i In {1:NumSensors}
         Printf("sensor_%g",i);
         Print[ b, OnElementsOf Vol_Sensor~{i}, File Sprintf("b_sensor_%g.pos", i) ] ;
-      EndFor
+      EndFor*/
       Echo[ Str["l=PostProcessing.NbViews-1;",
 		"View[l].ArrowSizeMax = 100;",
 		"View[l].CenterGlyphs = 1;",
@@ -372,11 +373,11 @@ PostOperation {
   { Name MagSta_a ; NameOfPostProcessing MagSta_a ;
     Operation {
       Print[ b,  OnElementsOf Vol_mu,  File "b.pos" ];
-
+      /*
       For i In {1:NumSensors}
         Printf("sensor_%g",i);
         Print[ b, OnElementsOf Vol_Sensor~{i}, File Sprintf("b_sensor_%g.pos", i) ] ;
-      EndFor
+      EndFor*/
       Echo[ Str["l=PostProcessing.NbViews-1;",
 		"View[l].ArrowSizeMax = 100;",
 		"View[l].CenterGlyphs = 1;",
