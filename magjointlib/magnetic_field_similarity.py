@@ -37,15 +37,23 @@ end = time.time()
 print('took: %d s or %f min'%(end - start,(end - start)/60))
 start = time.time()
 sensor_values = np.zeros((number_of_sensors,3),dtype=np.float32,order='C')
+def generateSensorDataFork(i,magnets,sensors):
+    return sensors[i].getB(magnets)
+
+with Pool() as pool:
+    result = pool.starmap(generateSensorDataFork, zip(range(0,number_of_sensors),\
+        [magnets]*number_of_sensors,[sensors]*number_of_sensors))
+    for res,i in zip(result,range(0,number_of_sensors)):
+        sensor_values[i]=res
+end = time.time()
+print('pool took: %d s or %f min'%(end - start,(end - start)/60))
+start = time.time()
 for sens,i in zip(sensors,range(0,number_of_sensors)):
     sensor_values[i]=sens.getB(magnets)
 end = time.time()
-print('took: %d s or %f min'%(end - start,(end - start)/60))
+print('sequential took: %d s or %f min'%(end - start,(end - start)/60))
+
 start = time.time()
-
-# start = cuda.Event()
-# end   = cuda.Event()
-
 mod = SourceModule("""
   __global__ void distance(int number_of_samples, float3 *p1, float *d)
   {

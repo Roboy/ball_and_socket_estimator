@@ -13,3 +13,5 @@ python/hyperparameter_logs
 *.ts
 *.dat
 *.pos
+*.png
+*.gif

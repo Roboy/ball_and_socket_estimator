@@ -518,7 +518,7 @@ class BallJoint:
         elif self.sampling_method=='grid':
             rot = self.grid_positions[iter]
 
-        magnets = self.gen_magnets(self.config)
+        magnets = self.gen_magnets()
         magnets.rotate(rot[0],(1,0,0), anchor=(0,0,0))
         magnets.rotate(rot[1],(0,1,0), anchor=(0,0,0))
         magnets.rotate(rot[2],(0,0,1), anchor=(0,0,0))
@@ -581,11 +581,11 @@ class BallJoint:
             magnet.rotate(angle=angle[2],axis=(0,0,1))
             magnets.append(magnet)
         return Collection(magnets)
-    def gen_magnets(self,config):
+    def gen_magnets(self):
         magnets = []
-        for field,mag_dim,pos,pos_offset,angle,angle_offset in zip(config['field_strength'],\
-            config['magnet_dimension'],config['magnet_pos'],config['magnet_pos_offsets'],\
-            config['magnet_angle'],config['magnet_angle_offsets']):
+        for field,mag_dim,pos,pos_offset,angle,angle_offset in zip(self.config['field_strength'],\
+            self.config['magnet_dimension'],self.config['magnet_pos'],self.config['magnet_pos_offsets'],\
+            self.config['magnet_angle'],self.config['magnet_angle_offsets']):
             magnet = Box(mag=(0,0,field), dim=mag_dim,\
                 pos=(pos[0]+pos_offset[0],\
                     pos[1]+pos_offset[1],\
