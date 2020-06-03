@@ -21,6 +21,7 @@ from pycuda import gpuarray, tools
 from magpylib import Collection, displaySystem, Sensor
 import matplotlib
 import matplotlib.pyplot as plt
+
 matplotlib.use('Agg')
 
 import names
@@ -125,7 +126,7 @@ class ParticleSwarm():
             fig = plt.figure(figsize=(9,9))
             ax1 = fig.add_subplot(111, projection='3d')
             displaySystem(magnets, subplotAx=ax1, suppress=True, direc=True)
-            fig.savefig('pics/'+self.target_folder+'/'+p['name']+'/'+str(self.iteration)+'.png')
+            fig.savefig('pics/'+self.target_folder+'/'+p['name']+'/'+'%03d.png'%self.iteration)
             plt.close(fig)
             self.status_bar.update(1)
         # calculate global best score
@@ -134,7 +135,7 @@ class ParticleSwarm():
             if p['personal_best_score']>self.global_best_score:
                 self.global_best_score = p['personal_best_score']
                 self.global_best_particle = i
-                print('new global best score %d of particle %d'%(self.global_best_score,i))
+                print('new global best score %d of %s'%(self.global_best_score,p['name']))
             i+=1
     def move(self):
         i = 0

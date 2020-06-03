@@ -200,7 +200,7 @@ class ball_in_socket_estimator:
             print(euler_set[0,:])
             print(sensors_set[0,:])
 
-            data_split = 0.7
+            data_split = 0.9
 
             data_in_train = sensors_set[:int(number_of_samples*data_split),:]
             data_in_test = sensors_set[int(number_of_samples*data_split):,:]

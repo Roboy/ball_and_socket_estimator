@@ -12,10 +12,10 @@ import rospy
 
 num_processes = 60
 iterations = 1000
-grid_x_min = -80
-grid_x_max = 80
-grid_y_min = -80
-grid_y_max = 80
+grid_x_min = -60
+grid_x_max = 60
+grid_y_min = -60
+grid_y_max = 60
 grid_z_min = -80
 grid_z_max = 80
 grid_step_x = 1

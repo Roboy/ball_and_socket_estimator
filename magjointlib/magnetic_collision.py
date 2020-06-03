@@ -30,7 +30,7 @@ colliders,magnetic_field_differences = ball.calculateCollisions(sensor_values,po
 if len(colliders)>0:
     print('there are %d collisions'%len(colliders))
     for c,dif in zip(colliders,magnetic_field_differences):
-        pos_diff = ((c[0][0]-c[1][0])**2+(c[0][0]-c[1][0])**2+(c[0][0]-c[1][0])**2)**1/2
+        pos_diff = ((c[0][0]-c[1][0])**2+(c[0][1]-c[1][1])**2+(c[0][2]-c[1][2])**2)**0.5
         if pos_diff>20:
             print(c)
             print("magnetic dif %f"%dif)

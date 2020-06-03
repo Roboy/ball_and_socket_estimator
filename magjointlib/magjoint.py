@@ -43,7 +43,6 @@ class BallJoint:
         self.number_of_sensors = len(self.config['sensor_pos'])
         self.number_of_magnets = len(self.config['field_strength'])
         self.sensors = self.gen_sensors()
-        # rospy.init_node('BallJoint',anonymous=True)
     def generateSensorDataFork(self,i,joint_positions,magnet_angles):
         magnets = self.gen_magnets_angle(magnet_angles)
         magnets.rotate(joint_positions[i][0],(1,0,0), anchor=(0,0,0))
@@ -216,6 +215,7 @@ class BallJoint:
         return [b_error]
 
     def calibrateSensor(self):
+        rospy.init_node('BallJoint',anonymous=True)
         print('calibrating sensor')
         print('calibration magnet positions')
         print(self.config['calibration']['magnet_pos'])
@@ -373,15 +373,28 @@ class BallJoint:
         with open(self.config_file, 'w') as file:
             documents = dump(self.config, file)
 
-    def visualizeCloud(self,magnitudes,pos_values):
+    def visualizeCloud(self,mag_values,pos_values,scale):
         cloud = pcl.PointCloud_PointXYZRGB()
-        points = np.zeros((len(magnitudes), 4), dtype=np.float32)
+        number_of_samples = len(pos_values)
+        points = np.zeros((number_of_samples*2, 4), dtype=np.float32)
         i = 0
-        for rot in pos_values:
-            points[i][0] = magnitudes[i]*math.sin(rot[0]/180.0*math.pi)*math.cos(rot[1]/180.0*math.pi)
-            points[i][1] = magnitudes[i]*math.sin(rot[0]/180.0*math.pi)*math.sin(rot[1]/180.0*math.pi)
-            points[i][2] = magnitudes[i]*math.cos(rot[0]/180.0*math.pi)
-            points[i][3] = 255 << 16 | 255 << 8 | 255
+        for pos,mag in zip(pos_values,mag_values):
+            # dir = mag/np.linalg.norm(mag)
+            p = (pos+scale*mag)/100.0
+
+            points[i][0] = p[0]
+            points[i][1] = p[1]
+            points[i][2] = p[2]
+            if np.linalg.norm(p)>0.22:
+                points[i][3] = 255 << 16 | 255 << 8 | 255
+            else:
+                points[i][3] = 0 << 16 | 0 << 8 | 255
+
+            if i%10==0:
+                points[number_of_samples+i][0] = pos[0]/100.0
+                points[number_of_samples+i][1] = pos[1]/100.0
+                points[number_of_samples+i][2] = pos[2]/100.0
+                points[number_of_samples+i][3] = 255 << 16 | 0 << 8 | 255
             i = i+1
 
         cloud.from_array(points)
