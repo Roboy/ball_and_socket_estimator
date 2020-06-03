@@ -1,0 +1,130 @@
+calibration:
+  max_nfev: 2000
+  optimize: [field_strength, sensor_angle, sensor_pos]
+field_strength: [1300,1300]
+id: 0
+magnet_angle:
+- [90, 0, 150]
+- [90, 0, 30]
+magnet_angle_offsets:
+- [0.0, 0.0, 0.0]
+- [0.0, 0.0, 0.0]
+magnet_dimension:
+- [10, 10, 10]
+- [10, 10, 10]
+magnet_pos:
+- [10.392304845,-6.5,0]
+- [-10.392304845,-6.5,0]
+magnet_pos_offsets:
+- [0.0, 0.0, 0.0]
+- [0.0, 0.0, 0.0]
+sensor_angle:
+- [0, 0, 90]
+- [0, 0, 90]
+- [0, 0, 90]
+- [0, 0, 90]
+sensor_angle_offsets:
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - &id001 !!python/object/apply:numpy.dtype
+      args: [f8, 0, 1]
+      state: !!python/tuple [3, <, null, null, null, -1, -1, 0]
+    - !!binary |
+      uVYoNxuYFDw=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      yVCtCo5VCTw=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      ZLF15lnR1b8=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      3/nODL9c/Ds=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      rKtGuLcx0bg=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      e4z8RMYd9L8=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      S5KXGvAzcDg=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      Z8DniV7YNTI=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      2dk9M5x7/78=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      oBGonGMzWKs=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      rbWshL50g6c=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      oU5TED+h0r8=
+sensor_pos:
+- [-22.4, 7.25, 0]
+- [-14, -19.5, 0]
+- [14.3, -19.6, 0]
+- [22.325, 6.675, 0]
+sensor_pos_offsets:
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      u+N0wWq30r8=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      MQnTFheyu78=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      jdbXsNytrD8=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      Pbzl3xpSqD8=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      Ju/G660Tq78=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      8kBlUM6jvr8=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      7XD6kouZvb8=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      22++HMgz4b8=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      IdKZDZ+hnz8=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      j3D43yunzT8=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      /+eZeL3Mwj8=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      GiU6mp3Zqz8=

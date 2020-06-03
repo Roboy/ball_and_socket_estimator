@@ -627,6 +627,8 @@ class BallJoint:
             i = i+1
         return Collection(magnets)
     def plotMagnets(self,magnets):
+        for sens in self.sensors:
+            print(sens.getB(magnets))
         # calculate B-field on a grid
         xs = np.linspace(-25,25,50)
         ys = np.linspace(-25,25,50)
