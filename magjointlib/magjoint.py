@@ -376,7 +376,7 @@ class BallJoint:
     def visualizeCloud(self,mag_values,pos_values,scale):
         cloud = pcl.PointCloud_PointXYZRGB()
         number_of_samples = len(pos_values)
-        points = np.zeros((number_of_samples*2, 4), dtype=np.float32)
+        points = np.zeros((number_of_samples, 4), dtype=np.float32)
         i = 0
         for pos,mag in zip(pos_values,mag_values):
             # dir = mag/np.linalg.norm(mag)
@@ -388,13 +388,13 @@ class BallJoint:
             if np.linalg.norm(p)>0.22:
                 points[i][3] = 255 << 16 | 255 << 8 | 255
             else:
-                points[i][3] = 0 << 16 | 0 << 8 | 255
+                points[i][3] = 0 << 16 | 255 << 8 | 255
 
-            if i%10==0:
-                points[number_of_samples+i][0] = pos[0]/100.0
-                points[number_of_samples+i][1] = pos[1]/100.0
-                points[number_of_samples+i][2] = pos[2]/100.0
-                points[number_of_samples+i][3] = 255 << 16 | 0 << 8 | 255
+            # if i%10==0:
+            #     points[number_of_samples+i][0] = pos[0]/100.0
+            #     points[number_of_samples+i][1] = pos[1]/100.0
+            #     points[number_of_samples+i][2] = pos[2]/100.0
+            #     points[number_of_samples+i][3] = 255 << 16 | 0 << 8 | 255
             i = i+1
 
         cloud.from_array(points)
