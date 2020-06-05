@@ -36,8 +36,8 @@ __global__ void MagneticFieldInterpolateKernel(
 }
 """)
 
-x_step = 10
-y_step = 10
+x_step = 1
+y_step = 1
 
 x_angles = np.arange(-pi+pi/180*x_step,pi-pi/180*x_step,pi/180*x_step)
 y_angles = np.arange(-pi,pi,pi/180*y_step)
