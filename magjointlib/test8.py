@@ -43,7 +43,7 @@ __global__ void MagneticFieldInterpolateKernel(
 {
     unsigned int index = blockIdx.x * blockDim.x + threadIdx.x + blockIdx.y * blockDim.y + threadIdx.y;
 
-    float theta = atan2(pos[index].y,pos[index].x)/PI;
+    float theta = atan2(pos[index].y,pos[index].x)/(2*PI);
     float phi = atan2(sqrtf(powf(pos[index].x,2.0)+powf(pos[index].y,2.0)),pos[index].z)/(2*PI);
 
     if( index > number_of_samples )
@@ -56,7 +56,7 @@ __global__ void MagneticFieldInterpolateKernel(
 }
 """)
 
-x_angles = np.arange(0,180,x_step)
+x_angles = np.arange(0,360,x_step)
 y_angles = np.arange(0,360,y_step)
 
 width,height = len(x_angles),len(y_angles)
