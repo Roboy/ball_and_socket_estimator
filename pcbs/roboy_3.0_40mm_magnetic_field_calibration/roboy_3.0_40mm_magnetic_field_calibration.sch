@@ -768,34 +768,34 @@ F 3 "~" H 6600 3025 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:Fiducial FID?
+L Mechanical:Fiducial FID1
 U 1 1 5EF31D7B
 P 4875 1900
-F 0 "FID?" H 4960 1946 50  0000 L CNN
+F 0 "FID1" H 4960 1946 50  0000 L CNN
 F 1 "FID1" H 4960 1855 50  0000 L CNN
-F 2 "" H 4875 1900 50  0001 C CNN
+F 2 "Fiducial:Fiducial_0.75mm_Mask1.5mm" H 4875 1900 50  0001 C CNN
 F 3 "~" H 4875 1900 50  0001 C CNN
 	1    4875 1900
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:Fiducial FID?
+L Mechanical:Fiducial FID2
 U 1 1 5EF332D2
 P 4875 2100
-F 0 "FID?" H 4960 2146 50  0000 L CNN
+F 0 "FID2" H 4960 2146 50  0000 L CNN
 F 1 "FID2" H 4960 2055 50  0000 L CNN
-F 2 "" H 4875 2100 50  0001 C CNN
+F 2 "Fiducial:Fiducial_0.75mm_Mask1.5mm" H 4875 2100 50  0001 C CNN
 F 3 "~" H 4875 2100 50  0001 C CNN
 	1    4875 2100
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:Fiducial FID?
+L Mechanical:Fiducial FID3
 U 1 1 5EF33795
 P 4875 2275
-F 0 "FID?" H 4960 2321 50  0000 L CNN
+F 0 "FID3" H 4960 2321 50  0000 L CNN
 F 1 "FID3" H 4960 2230 50  0000 L CNN
-F 2 "" H 4875 2275 50  0001 C CNN
+F 2 "Fiducial:Fiducial_0.75mm_Mask1.5mm" H 4875 2275 50  0001 C CNN
 F 3 "~" H 4875 2275 50  0001 C CNN
 	1    4875 2275
 	1    0    0    -1  

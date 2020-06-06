@@ -735,36 +735,69 @@ F 3 "" H 5950 5075 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H5
 U 1 1 5EF2D31B
 P 6600 2675
-F 0 "H?" H 6700 2721 50  0000 L CNN
-F 1 "MountingHole" H 6700 2630 50  0000 L CNN
-F 2 "" H 6600 2675 50  0001 C CNN
+F 0 "H5" H 6700 2721 50  0000 L CNN
+F 1 "head" H 6700 2630 50  0000 L CNN
+F 2 "custom_lib:R1_face_mask_5.5mm" H 6600 2675 50  0001 C CNN
 F 3 "~" H 6600 2675 50  0001 C CNN
 	1    6600 2675
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H7
 U 1 1 5EF2D62F
 P 6625 2850
-F 0 "H?" H 6725 2896 50  0000 L CNN
-F 1 "MountingHole" H 6725 2805 50  0000 L CNN
-F 2 "" H 6625 2850 50  0001 C CNN
+F 0 "H7" H 6725 2896 50  0000 L CNN
+F 1 "ears" H 6725 2805 50  0000 L CNN
+F 2 "custom_lib:R1_ear_silk_5.5mm" H 6625 2850 50  0001 C CNN
 F 3 "~" H 6625 2850 50  0001 C CNN
 	1    6625 2850
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H6
 U 1 1 5EF2D9AF
 P 6600 3025
-F 0 "H?" H 6700 3071 50  0000 L CNN
-F 1 "MountingHole" H 6700 2980 50  0000 L CNN
-F 2 "" H 6600 3025 50  0001 C CNN
+F 0 "H6" H 6700 3071 50  0000 L CNN
+F 1 "eyes" H 6700 2980 50  0000 L CNN
+F 2 "custom_lib:R1_eyes_mask_5.5mm" H 6600 3025 50  0001 C CNN
 F 3 "~" H 6600 3025 50  0001 C CNN
 	1    6600 3025
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID?
+U 1 1 5EF31D7B
+P 4875 1900
+F 0 "FID?" H 4960 1946 50  0000 L CNN
+F 1 "FID1" H 4960 1855 50  0000 L CNN
+F 2 "" H 4875 1900 50  0001 C CNN
+F 3 "~" H 4875 1900 50  0001 C CNN
+	1    4875 1900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID?
+U 1 1 5EF332D2
+P 4875 2100
+F 0 "FID?" H 4960 2146 50  0000 L CNN
+F 1 "FID2" H 4960 2055 50  0000 L CNN
+F 2 "" H 4875 2100 50  0001 C CNN
+F 3 "~" H 4875 2100 50  0001 C CNN
+	1    4875 2100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID?
+U 1 1 5EF33795
+P 4875 2275
+F 0 "FID?" H 4960 2321 50  0000 L CNN
+F 1 "FID3" H 4960 2230 50  0000 L CNN
+F 2 "" H 4875 2275 50  0001 C CNN
+F 3 "~" H 4875 2275 50  0001 C CNN
+	1    4875 2275
 	1    0    0    -1  
 $EndComp
 $EndSCHEMATC
