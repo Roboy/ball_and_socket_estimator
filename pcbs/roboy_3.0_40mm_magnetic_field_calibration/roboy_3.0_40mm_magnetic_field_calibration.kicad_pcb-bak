@@ -4595,7 +4595,7 @@
   )
 
   (module custom_lib:R1_face_mask_5.5mm (layer F.Cu) (tedit 5A75A9C8) (tstamp 5EDDF653)
-    (at 173.6 73.7)
+    (at 174.9 71.2)
     (path /5EF2D31B)
     (fp_text reference H5 (at 0 0) (layer F.SilkS) hide
       (effects (font (size 1.524 1.524) (thickness 0.3)))
@@ -4710,7 +4710,7 @@
   )
 
   (module custom_lib:R1_eyes_mask_5.5mm (layer F.Cu) (tedit 5D5A8000) (tstamp 5EDDF65A)
-    (at 173.6 73.7)
+    (at 174.9 71.2)
     (path /5EF2D9AF)
     (fp_text reference H6 (at 0 -2.54) (layer F.SilkS) hide
       (effects (font (size 1.524 1.524) (thickness 0.3)))
@@ -4777,7 +4777,7 @@
   )
 
   (module custom_lib:R1_ear_silk_5.5mm (layer F.Cu) (tedit 5A75A981) (tstamp 5EDDF65F)
-    (at 173.6 73.7)
+    (at 174.9 71.2)
     (path /5EF2D62F)
     (fp_text reference H7 (at 0 0) (layer F.SilkS) hide
       (effects (font (size 1.524 1.524) (thickness 0.3)))

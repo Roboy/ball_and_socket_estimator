@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name custom)(type Legacy)(uri /home/letrend/workspace/roboy3/src/ball_in_socket_estimator/pcbs/kicad_db/lib/custom.lib)(options "")(descr ""))
+  (lib (name TCA9546APWR)(type Legacy)(uri /home/letrend/workspace/roboy3/src/ball_in_socket_estimator/pcbs/kicad_db/lib/TCA9546APWR.lib)(options "")(descr ""))
+)
