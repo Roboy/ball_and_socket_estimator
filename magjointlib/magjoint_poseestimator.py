@@ -48,7 +48,7 @@ if args.g: #generate magnetic field
     for theta,i in zip(x_angles,range(0,width)):
         for phi,j in zip(y_angles,range(0,height)):
             pos = [[args.r*sin(theta*pi/180)*cos(phi*pi/180),args.r*sin(theta*pi/180)*sin(phi*pi/180),args.r*cos(theta*pi/180)]]
-            sensor = ball.gen_sensors_custom(pos,[[0,0,0]])
+            sensor = ball.gen_sensors_custom(pos,[[0,0,90]])
             val = sensor[0].getB(magnets)
             tex[i,j,0] = val[0]
             tex[i,j,1] = val[1]
@@ -134,7 +134,7 @@ class PoseEstimator:
             self.magneticsCallback(msg)
     def minimizeFunc(self,x):
         for pos,i in zip(self.sensor_pos,range(self.number_of_sensors)):
-             r = R.from_euler('xyz', x,degrees=True)
+             r = R.from_euler('xzy', x,degrees=True)
              self.input[i] = r.apply(pos)
         self.interpol(np.int32(self.number_of_sensors),drv.In(self.input),drv.Out(self.output),texrefs=[self.texref],block=self.bdim,grid=self.gdim)
         b_error = 0
@@ -151,7 +151,7 @@ class PoseEstimator:
                 val /= np.linalg.norm(val)
             self.b_target[i] = val
         # print(b_target)
-        res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-90,-90,-90), (90, 90, 90)),ftol=1e-8, xtol=1e-8,verbose=0,diff_step=0.001)#,max_nfev=20
+        res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-50,-50,-90), (50, 50, 90)),ftol=1e-8, xtol=1e-8,verbose=0,diff_step=0.1)#,max_nfev=20
         b_field_error = res.cost
         rospy.loginfo_throttle(1,"result %.3f %.3f %.3f b-field error %.3f"%(res.x[0],res.x[1],res.x[2],res.cost))
         msg = sensor_msgs.msg.JointState()
@@ -163,6 +163,9 @@ class PoseEstimator:
         euler = [res.x[0]/180*math.pi,res.x[1]/180*math.pi,res.x[2]/180*math.pi]
         msg.position = [euler[0], euler[1], euler[2]]
         self.joint_state.publish(msg)
-        self.pos_estimate_prev = res.x
+        if b_field_error<2000:
+            self.pos_estimate_prev = res.x
+        else:
+            self.pos_estimate_prev = [0,0,0]
 
 PoseEstimator(ball,tex)
