@@ -166,6 +166,7 @@ class PoseEstimator:
         if b_field_error<2000:
             self.pos_estimate_prev = res.x
         else:
+            rospy.logwarn_throttle(1,'b field error too big, resetting joint position...')
             self.pos_estimate_prev = [0,0,0]
 
 PoseEstimator(ball,tex)
