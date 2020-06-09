@@ -413,4 +413,70 @@ F 3 "~" H 7400 3225 50  0001 C CNN
 	1    7400 3225
 	1    0    0    -1  
 $EndComp
+$Comp
+L Mechanical:Fiducial FID1
+U 1 1 5EDFA1B5
+P 7400 3725
+F 0 "FID1" H 7485 3771 50  0000 L CNN
+F 1 "FID1" H 7485 3680 50  0000 L CNN
+F 2 "Fiducial:Fiducial_0.5mm_Mask1mm" H 7400 3725 50  0001 C CNN
+F 3 "~" H 7400 3725 50  0001 C CNN
+	1    7400 3725
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID2
+U 1 1 5EDFAE27
+P 7400 3975
+F 0 "FID2" H 7485 4021 50  0000 L CNN
+F 1 "FID2" H 7485 3930 50  0000 L CNN
+F 2 "Fiducial:Fiducial_0.5mm_Mask1mm" H 7400 3975 50  0001 C CNN
+F 3 "~" H 7400 3975 50  0001 C CNN
+	1    7400 3975
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID3
+U 1 1 5EDFB495
+P 7400 4225
+F 0 "FID3" H 7485 4271 50  0000 L CNN
+F 1 "FID3" H 7485 4180 50  0000 L CNN
+F 2 "Fiducial:Fiducial_0.5mm_Mask1mm" H 7400 4225 50  0001 C CNN
+F 3 "~" H 7400 4225 50  0001 C CNN
+	1    7400 4225
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID4
+U 1 1 5EDFEE73
+P 7425 4575
+F 0 "FID4" H 7510 4621 50  0000 L CNN
+F 1 "head" H 7510 4530 50  0000 L CNN
+F 2 "custom_lib:R1_face_mask_5.5mm" H 7425 4575 50  0001 C CNN
+F 3 "~" H 7425 4575 50  0001 C CNN
+	1    7425 4575
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID5
+U 1 1 5EDFEE7D
+P 7425 4825
+F 0 "FID5" H 7510 4871 50  0000 L CNN
+F 1 "ear" H 7510 4780 50  0000 L CNN
+F 2 "custom_lib:R1_ear_silk_5.5mm" H 7425 4825 50  0001 C CNN
+F 3 "~" H 7425 4825 50  0001 C CNN
+	1    7425 4825
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:Fiducial FID6
+U 1 1 5EDFEE87
+P 7425 5075
+F 0 "FID6" H 7510 5121 50  0000 L CNN
+F 1 "eyes" H 7510 5030 50  0000 L CNN
+F 2 "custom_lib:R1_eyes_mask_5.5mm" H 7425 5075 50  0001 C CNN
+F 3 "~" H 7425 5075 50  0001 C CNN
+	1    7425 5075
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

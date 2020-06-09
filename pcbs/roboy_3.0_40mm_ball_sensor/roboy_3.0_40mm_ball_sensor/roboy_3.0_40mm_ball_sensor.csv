@@ -1,0 +1,7 @@
+Id,Designator,Package,Quantity,Designation,Supplier and ref
+1,"U1,U2,U3,U4",TLE493d,4,TLE493d,https://www.mouser.de/ProductDetail/Infineon-Technologies/TLE493DW2B6A0HTSA1?qs=qpJ%252B%252B%252Bdg6p1ZWZo3xqeg4Q%3D%3D
+2,"C1,C2,C3,C4",C_0402_1005Metric,4,C,Any – 5V compliant
+3,J1,TE-Connectivity_Micro-Match_connector_02x05_Pitch_1.27mm,1,Conn_01x10_Female,https://www.mouser.de/ProductDetail/TE-Connectivity/1-2178710-0?qs=%2Fha2pyFaduiN2GAe%2FU0M%2FE%252BtCpbpOtlde5ovqce39pM%3D
+8,FID1,Fiducial_0.5mm_Mask1mm,1,FID1,
+9,FID2,Fiducial_0.5mm_Mask1mm,1,FID2,
+10,FID3,Fiducial_0.5mm_Mask1mm,1,FID3,
