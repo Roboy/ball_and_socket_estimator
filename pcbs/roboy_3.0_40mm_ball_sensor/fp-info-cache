@@ -1,4 +1,4 @@
-16832255973047244
+16841419462404244
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -74452,6 +74452,13 @@ CM81
 81
 81
 custom_lib
+DIL6-SMD
+<b>DIL 6 SMD</b><p>Source: http://www.fairchildsemi.com/pf/4N/4N35-M.html
+
+0
+6
+6
+custom_lib
 DIP_2pos_TDA02H0SB1R
 
 
@@ -74669,6 +74676,13 @@ SC70-5
 5
 5
 custom_lib
+SOP65P640X120-16N
+
+
+0
+16
+16
+custom_lib
 SSOP-28_5.3x10.2mm_Pitch0.65mm
 28-Lead Plastic Shrink Small Outline (SS)-5.30 mm Body [SSOP] (see Microchip Packaging Specification 00000049BS.pdf)
 SSOP 0.65
@@ -74700,167 +74714,190 @@ custom_lib
 TC2030-MCP-NL
 <B>TAG-CONNECT ICSP Connector</B><BR><I>Manufacturer:</I> <a href="www.tag-connect.com">Tag-Connect</a><BR>
 <BR>Cable for easy In-Circuit Serial Programming. Designed for Microchip ICD2, suitable for many others.<BR>
-0
-0
-0
+
+<TABLE cellspacing=0 cellpadding=0 border=0>
+<TR><TD width=20></TD><TD>
 <TABLE cellspacing=0 cellpadding=1 border=1>
 <TR bgcolor=silver><TD align=center>PAD</TD><TD align=center>Description</TD></TR>
 <TR><TD align=center>1</TD><TD>MCLR/Vpp</TD></TR>
 <TR><TD align=center>2</TD><TD>Vdd</TD></TR>
-0
-0
-0
+<TR><TD align=center>3</TD><TD>GND</TD></TR>
+<TR><TD align=center>4</TD><TD>PGD (ISPDAT)</TD></TR>
+<TR><TD align=center>5</TD><TD>PGC (ISPCLK)</TD></TR>
 <TR><TD align=center>6</TD><TD>nc (used for LVP)</TD></TR>
 </TABLE>
 </TD></TR></TABLE><BR><BR>
 
-0
-0
+©2009 ROFA.cz - modified and updated by Robert Darlington &#8249;rdarlington@gmail.com&#8250;
+
 0
 6
 6
 custom_lib
+TDK-LAMBDA_I6A4W020A033V-001-R
+
+
+0
+7
+7
+custom_lib
 TDSON-8-1
-0
-0
+Power MOSFET package, TDSON-8-1, SuperS08, SON-8_5x6mm
+tdson 
 0
 13
 5
 custom_lib
 TE-Connectivity_Micro-Match_connector_02x02_Pitch_1.27mm
-0
-0
+TE-Connectivity Micro-Match connector, female, 02x02, board mount, 1.27mm pitch, 215079-4
+connector, TE-Connectivity, female
 0
 4
 4
 custom_lib
 TE-Connectivity_Micro-Match_connector_02x03_Pitch_1.27mm
-0
-0
+TE-Connectivity Micro-Match connector, female, 02x02, board mount, 1.27mm pitch, 215079-6
+connector, TE-Connectivity, female
 0
 6
 6
 custom_lib
 TE-Connectivity_Micro-Match_connector_02x05_Pitch_1.27mm
-0
-0
+TE-Connectivity Micro-Match connector, female, 02x02, board mount, 1.27mm pitch, 215079-10
+connector, TE-Connectivity, female
 0
 10
 10
 custom_lib
 TE-Connectivity_Micro-Match_connector_02x10_Pitch_1.27mm
-0
-0
+TE-Connectivity Micro-Match connector, female, 02x02, board mount, 1.27mm pitch, 215079-10
+connector, TE-Connectivity, female
 0
 20
 20
 custom_lib
+TLE493d
+
+
+0
+7
+6
+custom_lib
 TLI4970
-0
-0
+
+
 0
 8
 8
 custom_lib
 TSL1401CL
-0
-0
+
+
 0
 8
 8
 custom_lib
 TSOP-6
-6
-0
+6-pin TSOP-6 package, http://www.icbank.com/icbank_data/semi_package/tsop6_dim.pdf
+TSOP-6
 0
 6
 6
 custom_lib
 The_0402_FP
-0
-0
+
+
 0
 2
 2
 custom_lib
 ULLGA6_1.45_x_1.0_0.5P
-0
-0
+
+
 0
 6
 6
 custom_lib
 Wago_2060_2_SMD
-0
-0
+
+
 0
 4
 2
 custom_lib
 Wago_2060_2_THT
-0
-0
+
+
 0
 4
 2
 custom_lib
 Wago_2060_3_SMD
-0
-0
+
+
 0
 6
 3
 custom_lib
 Wago_2060_3_THT
-0
-0
+
+
 0
 6
 3
 custom_lib
 X2QFN-8
-0
-0
+
+
 0
 8
 8
 custom_lib
 XAL5050-103MEC
-0
-0
+
+
 0
 2
 2
 custom_lib
+XDCR_DPS368XTSA1
+
+
+0
+8
+8
+custom_lib
 iCE40-PL9K-CM81
-0
-0
+
+
 0
 81
 81
 custom_lib
 ltc2855
-0
-0
+
+
 0
 13
 13
 custom_lib
 micro_match_female_8pos_SMT
-0
-0
+
+
 0
 8
 8
 custom_lib
 micro_match_female_10pos_SMT
-0
-0
+
+
 0
 10
 10
 custom_lib
 tcut1350x01
+
+
 0
-0
-0
+6
+6
