@@ -77,9 +77,7 @@ else:
             angle = ball.config['sensor_angle'][select][2]
             sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
             sv = sensor_quat.rotate(values[()]['sensor_values'][i][select])
-            if j<14:
-                # sensor_quat = Quaternion(axis=[1,0, 0], degrees=90)
-                # sv = sensor_quat.rotate(sv)
+            if j>=14: # the sensor values on the opposite pcb side need to inverted
                 sv = np.array([sv[0],-sv[1],-sv[2]])
             sensor_values.append(sv)
             color.append([colors[0][j],colors[1][j],colors[2][j]])
