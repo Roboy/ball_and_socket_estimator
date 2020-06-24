@@ -18,11 +18,12 @@ parser.add_argument("-s",help="steps at which the magnetic field shall be sample
 parser.add_argument("-scale",help="scale the magnetic field in cloud visualization",type=float,default=1.0)
 parser.add_argument("-m",help="model name to load, eg data/three_magnets.npz",default='data/three_magnets.npz')
 parser.add_argument("-v",help="visualize only",action="store_true")
-parser.add_argument("-r",help="radius on which to sample the magnetic field in mm",type=float,default=23.5)
+parser.add_argument("-select", nargs='+', help="select which sensors", type=int,
+                        default=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25])
 args = parser.parse_args()
-print(args)
 
 ball = magjoint.BallJoint(args.config)
+print(args)
 
 magnets = ball.gen_magnets()
 if args.v:
@@ -58,30 +59,18 @@ if args.g:
 else:
     print('loading model from '+args.m)
     values = np.load(args.m)['values']
-    print(values[()]['motor_position'])
+    # print(values[()]['motor_position'])
     sensor_values = []
     positions = []
     pbar = tqdm(total=3600)
-    # for i in range(0,3600):
-    #     motor_pos = values[()]['motor_position'][i]
-    #     quat = Quaternion(axis=[0, 1, 0], angle=motor_pos/180.0*pi)
-    #     for sensor_pos, sensor_angle, sensor_value in zip(ball.config['sensor_pos'],ball.config['sensor_angle'],values[()]['sensor_values'][i]):
-    #         sensor_pos_new = quat.rotate(sensor_pos)
-    #         positions.append(np.array(sensor_pos_new))
-    #         sensor_quat = Quaternion(axis=[0, 0, 1], angle=-sensor_angle[2]/180.0*pi)
-    #         sensor_values.append(sensor_quat.rotate(sensor_value))
-    #     pbar.update(1)
-    # sensor_select = [14,15,16,17,18,19,20,21,22,23,24,25]
-    # sensor_select = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-    sensor_select = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
-    colors = [random.sample(range(0, 255),len(sensor_select)),random.sample(range(0, 255),len(sensor_select)),random.sample(range(0, 255),len(sensor_select))]
+    colors = [random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select))]
     color = []
     # sensor_select = [0,1,2,3,4,14,15,16,17,18]
     for i in range(0,3600):
         motor_pos = values[()]['motor_position'][i]
         quat = Quaternion(axis=[0, 1, 0], degrees=motor_pos)
         j = 0
-        for select in sensor_select:
+        for select in args.select:
             pos = ball.config['sensor_pos'][select]
             sensor_pos_new = quat.rotate(pos)
             positions.append(np.array(sensor_pos_new))
