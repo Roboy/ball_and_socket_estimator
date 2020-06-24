@@ -405,6 +405,30 @@ class BallJoint:
         v = True
         while v:
             v = not(visual.WasStopped())
+    def visualizeCloudColor(self,mag_values,pos_values,scale,color):
+        cloud = pcl.PointCloud_PointXYZRGB()
+        number_of_samples = len(pos_values)
+        points = np.zeros((number_of_samples, 4), dtype=np.float32)
+        i = 0
+        for pos,mag in zip(pos_values,mag_values):
+            # dir = mag/np.linalg.norm(mag)
+            p = (pos+scale*mag)/100.0
+
+            points[i][0] = p[0]
+            points[i][1] = p[1]
+            points[i][2] = p[2]
+            points[i][3] = color[i][0]<<16|color[i][1]<<8|color[i][2]
+
+            i = i+1
+
+        cloud.from_array(points)
+
+        visual = pcl.pcl_visualization.CloudViewing()
+        visual.ShowColorCloud(cloud)
+
+        v = True
+        while v:
+            v = not(visual.WasStopped())
 
     def rotateMagnets(self,magnets,rot):
         magnets.rotate(rot[0],(1,0,0), anchor=(0,0,0))
