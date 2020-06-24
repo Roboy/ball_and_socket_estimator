@@ -10,3 +10,6 @@
 [submodule "pcbs/kicad_db"]
 	path = pcbs/kicad_db
 	url = https://github.com/Roboy/kicad_db
+[submodule "third_party/cnpy"]
+	path = third_party/cnpy
+	url = https://github.com/rogersce/cnpy

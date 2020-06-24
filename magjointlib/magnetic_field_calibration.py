@@ -61,7 +61,7 @@ else:
     values = np.load(args.m)['values']
     # print(values[()]['motor_position'])
     sensor_values = []
-    positions = []
+    sensor_positions = []
     pbar = tqdm(total=3600)
     colors = [random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select))]
     color = []
@@ -70,6 +70,8 @@ else:
         motor_pos = values[()]['motor_position'][i]
         quat = Quaternion(axis=[0, 1, 0], degrees=motor_pos)
         j = 0
+        sensor_values_ = []
+        positions = []
         for select in args.select:
             pos = ball.config['sensor_pos'][select]
             sensor_pos_new = quat.rotate(pos)
@@ -79,9 +81,15 @@ else:
             sv = sensor_quat.rotate(values[()]['sensor_values'][i][select])
             if j>=14: # the sensor values on the opposite pcb side need to inverted
                 sv = np.array([sv[0],-sv[1],-sv[2]])
-            sensor_values.append(sv)
+            sensor_values_.append(sv)
             color.append([colors[0][j],colors[1][j],colors[2][j]])
             j+=1
+        sensor_positions.append(positions)
+        sensor_values.append(sensor_values_)
         pbar.update(1)
+    print('saving sensor sensor_positions to '+'models/sensor_positions.npz')
+    print('saving sensor sensor_values to '+'models/sensor_values.npz')
+    np.savez_compressed('models/sensor_position.npz',values=sensor_positions)
+    np.savez_compressed('models/sensor_values.npz',values=sensor_values)
     pbar.close()
-    ball.visualizeCloudColor(sensor_values,positions,args.scale,color)
+    ball.visualizeCloudColor(sensor_values,sensor_positions,args.scale,color)

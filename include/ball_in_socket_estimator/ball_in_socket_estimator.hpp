@@ -13,6 +13,7 @@
 #include <Eigen/Dense>
 #include <thread>
 #include "grid3d.hpp"
+#include "cnpy.h"
 
 using namespace std;
 using namespace Eigen;

@@ -20,11 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
         )
 catkin_package(CATKIN_DEPENDS message_runtime roboy_middleware_msgs )
 
-
-find_package(PCL REQUIRED COMPONENTS common io visualization)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 #==============================================================================
 # Dependencies
 #==============================================================================
@@ -37,6 +32,15 @@ add_definitions(${PCL_DEFINITIONS})
     find_package(TinyXML2 REQUIRED)
     include_directories(${LibXML++_INCLUDE_DIRS})
 
+    find_package(PCL REQUIRED COMPONENTS common io visualization)
+    include_directories(${PCL_INCLUDE_DIRS})
+    link_directories(${PCL_LIBRARY_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+
+    find_package(CNPY REQUIRED)
+    find_package(ZLIB REQUIRED)
+    include_directories(${CNPY_INCLUDE_DIRS})
+
     include_directories(
             ${catkin_INCLUDE_DIRS}
             include/
@@ -46,10 +50,7 @@ add_definitions(${PCL_DEFINITIONS})
     #==============================================================================
     add_executable(ball_in_socket_estimator src/ball_in_socket_estimator.cpp)
     add_dependencies(ball_in_socket_estimator roboy_middleware_msgs_gencpp)
-    target_link_libraries(ball_in_socket_estimator ${catkin_LIBRARIES})
-
-    add_executable(magnetic_field_visualization src/magnetic_field_visualization.cpp)
-    target_link_libraries(magnetic_field_visualization ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${TinyXML2_LIBRARIES})
+    target_link_libraries(ball_in_socket_estimator ${catkin_LIBRARIES} ${CNPY_LIBRARIES} ${ZLIB_LIBRARIES} ${PCL_LIBRARIES})
 
     #==============================================================================
     # Installation
