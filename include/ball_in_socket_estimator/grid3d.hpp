@@ -1,4 +1,4 @@
-
+#include <vector>
 
 template<typename T>
 class Vec3 {
@@ -70,64 +70,54 @@ typedef Vec3<float> Vec3f;
 float randUniform() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
+using namespace std;
 
 template<typename T>
 class Grid {
 public:
-    unsigned nvoxels; // number of voxels (cube)
-    unsigned nx, ny, nz; // number of vertices
+    // unsigned nvoxels; // number of voxels (cube)
+    // unsigned nx, ny, nz; // number of vertices
+    unsigned nvoxels;
+    unsigned x_steps, y_steps;
     Vec3<T> *data;
 
-    Grid(unsigned nv = 10) : nvoxels(nv), data(nullptr) {
-        nx = ny = nz = nvoxels + 1;
-        data = new Vec3<T>[nx * ny * nz];
-        for (int z = 0; z < nz + 1; ++z) {
-            for (int y = 0; y < ny + 1; ++y) {
-                for (int x = 0; x < nx + 1; ++x) {
-                    data[IX(x, y, z)] = Vec3<T>(randUniform(), randUniform(), randUniform());
-                }
+    Grid(unsigned x_steps, unsigned y_steps, vector<vector<int>> indices, vector<vector<vector<double>>> values) :
+      x_steps(x_steps),y_steps(y_steps),data(nullptr) {
+        data = new Vec3<T>[x_steps*y_steps];
+        for (int x = 0; x < x_steps; x++) {
+          for (int y = 0; y < y_steps; y++) {
+                int index = indices[x][y];
+                data[IX(x, y)] = Vec3<T>(values[index][x][0],values[index][x][1],values[index][x][2]);
             }
         }
     }
 
     ~Grid() { if (data) delete[] data; }
 
-    unsigned IX(unsigned x, unsigned y, unsigned z) {
-        if (!(x < nx)) x -= 1;
-        if (!(y < ny)) y -= 1;
-        if (!(z < nz)) z -= 1;
-        return x * nx * ny + y * nx + z;
+    unsigned IX(unsigned x, unsigned y) {
+        if ((x > x_steps)) x -= 1;
+        if ((y > y_steps)) y -= 1;
+        return x * y_steps + y;
     }
 
-    Vec3<T> interpolate(const Vec3<T> &location) {
-        T gx, gy, gz, tx, ty, tz;
-        unsigned gxi, gyi, gzi;
+    Vec3<T> interpolate(float x, float y) {
+        T gx, gy, tx, ty;
+        unsigned gxi, gyi;
         // remap point coordinates to grid coordinates
-        gx = location.x * nvoxels;
+        gx = x * x_steps;
         gxi = int(gx);
         tx = gx - gxi;
-        gy = location.y * nvoxels;
+        gy = y * y_steps;
         gyi = int(gy);
         ty = gy - gyi;
-        gz = location.z * nvoxels;
-        gzi = int(gz);
-        tz = gz - gzi;
-        const Vec3<T> &c000 = data[IX(gxi, gyi, gzi)];
-        const Vec3<T> &c100 = data[IX(gxi + 1, gyi, gzi)];
-        const Vec3<T> &c010 = data[IX(gxi, gyi + 1, gzi)];
-        const Vec3<T> &c110 = data[IX(gxi + 1, gyi + 1, gzi)];
-        const Vec3<T> &c001 = data[IX(gxi, gyi, gzi + 1)];
-        const Vec3<T> &c101 = data[IX(gxi + 1, gyi, gzi + 1)];
-        const Vec3<T> &c011 = data[IX(gxi, gyi + 1, gzi + 1)];
-        const Vec3<T> &c111 = data[IX(gxi + 1, gyi + 1, gzi + 1)];
+        const Vec3<T> &c000 = data[IX(gxi, gyi)];
+        const Vec3<T> &c100 = data[IX(gxi + 1, gyi)];
+        const Vec3<T> &c010 = data[IX(gxi, gyi + 1)];
+        const Vec3<T> &c110 = data[IX(gxi + 1, gyi + 1)];
         return
-                (T(1) - tx) * (T(1) - ty) * (T(1) - tz) * c000 +
-                tx * (T(1) - ty) * (T(1) - tz) * c100 +
-                (T(1) - tx) * ty * (T(1) - tz) * c010 +
-                tx * ty * (T(1) - tz) * c110 +
-                (T(1) - tx) * (T(1) - ty) * tz * c001 +
-                tx * (T(1) - ty) * tz * c101 +
-                (T(1) - tx) * ty * tz * c011 +
-                tx * ty * tz * c111;
+                (T(1) - tx) * (T(1) - ty)  * c000 +
+                tx * (T(1) - ty) * c100 +
+                (T(1) - tx) * ty * c010 +
+                tx * ty * c110;
     }
 };

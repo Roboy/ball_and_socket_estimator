@@ -77,16 +77,34 @@ int main() {
     cnpy::NpyArray arr_mv2 = sensor_values_npz["values"];
     vector<vector<vector<double>>> sensor_position, sensor_values;
 
+    int number_of_samples = arr_mv1.shape[0];
+    int number_of_sensors = arr_mv1.shape[1];
+
     convertFromNpy(arr_mv1.data<double>(), arr_mv1.shape, sensor_position);
     convertFromNpy(arr_mv2.data<double>(), arr_mv2.shape, sensor_values);
+
+    {
+      vector<vector<vector<double>>> sensor_position_new = sensor_position, sensor_values_new = sensor_values;
+      // the sensors are interleaved
+      vector<int> sort_order = {0,1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13};
+      // sort
+      for (int i = 0; i < number_of_samples; i++) {
+          for (int j = 0; j < number_of_sensors; j++) {
+              sensor_position_new[i][j] = sensor_position[i][sort_order[j]];
+              sensor_values_new[i][j] = sensor_values[i][sort_order[j]];
+          }
+      }
+      sensor_position = sensor_position_new;
+      sensor_values = sensor_values_new;
+    }
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     vector<vector<float>> phi, theta;
     phi.resize(arr_mv1.shape[0]);
     theta.resize(arr_mv1.shape[0]);
-    for (int i = 0; i < sensor_position.size(); i++) {
-        for (int j = 0; j < arr_mv1.shape[1]; j++) {
+    for (int i = 0; i < number_of_samples; i++) {
+        for (int j = 0; j < number_of_sensors; j++) {
             phi[i].push_back(atan2(sensor_position[i][j][2], sensor_position[i][j][0]));
             theta[i].push_back(atan2(sqrtf(powf(sensor_position[i][j][0], 2.0f) + powf(sensor_position[i][j][2], 2.0f)),
                                      sensor_position[i][j][1]));
@@ -99,49 +117,55 @@ int main() {
             p.x = 0.22 * sin(theta[i][j]) * cos(phi[i][j]) + 0.0005 * sensor_values[i][j][0];
             p.y = 0.22 * cos(theta[i][j]) + 0.0005 * sensor_values[i][j][2];
             p.z = 0.22 * sin(theta[i][j]) * sin(phi[i][j]) + 0.0005 * sensor_values[i][j][1];
-            p.g = 50;
+            p.g = 255;
             cloud->push_back(p);
+            // if(j==1){
+            //   printf("%f\t",phi[i][j]);
+            // }
         }
     }
 
     vector<float> theta_average;
-    theta_average.resize(arr_mv1.shape[1]);
-    for (int i = 0; i < arr_mv1.shape[0]; i++) {
-        for (int j = 0; j < arr_mv1.shape[1]; j++) {
+    theta_average.resize(number_of_sensors);
+    for (int i = 0; i < number_of_samples; i++) {
+        for (int j = 0; j < number_of_sensors; j++) {
             theta_average[j] += theta[i][j];
         }
     }
+    for (int j = 0; j < number_of_sensors; j++) {
+        theta_average[j] /= number_of_samples;
+    }
 
     printf("theta\n");
-    for (int j = 0; j < arr_mv1.shape[1]; j++) {
-        printf("%f\n", theta_average[j] / arr_mv1.shape[0]);
+    for (int j = 0; j < number_of_sensors; j++) {
+        printf("%f\n", theta_average[j]);
     }
     printf("phi\n");
-    for (int j = 0; j < arr_mv1.shape[1]; j++) {
+    for (int j = 0; j < number_of_sensors; j++) {
         printf("%f\n", phi[0][j]);
     }
 
     vector<vector<int>> phi_indices;
     vector<vector<float>> phi_min;
-    phi_indices.resize(arr_mv1.shape[1]);
-    phi_min.resize(arr_mv1.shape[1]);
-    for (int j = 0; j < arr_mv1.shape[1]; j++) {
+    phi_indices.resize(number_of_sensors);
+    phi_min.resize(number_of_sensors);
+    for (int j = 0; j < number_of_sensors; j++) {
         phi_indices[j].resize(360);
         phi_min[j].resize(360);
         for (int deg = 0; deg < 360; deg++) {
             phi_indices[j][deg] = 0;
-            phi_min[j][deg] = 1000;//arbirtary big
-            for (int i = 0; i < arr_mv1.shape[0]; i++) {
-                float dif = sqrtf(powf(phi[i][j],2.0f) - powf((deg / 180.0f * M_PI),2.0f));
+            phi_min[j][deg] = 1000000;//arbirtary big
+            for (int i = 0; i < number_of_samples; i++) {
+                float dif = fabsf(phi[i][j]-((deg-180.0f) / 180.0f * M_PI));
                 if (dif < phi_min[j][deg]) {
-                    phi_min[j][deg] = phi[i][j];
+                    phi_min[j][deg] = dif;
                     phi_indices[j][deg] = i;
                 }
             }
         }
     }
 
-    for(int j=0;j<arr_mv1.shape[1];j++){
+    for(int j=0;j<number_of_sensors;j++){
         for (int deg = 0; deg < 360; deg++) {
             pcl::PointXYZRGB p;
             p.x = 0.22 * sin(theta[0][j]) * cos(phi[phi_indices[j][deg]][j]) + 0.0005 * sensor_values[phi_indices[j][deg]][j][0];
@@ -149,7 +173,27 @@ int main() {
             p.z = 0.22 * sin(theta[0][j]) * sin(phi[phi_indices[j][deg]][j]) + 0.0005 * sensor_values[phi_indices[j][deg]][j][1];
             p.b = 255;
             cloud->push_back(p);
+            // if(j==1){
+            //   printf("%f\t",phi_min[j][deg]);
+            // }
         }
+    }
+
+    float theta_range = (theta_average.front()-theta_average.back());
+
+    Grid<float> grid(26,360,phi_indices,sensor_values);
+    for (unsigned i = 0; i < 1000000; ++i) {
+        float phi_normalized = randUniform();
+        float theta_normalized = randUniform();
+        // create a random location
+        Vec3f result = grid.interpolate(theta_normalized,phi_normalized);
+        // printf("%f %f %f\n",result.x,result.y,result.z);
+        pcl::PointXYZRGB p;
+        p.x = -0.22 * sin(theta_normalized*theta_range) * cos(phi_normalized*M_PI*2.0f) + 0.0005 * result.x;
+        p.y = -0.22 * cos(theta_normalized*theta_range) + 0.0005 * result.y;
+        p.z = -0.22 * sin(theta_normalized*theta_range) * sin(phi_normalized*M_PI*2.0f) + 0.0005 *result.z;
+        p.r = 255;
+        cloud->push_back(p);
     }
 
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = rgbVis(cloud);
@@ -158,13 +202,6 @@ int main() {
         viewer->spinOnce(100);
         boost::this_thread::sleep(boost::posix_time::microseconds(100000));
     }
-
-    // Grid<float> grid;
-    // for (unsigned i = 0; i < 1000; ++i) {
-    //     // create a random location
-    //     Vec3f result = grid.interpolate(Vec3f(randUniform(),randUniform(),randUniform()));
-    //     printf("%f %f %f\n",result.x,result.y,result.z);
-    // }
 
     return 0;
 }
