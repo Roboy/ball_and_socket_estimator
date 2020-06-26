@@ -78,46 +78,45 @@ public:
     // unsigned nvoxels; // number of voxels (cube)
     // unsigned nx, ny, nz; // number of vertices
     unsigned nvoxels;
-    unsigned x_steps, y_steps;
-    Vec3<T> *data;
+    unsigned theta_steps, phi_steps;
+    vector<vector<Vec3<T>>> data;
 
-    Grid(unsigned x_steps, unsigned y_steps, vector<vector<int>> indices, vector<vector<vector<double>>> values) :
-      x_steps(x_steps),y_steps(y_steps),data(nullptr) {
-        data = new Vec3<T>[x_steps*y_steps];
-        for (int x = 0; x < x_steps; x++) {
-          for (int y = 0; y < y_steps; y++) {
+    Grid(unsigned theta_steps, unsigned phi_steps, vector<vector<int>> indices, vector<vector<vector<double>>> values) :
+      theta_steps(theta_steps),phi_steps(phi_steps) {
+        data.resize(theta_steps);
+        for (int x = 0; x < theta_steps; x++) {
+          data[x].resize(phi_steps);
+          for (int y = 0; y < phi_steps; y++) {
                 int index = indices[x][y];
-                data[IX(x, y)] = Vec3<T>(values[index][x][0],values[index][x][1],values[index][x][2]);
+                data[x][y] = Vec3<T>(values[index][x][0],values[index][x][1],values[index][x][2]);
             }
         }
     }
 
-    ~Grid() { if (data) delete[] data; }
-
-    unsigned IX(unsigned x, unsigned y) {
-        if ((x > x_steps)) x -= 1;
-        if ((y > y_steps)) y -= 1;
-        return x * y_steps + y;
-    }
+    ~Grid() {}
 
     Vec3<T> interpolate(float x, float y) {
         T gx, gy, tx, ty;
         unsigned gxi, gyi;
         // remap point coordinates to grid coordinates
-        gx = x * x_steps;
+        gx = x * theta_steps;
         gxi = int(gx);
         tx = gx - gxi;
-        gy = y * y_steps;
+        gy = y * phi_steps;
         gyi = int(gy);
         ty = gy - gyi;
-        const Vec3<T> &c000 = data[IX(gxi, gyi)];
-        const Vec3<T> &c100 = data[IX(gxi + 1, gyi)];
-        const Vec3<T> &c010 = data[IX(gxi, gyi + 1)];
-        const Vec3<T> &c110 = data[IX(gxi + 1, gyi + 1)];
-        return
-                (T(1) - tx) * (T(1) - ty)  * c000 +
-                tx * (T(1) - ty) * c100 +
-                (T(1) - tx) * ty * c010 +
-                tx * ty * c110;
+        if(gxi>=theta_steps)
+          gxi = theta_steps-1;
+        if(gyi>=phi_steps)
+          gyi = phi_steps-1;
+        const Vec3<T> &c000 = data[gxi][gyi];
+        // const Vec3<T> &c100 = data[IX(gxi + 1, gyi)];
+        // const Vec3<T> &c010 = data[IX(gxi, gyi + 1)];
+        // const Vec3<T> &c110 = data[IX(gxi + 1, gyi + 1)];
+        return c000;
+                // (T(1) - tx) * (T(1) - ty)  * c000 +
+                // tx * (T(1) - ty) * c100 +
+                // (T(1) - tx) * ty * c010 +
+                // tx * ty * c110;
     }
 };

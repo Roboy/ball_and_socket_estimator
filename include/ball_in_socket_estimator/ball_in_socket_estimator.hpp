@@ -14,6 +14,8 @@
 #include <thread>
 #include "grid3d.hpp"
 #include "cnpy.h"
+#include <numeric>      // std::iota
+#include <algorithm>    // std::sort, std::stable_sort
 
 using namespace std;
 using namespace Eigen;
