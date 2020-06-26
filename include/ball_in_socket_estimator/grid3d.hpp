@@ -105,18 +105,18 @@ public:
         gy = y * phi_steps;
         gyi = int(gy);
         ty = gy - gyi;
-        if(gxi>=theta_steps)
-          gxi = theta_steps-1;
-        if(gyi>=phi_steps)
-          gyi = phi_steps-1;
+        if(gxi>=theta_steps-1)
+          gxi = theta_steps-2;
+        if(gyi>=phi_steps-1)
+          gyi = phi_steps-2;
         const Vec3<T> &c000 = data[gxi][gyi];
-        // const Vec3<T> &c100 = data[IX(gxi + 1, gyi)];
-        // const Vec3<T> &c010 = data[IX(gxi, gyi + 1)];
-        // const Vec3<T> &c110 = data[IX(gxi + 1, gyi + 1)];
-        return c000;
-                // (T(1) - tx) * (T(1) - ty)  * c000 +
-                // tx * (T(1) - ty) * c100 +
-                // (T(1) - tx) * ty * c010 +
-                // tx * ty * c110;
+        const Vec3<T> &c100 = data[gxi + 1][gyi];
+        const Vec3<T> &c010 = data[gxi][gyi + 1];
+        const Vec3<T> &c110 = data[gxi + 1][gyi + 1];
+        return
+                (T(1) - tx) * (T(1) - ty)  * c000 +
+                tx * (T(1) - ty) * c100 +
+                (T(1) - tx) * ty * c010 +
+                tx * ty * c110;
     }
 };

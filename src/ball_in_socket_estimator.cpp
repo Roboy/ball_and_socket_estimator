@@ -248,6 +248,23 @@ int main() {
       }
     }
 
+    for (int i = 0; i < 100000; i++) {
+        float phi_normalized = randUniform();
+        float theta_normalized = randUniform();
+        float theta_ = theta_normalized*theta_range+theta_min;
+        float phi_ = phi_normalized*M_PI*2.0f-M_PI;
+        // create a random location
+        Vec3f result = grid.interpolate(theta_normalized,phi_normalized);
+        // printf("%f %f %f\n",result.x,result.y,result.z);
+        pcl::PointXYZRGB p;
+        p.x = 0.22 * sin(theta_) * cos(phi_) + 0.0005 * result.x;
+        p.y = 0.22 * cos(theta_) + 0.0005 * result.z;
+        p.z = 0.22 * sin(theta_) * sin(phi_) + 0.0005 *result.y;
+        p.r = 255;
+        p.b = 255;
+        cloud->push_back(p);
+    }
+
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = rgbVis(cloud);
 
     while (!viewer->wasStopped()) {
