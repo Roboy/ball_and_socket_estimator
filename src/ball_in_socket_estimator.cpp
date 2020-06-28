@@ -1,6 +1,6 @@
 #include "ball_in_socket_estimator/ball_in_socket_estimator.hpp"
 
-BallInSocketEstimator::BallInSocketEstimator() {
+BallInSocketEstimator::BallInSocketEstimator(string sensor_pos_filepath, string sensor_values_filepath, string config_filepath) {
     if (!ros::isInitialized()) {
         int argc = 0;
         char **argv = NULL;
@@ -13,79 +13,9 @@ BallInSocketEstimator::BallInSocketEstimator() {
 
     magnetic_sensor_sub = nh->subscribe("/roboy/middleware/MagneticSensor", 100,
                                         &BallInSocketEstimator::magneticSensorCallback, this);
-    visualization_pub = nh->advertise<visualization_msgs::Marker>("/visualization_marker", 1);
-}
 
-BallInSocketEstimator::~BallInSocketEstimator() {
-}
-
-
-void BallInSocketEstimator::magneticSensorCallback(const roboy_middleware_msgs::MagneticSensorConstPtr &msg) {
-    ROS_DEBUG_THROTTLE(10, "receiving magnetic data");
-
-}
-
-void convertFromNpy(double *data, vector<unsigned long> shape, vector<vector<vector<double>>> &data_out) {
-    data_out.resize(shape[0]);
-    for (int i = 0; i < shape[0]; i++) {
-        data_out[i].resize(shape[1]);
-        for (int j = 0; j < shape[1]; j++) {
-            data_out[i][j].resize(shape[2]);
-            for (int k = 0; k < shape[2]; k++) {
-                data_out[i][j][k] = data[i * shape[1] * shape[2] + j * shape[2] + k];
-//              printf("%f\t",mv1[i * arr_mv1.shape[1] * arr_mv1.shape[2] + j * arr_mv1.shape[2] + k]);
-            }
-//          printf("\n");
-        }
-    }
-}
-
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/surface/gp3.h>
-#include <pcl/io/vtk_io.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/io/vtk_lib_io.h>
-#include <stdio.h>
-#include <pcl/visualization/cloud_viewer.h>
-
-boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud) {
-    // --------------------------------------------
-    // -----Open 3D viewer and add point cloud-----
-    // --------------------------------------------
-    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-    viewer->setBackgroundColor(0, 0, 0);
-    pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
-    viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb, "sample cloud");
-    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
-    viewer->addCoordinateSystem(1.0);
-    viewer->initCameraParameters();
-    return (viewer);
-}
-
-template <typename T>
-vector<size_t> sort_indexes(const vector<T> &v) {
-
-  // initialize original index locations
-  vector<size_t> idx(v.size());
-  iota(idx.begin(), idx.end(), 0);
-
-  // sort indexes based on comparing values in v
-  // using std::stable_sort instead of std::sort
-  // to avoid unnecessary index re-orderings
-  // when v contains elements of equal values
-  stable_sort(idx.begin(), idx.end(),
-       [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
-
-  return idx;
-}
-
-int main() {
     //load the entire npz file
-    cnpy::npz_t sensor_positions_npz = cnpy::npz_load(
-            "/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/magjointlib/models/sensor_position.npz");
+    cnpy::npz_t sensor_positions_npz = cnpy::npz_load(sensor_pos_filepath);
     cnpy::npz_t sensor_values_npz = cnpy::npz_load(
             "/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/magjointlib/models/sensor_values.npz");
 
@@ -265,12 +195,80 @@ int main() {
         cloud->push_back(p);
     }
 
-    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = rgbVis(cloud);
+    // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = rgbVis(cloud);
+    //
+    // while (!viewer->wasStopped()) {
+    //     viewer->spinOnce(100);
+    //     boost::this_thread::sleep(boost::posix_time::microseconds(100000));
+    // }
 
-    while (!viewer->wasStopped()) {
-        viewer->spinOnce(100);
-        boost::this_thread::sleep(boost::posix_time::microseconds(100000));
+    if(!fileExists(config_filepath)) {
+        ROS_FATAL_STREAM(config_filepath << " does not exist, check your path");
     }
 
+    YAML::Node config;
+
+    try{
+      config = YAML::LoadFile(config_filepath);
+    }catch(std::exception& e){
+      ROS_ERROR_STREAM("yaml read exception in "<< config_filepath << " : " <<e.what());
+    }
+
+    vector<vector<float>> sensor_pos,sensor_angle;
+    try{
+      sensor_pos = config["sensor_pos"].as<vector<vector<float>>>();
+      sensor_angle = config["sensor_angle"].as<vector<vector<float>>>();
+    }catch(std::exception& e){
+      ROS_ERROR_STREAM("yaml read exception in "<< config_filepath << " : " <<e.what());
+    }
+
+    estimator = boost::shared_ptr<PoseEstimator>(new PoseEstimator(4));
+    for(int i=0;i<sensor_pos.size();i++){
+      estimator->sensor_pos.push_back(Vector3d(sensor_pos[i][0],sensor_pos[i][1],sensor_pos[i][2]));
+      estimator->sensor_angle.push_back(Vector3d(sensor_angle[i][0],sensor_angle[i][1],sensor_angle[i][2]));
+      ROS_INFO_STREAM(estimator->sensor_pos.back().transpose());
+    }
+
+    estimator->grid = &grid;
+    estimator->theta_min = theta_min;
+    estimator->theta_range = theta_range;
+    NumericalDiff<PoseEstimator> *numDiff;
+    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<PoseEstimator>, double> *lm;
+    numDiff = new NumericalDiff<PoseEstimator>(*estimator);
+    lm = new LevenbergMarquardt<NumericalDiff<PoseEstimator>, double>(*numDiff);
+    lm->parameters.maxfev = 1000;
+    lm->parameters.xtol = 1e-10;
+    VectorXd pose(3);
+    pose << 0.001,0,0;
+    int ret = lm->minimize(pose);
+    ROS_INFO_THROTTLE(1,
+                      "finished after %ld iterations, with an error of %f",
+                      lm->iter,
+                      lm->fnorm);
+}
+
+BallInSocketEstimator::~BallInSocketEstimator() {
+}
+
+
+void BallInSocketEstimator::magneticSensorCallback(const roboy_middleware_msgs::MagneticSensorConstPtr &msg) {
+    ROS_DEBUG_THROTTLE(10, "receiving magnetic data");
+
+}
+
+int main(int argc, char*argv[]) {
+
+    if (!ros::isInitialized()) {
+        int argc = 0;
+        char **argv = NULL;
+        ros::init(argc, argv, "BallInSocketEstimator",
+                  ros::init_options::NoSigintHandler | ros::init_options::AnonymousName);
+    }
+
+    string sensor_pos_filepath("/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/magjointlib/models/sensor_position.npz");
+    string sensor_values_filepath("/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/magjointlib/models/sensor_values.npz");
+    string config_filepath("/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/magjointlib/configs/magnetic_field_calibration.yaml");
+
+    BallInSocketEstimator ball_in_socket_estimator(sensor_pos_filepath,sensor_values_filepath,config_filepath);
     return 0;
 }

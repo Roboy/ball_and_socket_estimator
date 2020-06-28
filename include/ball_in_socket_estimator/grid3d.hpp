@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 
 template<typename T>
@@ -67,9 +68,7 @@ public:
 
 typedef Vec3<float> Vec3f;
 
-float randUniform() {
-    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-}
+
 using namespace std;
 
 template<typename T>

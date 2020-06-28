@@ -41,6 +41,10 @@ catkin_package(CATKIN_DEPENDS message_runtime roboy_middleware_msgs )
     find_package(ZLIB REQUIRED)
     include_directories(${CNPY_INCLUDE_DIRS})
 
+    # yaml-cpp
+    pkg_check_modules( yaml-cpp REQUIRED yaml-cpp)
+    include_directories(${yaml-cpp_INCLUDE_DIRS})
+
     include_directories(
             ${catkin_INCLUDE_DIRS}
             include/
@@ -48,9 +52,9 @@ catkin_package(CATKIN_DEPENDS message_runtime roboy_middleware_msgs )
     #==============================================================================
     # Application
     #==============================================================================
-    add_executable(ball_in_socket_estimator src/ball_in_socket_estimator.cpp)
+    add_executable(ball_in_socket_estimator src/ball_in_socket_estimator.cpp src/pose_estimator.cpp)
     add_dependencies(ball_in_socket_estimator roboy_middleware_msgs_gencpp)
-    target_link_libraries(ball_in_socket_estimator ${catkin_LIBRARIES} ${CNPY_LIBRARIES} ${ZLIB_LIBRARIES} ${PCL_LIBRARIES})
+    target_link_libraries(ball_in_socket_estimator ${catkin_LIBRARIES} ${CNPY_LIBRARIES} ${ZLIB_LIBRARIES} ${PCL_LIBRARIES} ${yaml-cpp_LIBRARIES} )
 
     #==============================================================================
     # Installation
