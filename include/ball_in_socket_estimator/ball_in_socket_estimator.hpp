@@ -100,4 +100,5 @@ private:
     boost::shared_ptr<ros::AsyncSpinner> spinner;
     ros::Subscriber magnetic_sensor_sub;
     boost::shared_ptr<PoseEstimator> estimator;
+    vector<int> sensor_select = {1,5};
 };

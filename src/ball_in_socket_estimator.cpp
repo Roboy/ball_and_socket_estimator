@@ -9,10 +9,6 @@ BallInSocketEstimator::BallInSocketEstimator(string sensor_pos_filepath, string 
     }
 
     nh.reset(new ros::NodeHandle);
-    spinner.reset(new ros::AsyncSpinner(0));
-
-    magnetic_sensor_sub = nh->subscribe("/roboy/middleware/MagneticSensor", 100,
-                                        &BallInSocketEstimator::magneticSensorCallback, this);
 
     //load the entire npz file
     cnpy::npz_t sensor_positions_npz = cnpy::npz_load(sensor_pos_filepath);
@@ -157,51 +153,6 @@ BallInSocketEstimator::BallInSocketEstimator(string sensor_pos_filepath, string 
     float theta_min = theta_average.front();
     float theta_range = (theta_average.back()-theta_average.front());
 
-    Grid<float> grid(25,360,phi_indices,sensor_values);
-    for (int i = 0; i < 360; i++) {
-      for (int j = 0; j < number_of_sensors; j++) {
-        // float phi_normalized = randUniform();
-        // float theta_normalized = randUniform();
-        float phi_normalized = (phi[j][phi_indices[j][i]]+M_PI)/(M_PI*2.0f);
-        float theta_normalized = (theta[j][0]-theta_min)/theta_range;
-        float theta_ = theta_normalized*theta_range+theta_min;
-        float phi_ = phi_normalized*M_PI*2.0f-M_PI;
-        // create a random location
-        Vec3f result = grid.interpolate(theta_normalized,phi_normalized);
-        // printf("%f %f %f\n",result.x,result.y,result.z);
-        pcl::PointXYZRGB p;
-        p.x = 0.22 * sin(theta_) * cos(phi_) + 0.0005 * result.x;
-        p.y = 0.22 * cos(theta_) + 0.0005 * result.z;
-        p.z = 0.22 * sin(theta_) * sin(phi_) + 0.0005 *result.y;
-        p.r = 255;
-        cloud->push_back(p);
-      }
-    }
-
-    for (int i = 0; i < 100000; i++) {
-        float phi_normalized = randUniform();
-        float theta_normalized = randUniform();
-        float theta_ = theta_normalized*theta_range+theta_min;
-        float phi_ = phi_normalized*M_PI*2.0f-M_PI;
-        // create a random location
-        Vec3f result = grid.interpolate(theta_normalized,phi_normalized);
-        // printf("%f %f %f\n",result.x,result.y,result.z);
-        pcl::PointXYZRGB p;
-        p.x = 0.22 * sin(theta_) * cos(phi_) + 0.0005 * result.x;
-        p.y = 0.22 * cos(theta_) + 0.0005 * result.z;
-        p.z = 0.22 * sin(theta_) * sin(phi_) + 0.0005 *result.y;
-        p.r = 255;
-        p.b = 255;
-        cloud->push_back(p);
-    }
-
-    // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = rgbVis(cloud);
-    //
-    // while (!viewer->wasStopped()) {
-    //     viewer->spinOnce(100);
-    //     boost::this_thread::sleep(boost::posix_time::microseconds(100000));
-    // }
-
     if(!fileExists(config_filepath)) {
         ROS_FATAL_STREAM(config_filepath << " does not exist, check your path");
     }
@@ -222,29 +173,68 @@ BallInSocketEstimator::BallInSocketEstimator(string sensor_pos_filepath, string 
       ROS_ERROR_STREAM("yaml read exception in "<< config_filepath << " : " <<e.what());
     }
 
-    estimator = boost::shared_ptr<PoseEstimator>(new PoseEstimator(4));
-    for(int i=0;i<sensor_pos.size();i++){
-      estimator->sensor_pos.push_back(Vector3d(sensor_pos[i][0],sensor_pos[i][1],sensor_pos[i][2]));
-      estimator->sensor_angle.push_back(Vector3d(sensor_angle[i][0],sensor_angle[i][1],sensor_angle[i][2]));
+    estimator = boost::shared_ptr<PoseEstimator>(new PoseEstimator(sensor_select.size()));
+    for(int i=0;i<sensor_select.size();i++){
+      estimator->sensor_pos.push_back(Vector3d(sensor_pos[sensor_select[i]][0],sensor_pos[sensor_select[i]][1],sensor_pos[sensor_select[i]][2]));
+      estimator->sensor_angle.push_back(Vector3d(sensor_angle[sensor_select[i]][0],sensor_angle[sensor_select[i]][1],sensor_angle[sensor_select[i]][2]));
       ROS_INFO_STREAM(estimator->sensor_pos.back().transpose());
     }
 
-    estimator->grid = &grid;
     estimator->theta_min = theta_min;
     estimator->theta_range = theta_range;
-    NumericalDiff<PoseEstimator> *numDiff;
-    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<PoseEstimator>, double> *lm;
-    numDiff = new NumericalDiff<PoseEstimator>(*estimator);
-    lm = new LevenbergMarquardt<NumericalDiff<PoseEstimator>, double>(*numDiff);
-    lm->parameters.maxfev = 1000;
-    lm->parameters.xtol = 1e-10;
-    VectorXd pose(3);
-    pose << 0.001,0,0;
-    int ret = lm->minimize(pose);
-    ROS_INFO_THROTTLE(1,
-                      "finished after %ld iterations, with an error of %f",
-                      lm->iter,
-                      lm->fnorm);
+
+    estimator->grid = new Grid<float>(25,360,phi_indices,sensor_values);
+    for (int i = 0; i < 360; i++) {
+      for (int j = 0; j < number_of_sensors; j++) {
+        // float phi_normalized = randUniform();
+        // float theta_normalized = randUniform();
+        float phi_normalized = (phi[j][phi_indices[j][i]]+M_PI)/(M_PI*2.0f);
+        float theta_normalized = (theta[j][0]-theta_min)/theta_range;
+        float theta_ = theta_normalized*theta_range+theta_min;
+        float phi_ = phi_normalized*M_PI*2.0f-M_PI;
+        // create a random location
+        Vec3f result = estimator->grid->interpolate(theta_normalized,phi_normalized);
+        // printf("%f %f %f\n",result.x,result.y,result.z);
+        pcl::PointXYZRGB p;
+        p.x = 0.22 * sin(theta_) * cos(phi_) + 0.0005 * result.x;
+        p.y = 0.22 * cos(theta_) + 0.0005 * result.z;
+        p.z = 0.22 * sin(theta_) * sin(phi_) + 0.0005 *result.y;
+        p.r = 255;
+        cloud->push_back(p);
+      }
+    }
+
+    for (int i = 0; i < 100000; i++) {
+        float phi_normalized = randUniform();
+        float theta_normalized = randUniform();
+        float theta_ = theta_normalized*theta_range+theta_min;
+        float phi_ = phi_normalized*M_PI*2.0f-M_PI;
+        // create a random location
+        Vec3f result = estimator->grid->interpolate(theta_normalized,phi_normalized);
+        // printf("%f %f %f\n",result.x,result.y,result.z);
+        pcl::PointXYZRGB p;
+        p.x = 0.22 * sin(theta_) * cos(phi_) + 0.0005 * result.x;
+        p.y = 0.22 * cos(theta_) + 0.0005 * result.z;
+        p.z = 0.22 * sin(theta_) * sin(phi_) + 0.0005 *result.y;
+        p.r = 255;
+        p.b = 255;
+        cloud->push_back(p);
+    }
+
+    // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = rgbVis(cloud);
+    //
+    // while (!viewer->wasStopped()) {
+    //     viewer->spinOnce(100);
+    //     boost::this_thread::sleep(boost::posix_time::microseconds(100000));
+    // }
+
+
+
+    spinner.reset(new ros::AsyncSpinner(0));
+    spinner->start();
+
+    magnetic_sensor_sub = nh->subscribe("/roboy/middleware/MagneticSensor", 100,
+                                        &BallInSocketEstimator::magneticSensorCallback, this);
 }
 
 BallInSocketEstimator::~BallInSocketEstimator() {
@@ -252,8 +242,34 @@ BallInSocketEstimator::~BallInSocketEstimator() {
 
 
 void BallInSocketEstimator::magneticSensorCallback(const roboy_middleware_msgs::MagneticSensorConstPtr &msg) {
-    ROS_DEBUG_THROTTLE(10, "receiving magnetic data");
+    ROS_INFO_THROTTLE(5, "receiving magnetic data");
 
+    vector<Vector3d> sensor_target;
+    for(int i=0;i<sensor_select.size();i++){
+      Quaterniond quat(AngleAxisd(-estimator->sensor_angle[sensor_select[i]][2], Vector3d::UnitZ()));
+      Vector3d mag(msg->x[sensor_select[i]],msg->y[sensor_select[i]],msg->z[sensor_select[i]]);
+      mag = quat*mag;
+      if(sensor_select[i]>=14)
+        sensor_target.push_back(Vector3d(mag[0],-mag[1],-mag[2]));
+      else
+        sensor_target.push_back(mag);
+    }
+    estimator->sensor_target = sensor_target;
+
+    NumericalDiff<PoseEstimator> *numDiff;
+    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<PoseEstimator>, double> *lm;
+    numDiff = new NumericalDiff<PoseEstimator>(*estimator);
+    lm = new LevenbergMarquardt<NumericalDiff<PoseEstimator>, double>(*numDiff);
+    lm->parameters.maxfev = 1000;
+    lm->parameters.xtol = 1e-5;
+    lm->parameters.ftol = 1e-5;
+    VectorXd pose(3);
+    pose << 0.1,0.1,0.1;
+    int ret = lm->minimize(pose);
+    ROS_INFO_THROTTLE(1,
+                      "finished after %ld iterations, with an error of %f, result %.4f %.4f %.4f",
+                      lm->iter,
+                      lm->fnorm, pose[0], pose[1], pose[2]);
 }
 
 int main(int argc, char*argv[]) {
@@ -270,5 +286,8 @@ int main(int argc, char*argv[]) {
     string config_filepath("/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/magjointlib/configs/magnetic_field_calibration.yaml");
 
     BallInSocketEstimator ball_in_socket_estimator(sensor_pos_filepath,sensor_values_filepath,config_filepath);
+    while(ros::ok()){
+      ROS_INFO_THROTTLE(10,"running");
+    }
     return 0;
 }

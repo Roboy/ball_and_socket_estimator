@@ -6,6 +6,7 @@
 #include <unsupported/Eigen/NonLinearOptimization>
 #include <unsupported/Eigen/NumericalDiff>
 #include "grid3d.hpp"
+#include <ros/ros.h>
 
 // std
 #include <iostream>
@@ -41,6 +42,9 @@ struct PoseEstimator : Functor<double> {
      * @param numberOfSensors you can however choose any number of sensors here
      */
     PoseEstimator(int numberOfSensors = 4);
+    ~PoseEstimator(){
+      delete grid;
+    }
 
     /**
      * This is the function that is called in each iteration
