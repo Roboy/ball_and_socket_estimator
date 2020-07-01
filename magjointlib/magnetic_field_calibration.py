@@ -10,6 +10,9 @@ from std_msgs.msg import Float32
 from roboy_middleware_msgs.msg import MagneticSensor
 from tqdm import tqdm
 import random
+from scipy.optimize import fsolve, least_squares
+from scipy.spatial.transform import Rotation as R
+import std_msgs.msg, sensor_msgs.msg
 
 parser = argparse.ArgumentParser()
 parser.add_argument("config",help="path to magjoint config file, eg config/single_magnet.yaml")
@@ -144,22 +147,35 @@ else: # load recorded data
                 # print(index_min)
 
         class PoseEstimator:
+            balljoint = None
             sensor_values = []
             grid = []
             theta_min = 0
             theta_range = pi
             theta_steps = 0
             phi_steps = 0
-            def __init__(self, theta_steps, phi_steps, phi_indices, theta_min, theta_range, sensor_values):
+            number_of_sensors = 0
+            normalize_magnetic_strength = False
+            b_target = None
+            pos_estimate_prev = [0,0,0]
+            body_part = 'head'
+            def __init__(self, balljoint, theta_steps, phi_steps, phi_indices, theta_min, theta_range, sensor_values):
+                self.balljoint = balljoint
+                self.number_of_sensors = balljoint.number_of_sensors
                 self.sensor_values = sensor_values
                 self.theta_steps = theta_steps
                 self.phi_steps = phi_steps
                 self.grid = [np.zeros(3)]*theta_steps*phi_steps
                 self.theta_min = theta_min
                 self.theta_range = theta_range
+                self.b_target = [np.zeros(3)]*self.number_of_sensors
                 for j in range(0,theta_steps):
                   for i in range(0,phi_steps):
                     self.grid[j*phi_steps+i] = sensor_values[j][phi_indices[j][i]]
+                self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState, queue_size=1)
+                # while not rospy.is_shutdown():
+                #     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
+                #     self.magneticsCallback(msg)
             def interpolate(self,pos):
                 phi = atan2(pos[2], pos[0])
                 theta = atan2(sqrt(pos[0] ** 2 + pos[2] ** 2),pos[1])
@@ -171,14 +187,65 @@ else: # load recorded data
                 gy = phi_normalized * self.phi_steps
                 gyi = int(gy)
                 ty = gy - gyi
-                if(gxi>=self.theta_steps):
-                    gxi = self.theta_steps-1
-                if (gyi >= self.phi_steps):
-                    gyi = self.phi_steps - 1
+                if(gxi>=self.theta_steps-1):
+                    gxi = self.theta_steps-2
+                if (gyi >= self.phi_steps-1):
+                    gyi = self.phi_steps - 2
                 c000 = self.grid[gxi*self.phi_steps+gyi]
-                return c000
+                c100 = self.grid[(gxi+1)*self.phi_steps+gyi]
+                c010 = self.grid[gxi*self.phi_steps+gyi+1]
+                c110 = self.grid[(gxi+1)*self.phi_steps+gyi+1]
+                return (1 - tx) * (1 - ty) * c000 +\
+                         tx * (1 - ty) * c100 +\
+                         (1 - tx) * ty * c010 +\
+                         tx * ty * c110
+                # return c000
+            def minimizeFunc(self, x):
+                values = []
+                for select in args.select:
+                    pos = np.array(self.balljoint.config['sensor_pos'][select])
+                    # pos/=np.linalg.norm(pos)
+                    r = R.from_euler('xzy', x, degrees=True)
+                    values.append(self.interpolate(r.apply(pos)))
+                b_error = 0
+                for out, target in zip(values, self.b_target):
+                    b_error += np.linalg.norm(out - target)
+                return [b_error]
+            def magneticsCallback(self, data):
+                if (data.id != self.balljoint.config['id']):
+                    return
 
-        estimator = PoseEstimator(number_of_sensors,phi_steps,phi_indices,theta[-1][0],(theta[0][0]-theta[-1][0]),sensor_values)
+                for select,i in zip(args.select,range(len(data.x))):
+                    angle = self.balljoint.config['sensor_angle'][select][2]
+                    sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
+                    val = np.array((data.x[select], data.y[select], data.z[select]))
+                    sv = sensor_quat.rotate(val)
+                    if select >= 14:  # the sensor values on the opposite pcb side need to inverted
+                        sv = np.array([sv[0], -sv[1], -sv[2]])
+                    self.b_target[i] = sv
+
+                # print(self.b_target)
+                res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds=((-180, -180, -180), (180, 180, 180)),
+                                    ftol=1e-15, gtol=1e-15, xtol=1e-15, verbose=0, diff_step=0.1)  # ,max_nfev=20
+                b_field_error = res.cost
+                rospy.loginfo_throttle(1, "result %.3f %.3f %.3f b-field error %.3f" % (
+                res.x[0], res.x[1], res.x[2], res.cost))
+                msg = sensor_msgs.msg.JointState()
+                msg.header = std_msgs.msg.Header()
+                msg.header.stamp = rospy.Time.now()
+                msg.name = [self.body_part + '_axis0', self.body_part + '_axis1', self.body_part + '_axis2']
+                msg.velocity = [0, 0, 0]
+                msg.effort = [0, 0, 0]
+                euler = [res.x[0] / 180 * pi, res.x[1] / 180 * pi, res.x[2] / 180 * pi]
+                msg.position = [euler[0], euler[1], euler[2]]
+                self.joint_state.publish(msg)
+                # if b_field_error < 2000:
+                self.pos_estimate_prev = res.x
+                # else:
+                #     rospy.logwarn_throttle(1, 'b field error too big, resetting joint position...')
+                #     self.pos_estimate_prev = [0, 0, 0]
+
+        estimator = PoseEstimator(ball,number_of_sensors,phi_steps,phi_indices,theta[-1][0],(theta[0][0]-theta[-1][0]),sensor_values)
         positions = []
         values = []
         color = []
@@ -194,4 +261,11 @@ else: # load recorded data
                 positions.append(sensor_positions[j][i])
                 values.append(sensor_values[j][i])
                 color.append([0, 0, 255])
+        for i in range(100000):
+            pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
+            pos = pos / np.linalg.norm(pos)*22
+            value = estimator.interpolate(pos)
+            positions.append(pos)
+            values.append(np.array([value[0], value[1], value[2]]))
+            color.append([80, 30, 255])
         ball.visualizeCloudColor2(values, positions, args.scale, color)
