@@ -44,9 +44,10 @@ if args.g: #record data
     rospy.sleep(1)
 
     values = {'motor_position':[], 'sensor_values':[]}
-    pbar = tqdm(total=360)
-    for i in range(0,360):
-        motor_target.publish(i)
+    pbar = tqdm(total=len(range(-100,4000)))
+    for i in range(-100,4000):
+        motor_target.publish(i/10)
+        rospy.sleep(0.01)
         sensor = rospy.wait_for_message("/roboy/middleware/MagneticSensor", MagneticSensor, timeout=None)
         motor_position = rospy.wait_for_message("/motor_position", Float32, timeout=None)
         values['motor_position'].append(motor_position.data)
@@ -67,11 +68,11 @@ else: # load recorded data
         # print(values[()]['motor_position'])
         sensor_values = []
         sensor_positions = []
-        pbar = tqdm(total=360)
+        pbar = tqdm(total=len(values[()]['motor_position']))
         colors = [random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select))]
         color = []
         # sensor_select = [0,1,2,3,4,14,15,16,17,18]
-        for i in range(0,360):
+        for i in range(len(values[()]['motor_position'])):
             motor_pos = values[()]['motor_position'][i]
             quat = Quaternion(axis=[0, 1, 0], degrees=motor_pos)
             j = 0
@@ -159,6 +160,9 @@ else: # load recorded data
             b_target = None
             pos_estimate_prev = [0,0,0]
             body_part = 'head'
+            sensor_select = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+            # sensor_select = [1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13]
+            # sensor_select = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             def __init__(self, balljoint, theta_steps, phi_steps, phi_indices, theta_min, theta_range, sensor_values):
                 self.balljoint = balljoint
                 self.number_of_sensors = balljoint.number_of_sensors
@@ -173,9 +177,9 @@ else: # load recorded data
                   for i in range(0,phi_steps):
                     self.grid[j*phi_steps+i] = sensor_values[j][phi_indices[j][i]]
                 self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState, queue_size=1)
-                # while not rospy.is_shutdown():
-                #     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
-                #     self.magneticsCallback(msg)
+                while not rospy.is_shutdown():
+                    msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
+                    self.magneticsCallback(msg)
             def interpolate(self,pos):
                 phi = atan2(pos[2], pos[0])
                 theta = atan2(sqrt(pos[0] ** 2 + pos[2] ** 2),pos[1])
@@ -202,7 +206,7 @@ else: # load recorded data
                 # return c000
             def minimizeFunc(self, x):
                 values = []
-                for select in args.select:
+                for select in self.sensor_select:
                     pos = np.array(self.balljoint.config['sensor_pos'][select])
                     # pos/=np.linalg.norm(pos)
                     r = R.from_euler('xzy', x, degrees=True)
@@ -215,7 +219,7 @@ else: # load recorded data
                 if (data.id != self.balljoint.config['id']):
                     return
 
-                for select,i in zip(args.select,range(len(data.x))):
+                for select,i in zip(self.sensor_select,range(len(data.x))):
                     angle = self.balljoint.config['sensor_angle'][select][2]
                     sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
                     val = np.array((data.x[select], data.y[select], data.z[select]))
@@ -225,8 +229,8 @@ else: # load recorded data
                     self.b_target[i] = sv
 
                 # print(self.b_target)
-                res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds=((-180, -180, -180), (180, 180, 180)),
-                                    ftol=1e-15, gtol=1e-15, xtol=1e-15, verbose=0, diff_step=0.1)  # ,max_nfev=20
+                res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds=((-360, -360, -360), (360, 360, 360)),
+                                    ftol=1e-15, gtol=1e-15, xtol=1e-15, verbose=0, diff_step=0.01)  # ,max_nfev=20
                 b_field_error = res.cost
                 rospy.loginfo_throttle(1, "result %.3f %.3f %.3f b-field error %.3f" % (
                 res.x[0], res.x[1], res.x[2], res.cost))
