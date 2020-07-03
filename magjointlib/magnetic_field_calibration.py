@@ -81,13 +81,16 @@ else: # load recorded data
             for select in args.select:
                 pos = ball.config['sensor_pos'][select]
                 sensor_pos_new = quat.rotate(pos)
-                positions.append(np.array(sensor_pos_new))
                 angle = ball.config['sensor_angle'][select][2]
                 sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
                 sv = sensor_quat.rotate(values[()]['sensor_values'][i][select])
                 if select>=14: # the sensor values on the opposite pcb side need to inverted
                     sv = np.array([sv[0],-sv[1],-sv[2]])
+                    quat2 = Quaternion(axis=[0, 1, 0], degrees=3)
+                    sensor_pos_new = quat2.rotate(sensor_pos_new)
+                    sv = quat2.rotate(sv)
                 sensor_values_.append(sv)
+                positions.append(np.array(sensor_pos_new))
                 color.append([colors[0][j],colors[1][j],colors[2][j]])
                 j+=1
             sensor_positions.append(positions)
@@ -160,9 +163,9 @@ else: # load recorded data
             b_target = None
             pos_estimate_prev = [0,0,0]
             body_part = 'head'
-            sensor_select = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+            # sensor_select = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
             # sensor_select = [1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13]
-            # sensor_select = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+            sensor_select = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             def __init__(self, balljoint, theta_steps, phi_steps, phi_indices, theta_min, theta_range, sensor_values):
                 self.balljoint = balljoint
                 self.number_of_sensors = balljoint.number_of_sensors
@@ -177,9 +180,10 @@ else: # load recorded data
                   for i in range(0,phi_steps):
                     self.grid[j*phi_steps+i] = sensor_values[j][phi_indices[j][i]]
                 self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState, queue_size=1)
-                while not rospy.is_shutdown():
-                    msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
-                    self.magneticsCallback(msg)
+                # print('init done, listening for roboy/middleware/MagneticSensor ... ')
+                # while not rospy.is_shutdown():
+                #     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
+                #     self.magneticsCallback(msg)
             def interpolate(self,pos):
                 phi = atan2(pos[2], pos[0])
                 theta = atan2(sqrt(pos[0] ** 2 + pos[2] ** 2),pos[1])
@@ -191,19 +195,19 @@ else: # load recorded data
                 gy = phi_normalized * self.phi_steps
                 gyi = int(gy)
                 ty = gy - gyi
-                if(gxi>=self.theta_steps-1):
-                    gxi = self.theta_steps-2
-                if (gyi >= self.phi_steps-1):
-                    gyi = self.phi_steps - 2
+                if(gxi>=self.theta_steps):
+                    gxi = self.theta_steps-1
+                if (gyi >= self.phi_steps):
+                    gyi = 0
                 c000 = self.grid[gxi*self.phi_steps+gyi]
-                c100 = self.grid[(gxi+1)*self.phi_steps+gyi]
-                c010 = self.grid[gxi*self.phi_steps+gyi+1]
-                c110 = self.grid[(gxi+1)*self.phi_steps+gyi+1]
-                return (1 - tx) * (1 - ty) * c000 +\
-                         tx * (1 - ty) * c100 +\
-                         (1 - tx) * ty * c010 +\
-                         tx * ty * c110
-                # return c000
+                # c100 = self.grid[(gxi+1)*self.phi_steps+gyi]
+                # c010 = self.grid[gxi*self.phi_steps+gyi+1]
+                # c110 = self.grid[(gxi+1)*self.phi_steps+gyi+1]
+                # return (1 - tx) * (1 - ty) * c000 +\
+                #         tx * (1 - ty) * c100 +\
+                #         (1 - tx) * ty * c010 +\
+                #         tx * ty * c110
+                return c000
             def minimizeFunc(self, x):
                 values = []
                 for select in self.sensor_select:
@@ -229,7 +233,7 @@ else: # load recorded data
                     self.b_target[i] = sv
 
                 # print(self.b_target)
-                res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds=((-360, -360, -360), (360, 360, 360)),
+                res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds=((-180, -180, -180), (180, 180, 180)),
                                     ftol=1e-15, gtol=1e-15, xtol=1e-15, verbose=0, diff_step=0.01)  # ,max_nfev=20
                 b_field_error = res.cost
                 rospy.loginfo_throttle(1, "result %.3f %.3f %.3f b-field error %.3f" % (
@@ -243,7 +247,7 @@ else: # load recorded data
                 euler = [res.x[0] / 180 * pi, res.x[1] / 180 * pi, res.x[2] / 180 * pi]
                 msg.position = [euler[0], euler[1], euler[2]]
                 self.joint_state.publish(msg)
-                # if b_field_error < 2000:
+                # if b_field_error < 20000:
                 self.pos_estimate_prev = res.x
                 # else:
                 #     rospy.logwarn_throttle(1, 'b field error too big, resetting joint position...')
@@ -264,7 +268,7 @@ else: # load recorded data
                 color.append([255,255,255])
                 positions.append(sensor_positions[j][i])
                 values.append(sensor_values[j][i])
-                color.append([0, 0, 255])
+                color.append([100, 0, 255])
         for i in range(100000):
             pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
             pos = pos / np.linalg.norm(pos)*22
