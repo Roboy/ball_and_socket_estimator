@@ -12,7 +12,7 @@ parser.add_argument("-s",help="steps at which the magnetic field shall be sample
 parser.add_argument("-scale",help="scale the magnetic field in cloud visualization",type=float,default=1.0)
 parser.add_argument("-m",help="model name to load, eg models/two_magnets.npz",default='models/three_magnets.npz')
 parser.add_argument("-v",help="visualize",action="store_true")
-parser.add_argument("-r",help="radius on which to sample the magnetic field in mm",type=float,default=23.5)
+parser.add_argument("-r",help="radius on which to sample the magnetic field in mm",type=float,default=22)
 args = parser.parse_args()
 print(args)
 
