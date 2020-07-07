@@ -408,20 +408,19 @@ class BallJoint:
     def visualizeCloudColor(self,mag_values,pos_values,scale,color):
         cloud = pcl.PointCloud_PointXYZRGB()
         number_of_samples = len(pos_values)
-        points = np.zeros((number_of_samples*26, 4), dtype=np.float32)
-        j = 0
-        for pos,mag in zip(pos_values,mag_values):
-            i = 0
-            for pos_,mag_ in zip(pos,mag):
+        number_of_sensors = len(pos_values[0])
+        points = np.zeros((number_of_samples*number_of_sensors, 4), dtype=np.float32)
+        k = 0
+        for i in range(number_of_samples):
+            for j in range(number_of_sensors):
                 # dir = mag/np.linalg.norm(mag)
-                p = (pos_+scale*mag_)/100.0
+                p = (pos_values[i][j]+scale*mag_values[i][j])/100.0
 
-                points[j][0] = p[0]
-                points[j][1] = p[1]
-                points[j][2] = p[2]
-                points[j][3] = color[i][0]<<16|color[i][1]<<8|color[i][2]
-                j +=1
-                i +=1
+                points[k][0] = p[0]
+                points[k][1] = p[1]
+                points[k][2] = p[2]
+                points[k][3] = color[0][j]<<16|color[1][j]<<8|color[2][j]
+                k+=1
 
         cloud.from_array(points)
 

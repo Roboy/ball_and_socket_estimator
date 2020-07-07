@@ -44,8 +44,8 @@ if args.g: #record data
     rospy.sleep(1)
 
     values = {'motor_position':[], 'sensor_values':[]}
-    pbar = tqdm(total=len(range(-100,4000)))
-    for i in range(-100,4000):
+    pbar = tqdm(total=len(range(-10,3700)))
+    for i in range(-10,3700):
         motor_target.publish(i/10)
         rospy.sleep(0.01)
         sensor = rospy.wait_for_message("/roboy/middleware/MagneticSensor", MagneticSensor, timeout=None)
@@ -66,42 +66,46 @@ else: # load recorded data
         print('loading model from '+args.m)
         values = np.load(args.m)['values']
         # print(values[()]['motor_position'])
-        sensor_values = []
-        sensor_positions = []
         pbar = tqdm(total=len(values[()]['motor_position']))
         colors = [random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select)),random.sample(range(0, 255),len(args.select))]
-        color = []
-        # sensor_select = [0,1,2,3,4,14,15,16,17,18]
-        for i in range(len(values[()]['motor_position'])):
+        number_of_samples = int(len(values[()]['motor_position']))
+        number_of_sensors = len(args.select)
+        sensor_positions = np.zeros((number_of_samples,number_of_sensors,3))
+        sensor_values = np.zeros((number_of_samples, number_of_sensors, 3))
+
+        for i in range(number_of_samples):
             motor_pos = values[()]['motor_position'][i]
-            quat = Quaternion(axis=[0, 1, 0], degrees=motor_pos)
+
             j = 0
-            sensor_values_ = []
-            positions = []
             for select in args.select:
-                pos = ball.config['sensor_pos'][select]
-                sensor_pos_new = quat.rotate(pos)
+                # print(motor_pos)
+                quat = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
+                sensor_positions[i][j] = np.array(ball.config['sensor_pos'][select])
+                sensor_positions[i][j] = quat.rotate(sensor_positions[i][j])
                 angle = ball.config['sensor_angle'][select][2]
                 sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
-                sv = sensor_quat.rotate(values[()]['sensor_values'][i][select])
+                # sv = np.array([0,0,0])
+                sv = values[()]['sensor_values'][i][select]
+                sv = sensor_quat.rotate(sv)
+                # quat2 = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
+                # sv = quat2.rotate(sv)
                 if select>=14: # the sensor values on the opposite pcb side need to inverted
-                    sv = np.array([sv[0],-sv[1],-sv[2]])
-                    # quat2 = Quaternion(axis=[0, 1, 0], degrees=3)
-                    # sensor_pos_new = quat2.rotate(sensor_pos_new)
-                    # sv = quat2.rotate(sv)
-                sensor_values_.append(sv)
-                positions.append(np.array(sensor_pos_new))
-                color.append([colors[0][j],colors[1][j],colors[2][j]])
+                    quat2 = Quaternion(axis=[1, 0, 0], degrees=200)
+                    sv = quat2.rotate(sv)
+                    # sv = np.array([sv[0],-sv[1],-sv[2]])
+                #     quat2 = Quaternion(axis=[0, 1, 0], degrees=motor_pos+180)
+                #     sv = quat2.rotate(sv)
+                # else:
+
+                sensor_values[i][j] = sv
                 j+=1
-            sensor_positions.append(positions)
-            sensor_values.append(sensor_values_)
             pbar.update(1)
         print('saving sensor sensor_positions to '+'models/sensor_positions.npz')
         print('saving sensor sensor_values to '+'models/sensor_values.npz')
         np.savez_compressed('models/sensor_position.npz',values=sensor_positions)
         np.savez_compressed('models/sensor_values.npz',values=sensor_values)
         pbar.close()
-        ball.visualizeCloudColor(sensor_values,sensor_positions,args.scale,color)
+        ball.visualizeCloudColor(sensor_values,sensor_positions,args.scale,colors)
     else:
         sensor_positions = np.load('models/sensor_position.npz')['values']
         sensor_values = np.load('models/sensor_values.npz')['values']
@@ -119,8 +123,8 @@ else: # load recorded data
 
         for j in range(0,number_of_sensors):
             for i in range(0,number_of_samples):
-                phi[j][i] = atan2(sensor_positions[i][j][2], sensor_positions[i][j][0])
-                theta[j][i] = atan2(sqrt(sensor_positions[i][j][0]**2 + sensor_positions[i][j][2]**2),sensor_positions[i][j][1])
+                phi[j][i] = atan2(sensor_positions[i][j][2], sensor_positions[i][j][1])
+                theta[j][i] = atan2(sqrt(sensor_positions[i][j][1]**2 + sensor_positions[i][j][2]**2),sensor_positions[i][j][0])
             indices = sorted(range(number_of_samples), key=lambda k: phi[j][k])
             phi[j] = phi[j][indices]
             theta[j] = theta[j][indices]
@@ -130,14 +134,6 @@ else: # load recorded data
 
         sensor_values = sensor_values_temp
         sensor_positions = sensor_positions_temp
-        # positions = []
-        # values = []
-        # for (pos,value) in zip(sensor_positions,sensor_values):
-        #     for (p,v) in zip(pos,value):
-        #         positions.append(p)
-        #         values.append(v)
-        #         color.append([255,255,255])
-        # ball.visualizeCloudColor2(values, positions, args.scale, color)
 
         phi_steps = 360
 
@@ -149,6 +145,16 @@ else: # load recorded data
                 index_min = min(range(len(phi_min)), key=phi_min.__getitem__)
                 phi_indices[j][deg] = index_min
                 # print(index_min)
+
+        # positions = []
+        # values = []
+        # for j in range(number_of_sensors):
+        #     for deg in range(phi_steps):
+        #         positions.append(sensor_positions[j][phi_indices[j][deg]])
+        #         values.append(sensor_values[j][phi_indices[j][deg]])
+        #         color.append([255, 255, 255])
+        # ball.visualizeCloudColor2(values, positions, args.scale, color)
+
 
         class PoseEstimator:
             balljoint = None
@@ -165,7 +171,7 @@ else: # load recorded data
             body_part = 'head'
             # sensor_select = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
             # sensor_select = [1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13]
-            sensor_select = [0,1,2,3]
+            sensor_select = [1,6,13]
             def __init__(self, balljoint, theta_steps, phi_steps, phi_indices, theta_min, theta_range, sensor_values):
                 self.balljoint = balljoint
                 self.number_of_sensors = balljoint.number_of_sensors
@@ -186,10 +192,10 @@ else: # load recorded data
                     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
                     self.magneticsCallback(msg)
             def interpolate(self,pos):
-                phi = atan2(pos[2], pos[0])
-                theta = atan2(sqrt(pos[0] ** 2 + pos[2] ** 2),pos[1])
+                phi = atan2(pos[2], pos[1])
+                theta = atan2(sqrt(pos[2] ** 2 + pos[1] ** 2),pos[0])
                 phi_normalized = (phi + pi) / (pi * 2.0)
-                theta_normalized = 1-((theta - self.theta_min) / self.theta_range) #because of the order of theta from high to low
+                theta_normalized = ((theta - self.theta_min) / self.theta_range)
                 gx = theta_normalized * self.theta_steps
                 gxi = int(gx)
                 tx = gx - gxi
@@ -229,8 +235,9 @@ else: # load recorded data
                     sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
                     val = np.array((data.x[select], data.y[select], data.z[select]))
                     sv = sensor_quat.rotate(val)
-                    if select >= 14:  # the sensor values on the opposite pcb side need to inverted
-                        sv = np.array([sv[0], -sv[1], -sv[2]])
+                    # if select >= 14:  # the sensor values on the opposite pcb side need to inverted
+                    #     quat2 = Quaternion(axis=[1, 0, 0], degrees=200)
+                    #     sv = quat2.rotate(sv)
                     self.b_target[i] = sv
 
                 # print(self.b_target)
@@ -254,7 +261,7 @@ else: # load recorded data
                 #     rospy.logwarn_throttle(1, 'b field error too big, resetting joint position...')
                 #     self.pos_estimate_prev = [0, 0, 0]
 
-        estimator = PoseEstimator(ball,number_of_sensors,phi_steps,phi_indices,theta[-1][0],(theta[0][0]-theta[-1][0]),sensor_values)
+        estimator = PoseEstimator(ball,number_of_sensors,phi_steps,phi_indices,theta[0][0],(theta[-1][0]-theta[0][0]),sensor_values)
         positions = []
         values = []
         color = []

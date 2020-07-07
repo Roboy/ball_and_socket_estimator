@@ -12,6 +12,7 @@ parser.add_argument("-s",help="steps at which the magnetic field shall be sample
 parser.add_argument("-scale",help="scale the magnetic field in cloud visualization",type=float,default=1.0)
 parser.add_argument("-m",help="model name to load, eg models/two_magnets.npz",default='models/three_magnets.npz')
 parser.add_argument("-v",help="visualize",action="store_true")
+parser.add_argument("-t",help="sensor arrangement as for the magnetic field calibration",action="store_true")
 parser.add_argument("-r",help="radius on which to sample the magnetic field in mm",type=float,default=22)
 args = parser.parse_args()
 print(args)
@@ -24,14 +25,28 @@ if args.v:
 
 if args.g:
     positions,pos_offsets,angles,angle_offsets = [],[],[],[]
-    x_angles = np.arange(0,360,args.s)
-    y_angles = np.arange(0,360,args.s)
-    for theta,i in zip(x_angles,range(0,len(x_angles))):
-        for phi,j in zip(y_angles,range(0,len(y_angles))):
-            positions.append([args.r*sin(theta*pi/180)*cos(phi*pi/180),args.r*sin(theta*pi/180)*sin(phi*pi/180),args.r*cos(theta*pi/180)])
-            pos_offsets.append([0,0,0])
-            angles.append([0,0,90])
-            angle_offsets.append([0,0,0])
+    if not args.t:
+        x_angles = np.arange(0,360,args.s)
+        y_angles = np.arange(0,360,args.s)
+        for theta,i in zip(x_angles,range(0,len(x_angles))):
+            for phi,j in zip(y_angles,range(0,len(y_angles))):
+                positions.append([args.r * sin(theta * pi / 180) * cos(phi * pi / 180),
+                                 args.r * sin(theta * pi / 180) * sin(phi * pi / 180),
+                                  args.r * cos(theta * pi / 180),])
+                pos_offsets.append([0,0,0])
+                angles.append([0,0,90])
+                angle_offsets.append([0,0,0])
+    else:
+        y_angles = np.arange(0, 360, args.s)
+        x_angles = np.arange(0.645774*180/pi, 2.949599*180/pi, 5.5)
+        for theta, i in zip(x_angles, range(0, len(x_angles))):
+            for phi, j in zip(y_angles, range(0, len(y_angles))):
+                positions.append([args.r * sin(theta * pi / 180) * cos(phi * pi / 180),
+                                  args.r * sin(theta * pi / 180) * sin(phi * pi / 180),
+                                  args.r * cos(theta * pi / 180)])
+                pos_offsets.append([0, 0, 0])
+                angles.append([0, 0, 90])
+                angle_offsets.append([0, 0, 0])
     number_of_sensors = len(positions)
     print('number_of_sensors %d'%number_of_sensors)
     print('scale %f'%args.scale)
