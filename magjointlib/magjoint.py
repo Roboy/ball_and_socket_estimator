@@ -43,6 +43,58 @@ class BallJoint:
         self.number_of_sensors = len(self.config['sensor_pos'])
         self.number_of_magnets = len(self.config['field_strength'])
         self.sensors = self.gen_sensors()
+    def filterRecordedData(self,selection,phi_steps,sensor_positions,sensor_values):
+        number_of_sensors = len(selection)
+        number_of_samples = len(sensor_positions)
+        # calculate spherical coordinates
+        phi = [np.zeros(number_of_samples)] * number_of_sensors
+        theta = [np.zeros(number_of_samples)] * number_of_sensors
+
+        sensor_values_temp = np.zeros((number_of_sensors, number_of_samples, 3))
+        sensor_positions_temp = np.zeros((number_of_sensors, number_of_samples, 3))
+
+        pbar = tqdm(total=number_of_sensors, desc='calculating spherical coordinates', leave=True)
+        for j in range(0, number_of_sensors):
+            for i in range(0, number_of_samples): # calculate sperical coordinates from sensor positions
+                phi[j][i] = math.atan2(sensor_positions[i][j][2], sensor_positions[i][j][1])
+                theta[j][i] = math.atan2(math.sqrt(sensor_positions[i][j][1] ** 2 + sensor_positions[i][j][2] ** 2),
+                                    sensor_positions[i][j][0])
+            # sort them in increasing phi order
+            indices = sorted(range(number_of_samples), key=lambda k: phi[j][k])
+            phi[j] = phi[j][indices]
+            theta[j] = theta[j][indices]
+            for i in range(0, number_of_samples):
+                sensor_values_temp[j][i] = sensor_values[indices[i]][j]
+                sensor_positions_temp[j][i] = sensor_positions[indices[i]][j]
+            pbar.update(1)
+
+        sensor_values = sensor_values_temp
+        sensor_positions = sensor_positions_temp
+
+        pbar = tqdm(total=number_of_sensors, desc='sampling values closest to phi steps', leave=True)
+
+        phi_indices = [np.zeros(phi_steps, dtype=np.int)] * number_of_sensors
+        for j in range(0, number_of_sensors):
+            for deg in range(0, phi_steps):
+                phi_min = abs(phi[j] - [((deg - 180.0) / 180.0 * math.pi)] * number_of_samples)
+                index_min = min(range(len(phi_min)), key=phi_min.__getitem__)
+                phi_indices[j][deg] = index_min
+            pbar.update(1)
+
+        sensor_positions_selection = np.zeros((number_of_sensors,phi_steps,3))
+        sensor_values_selection = np.zeros((number_of_sensors,phi_steps,3))
+        phi_selection = np.zeros((number_of_sensors,phi_steps))
+        theta_selection = np.zeros((number_of_sensors,phi_steps))
+        j = 0
+        for select in selection:
+            for deg in range(0, phi_steps):
+                sensor_positions_selection[j][deg] = sensor_positions[select][phi_indices[select][deg]]
+                sensor_values_selection[j][deg] = sensor_values[select][phi_indices[select][deg]]
+                phi_selection[j][deg] = phi[select][phi_indices[select][deg]]
+                theta_selection[j][deg] = theta[select][phi_indices[select][deg]]
+            j+=1
+        return sensor_positions_selection,sensor_values_selection,phi_selection,theta_selection
+
     def generateSensorDataFork(self,i,joint_positions,magnet_angles):
         magnets = self.gen_magnets_angle(magnet_angles)
         magnets.rotate(joint_positions[i][0],(1,0,0), anchor=(0,0,0))
@@ -437,7 +489,7 @@ class BallJoint:
         i = 0
         for pos,mag in zip(pos_values,mag_values):
             # dir = mag/np.linalg.norm(mag)
-            p = (pos+scale*mag)
+            p = (pos+scale*mag)/100
 
             points[i][0] = p[0]
             points[i][1] = p[1]

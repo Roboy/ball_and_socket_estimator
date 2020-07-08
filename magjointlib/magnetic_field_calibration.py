@@ -171,7 +171,7 @@ else: # load recorded data
             body_part = 'head'
             # sensor_select = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
             # sensor_select = [1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13]
-            sensor_select = [1,6,13]
+            sensor_select = [0,1,2,3]
             def __init__(self, balljoint, theta_steps, phi_steps, phi_indices, theta_min, theta_range, sensor_values):
                 self.balljoint = balljoint
                 self.number_of_sensors = balljoint.number_of_sensors
