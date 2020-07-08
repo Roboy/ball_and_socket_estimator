@@ -83,10 +83,10 @@ class PoseEstimator:
         self.b_target = [np.zeros(3)]*self.number_of_sensors
         rospy.init_node('magnetic_field_calibration', anonymous=True)
         self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState, queue_size=1)
-        print('init done, listening for roboy/middleware/MagneticSensor ... ')
-        while not rospy.is_shutdown():
-            msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
-            self.magneticsCallback(msg)
+        # print('init done, listening for roboy/middleware/MagneticSensor ... ')
+        # while not rospy.is_shutdown():
+        #     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
+        #     self.magneticsCallback(msg)
 
     def take_closest(self, myList, myNumber):
         """
@@ -111,19 +111,33 @@ class PoseEstimator:
         theta = math.atan2(math.sqrt(pos[2] ** 2 + pos[1] ** 2),pos[0])
         theta_selected,theta_index = self.take_closest(self.theta,theta)
         phi_selected,phi_index = self.take_closest(self.phi[theta_index],phi)
-        if phi_index<self.phi_steps-1 and theta_index<self.theta_steps-1:
-            c00 = self.sensor_values[theta_index][phi_index]
-            c10 = self.sensor_values[theta_index+1][phi_index]
-            c01 = self.sensor_values[theta_index][phi_index+1]
-            c11 = self.sensor_values[theta_index + 1][phi_index+1]
-            tx = theta - theta_selected
-            ty = phi - phi_selected
-            return (1 - tx) * (1 - ty) * c00 + \
-                    tx * (1 - ty) * c10 +\
-                    (1 - tx) * ty * c01 +\
-                    tx * ty * c11
-        else:
-            return self.sensor_values[theta_index][phi_index]
+        # tx = theta - theta_selected
+        # ty = phi - phi_selected
+        #
+        # if phi_index<self.phi_steps-1 and theta_index<self.theta_steps-1 and phi_index>0 and theta_index>0:
+        #     c00 = self.sensor_values[theta_index][phi_index]
+        #     if tx>0:
+        #         c10 = self.sensor_values[theta_index + 1][phi_index]
+        #     else:
+        #         c10 = self.sensor_values[theta_index - 1][phi_index]
+        #     if ty>0:
+        #         c01 = self.sensor_values[theta_index][phi_index - 1]
+        #     else:
+        #         c01 = self.sensor_values[theta_index][phi_index - 1]
+        #     if tx>0 and ty>0:
+        #         c11 = self.sensor_values[theta_index + 1][phi_index+1]
+        #     elif tx>0 and ty<0:
+        #         c11 = self.sensor_values[theta_index + 1][phi_index - 1]
+        #     elif tx<0 and ty>0:
+        #         c11 = self.sensor_values[theta_index - 1][phi_index + 1]
+        #     else:
+        #         c11 = self.sensor_values[theta_index - 1][phi_index - 1]
+        #     return (1 - tx) * (1 - ty) * c00 + \
+        #             tx * (1 - ty) * c10 +\
+        #             (1 - tx) * ty * c01 +\
+        #             tx * ty * c11
+        # else:
+        return self.sensor_values[theta_index][phi_index]
 
         # c000 = self.sensor_values[theta_index][phi_index]
         # return (1 - tx) * (1 - ty) * c000 +\
@@ -199,5 +213,5 @@ for i in range(100000):
     value = estimator.interpolate(pos)
     positions.append(pos)
     values.append(np.array([value[0], value[1], value[2]]))
-    color.append([80, 30, 255])
+    color.append([80, 90, 0])
 ball.visualizeCloudColor2(values, positions, args.scale, color)

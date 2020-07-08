@@ -72,6 +72,18 @@ else: # load recorded data
         number_of_sensors = len(args.select)
         sensor_positions = np.zeros((number_of_samples,number_of_sensors,3))
         sensor_values = np.zeros((number_of_samples, number_of_sensors, 3))
+        color = np.zeros((3,number_of_sensors),dtype=int)
+        j = 0
+        for select in args.select:
+            if select>=14:
+                color[0][j] = 255
+                color[1][j] = 255
+                color[2][j] = 0
+            else:
+                color[0][j] = 255
+                color[1][j] = 0
+                color[2][j] = 255
+            j+=1
 
         for i in range(number_of_samples):
             motor_pos = values[()]['motor_position'][i]
@@ -90,7 +102,7 @@ else: # load recorded data
                 # quat2 = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
                 # sv = quat2.rotate(sv)
                 if select>=14: # the sensor values on the opposite pcb side need to inverted
-                    quat2 = Quaternion(axis=[1, 0, 0], degrees=200)
+                    quat2 = Quaternion(axis=[1, 0, 0], degrees=180)
                     sv = quat2.rotate(sv)
                     # sv = np.array([sv[0],-sv[1],-sv[2]])
                 #     quat2 = Quaternion(axis=[0, 1, 0], degrees=motor_pos+180)
@@ -105,7 +117,7 @@ else: # load recorded data
         np.savez_compressed('models/sensor_position.npz',values=sensor_positions)
         np.savez_compressed('models/sensor_values.npz',values=sensor_values)
         pbar.close()
-        ball.visualizeCloudColor(sensor_values,sensor_positions,args.scale,colors)
+        ball.visualizeCloudColor(sensor_values,sensor_positions,args.scale,color)
     else:
         sensor_positions = np.load('models/sensor_position.npz')['values']
         sensor_values = np.load('models/sensor_values.npz')['values']
