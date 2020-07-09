@@ -112,7 +112,7 @@ class PoseEstimator:
     normalize_magnetic_strength = False
     pos_estimate_prev = [0,0,0]
     body_part = 'head'
-    selection = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+    selection = [0,1,2,3]
     def __init__(self,balljoint,texture):
         self.balljoint = balljoint
         self.tex = texture
@@ -165,14 +165,13 @@ class PoseEstimator:
 
         for select in self.selection:
             val = np.array((data.x[select], data.y[select], data.z[select]))
-            if self.normalize_magnetic_strength:
-                val /= np.linalg.norm(val)
             angle = self.balljoint.config['sensor_angle'][select][2]
             sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
             val = sensor_quat.rotate(val)
             self.b_target[select] = val
         # print(b_target)
-        res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-50,-50,-90), (50, 50, 90)),ftol=1e-8, xtol=1e-8,verbose=0,diff_step=0.1)#,max_nfev=20
+        res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-180,-180,-180), (180, 180, 180)),
+                            ftol=1e-15, xtol=1e-15, gtol=1e-15, verbose=0,diff_step=0.01)#,max_nfev=20
         b_field_error = res.cost
         rospy.loginfo_throttle(1,"result %.3f %.3f %.3f b-field error %.3f"%(res.x[0],res.x[1],res.x[2],res.cost))
         msg = sensor_msgs.msg.JointState()
@@ -184,49 +183,49 @@ class PoseEstimator:
         euler = [res.x[0]/180*math.pi,res.x[1]/180*math.pi,res.x[2]/180*math.pi]
         msg.position = [euler[0], euler[1], euler[2]]
         self.joint_state.publish(msg)
-        if b_field_error<2000:
-            self.pos_estimate_prev = res.x
-        else:
-            rospy.logwarn_throttle(1,'b field error too big, resetting joint position...')
-            self.pos_estimate_prev = [0,0,0]
+        # if b_field_error<2000:
+        self.pos_estimate_prev = res.x
+        # else:
+        #     rospy.logwarn_throttle(1,'b field error too big, resetting joint position...')
+        #     self.pos_estimate_prev = [0,0,0]
 
 estimator = PoseEstimator(ball,tex)
 
-positions = []
-values = []
-color = []
-
-number_of_samples = 100000
-pbar = tqdm(total=number_of_samples)
-for i in range(number_of_samples):
-    pose = np.array([random.uniform(-180,180),random.uniform(-180,180),random.uniform(-180,180)])
-    pos,value = estimator.interpolate(pose)
-    for i in range(ball.number_of_sensors):
-        positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
-        values.append(np.array([value[i][0],value[i][1],value[i][2]]))
-        color.append([80, 90, 0])
-    pbar.update(1)
-
-for j in range(tex.shape[0]):
-    for i in range(tex.shape[1]):
-        phi = (i - 180)
-        theta = (11 + j * 11)
-        theta_normalized = (theta - 11) / 143.0
-        phi_normalized = (phi + 180) / 360.0
-        pos = [22 * math.cos(theta * math.pi / 180),
-               22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
-               22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
-        positions.append(pos)
-        values.append(np.array(tex[j][i][0:3]))
-        color.append([255,255,255])
-
-        p,value = estimator.interpolatePosition(pos)
-        positions.append(pos)
-        values.append(np.array([value[0][0],value[0][1],value[0][2]]))
-        color.append([255, 0, 255])
-
-
-ball.visualizeCloudColor2(values, positions, args.scale, color)
+# positions = []
+# values = []
+# color = []
+#
+# number_of_samples = 100000
+# pbar = tqdm(total=number_of_samples)
+# for i in range(number_of_samples):
+#     pose = np.array([random.uniform(-180,180),random.uniform(-180,180),random.uniform(-180,180)])
+#     pos,value = estimator.interpolate(pose)
+#     for i in range(ball.number_of_sensors):
+#         positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
+#         values.append(np.array([value[i][0],value[i][1],value[i][2]]))
+#         color.append([80, 90, 0])
+#     pbar.update(1)
+#
+# for j in range(tex.shape[0]):
+#     for i in range(tex.shape[1]):
+#         phi = (i - 180)
+#         theta = (11 + j * 11)
+#         theta_normalized = (theta - 11) / 143.0
+#         phi_normalized = (phi + 180) / 360.0
+#         pos = [22 * math.cos(theta * math.pi / 180),
+#                22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
+#                22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
+#         positions.append(pos)
+#         values.append(np.array(tex[j][i][0:3]))
+#         color.append([255,255,255])
+#
+#         p,value = estimator.interpolatePosition(pos)
+#         positions.append(pos)
+#         values.append(np.array([value[0][0],value[0][1],value[0][2]]))
+#         color.append([255, 0, 255])
+#
+#
+# ball.visualizeCloudColor2(values, positions, args.scale, color)
 
 while not rospy.is_shutdown():
     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
