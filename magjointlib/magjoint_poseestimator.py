@@ -3,7 +3,8 @@ import magjoint
 import sys,math,time
 import numpy as np
 import argparse
-from math import *
+from math import sqrt,atan2,pi
+import random
 import pycuda.driver as drv
 from pycuda.compiler import SourceModule
 import pycuda.autoinit
@@ -15,14 +16,17 @@ import rospy
 from roboy_middleware_msgs.msg import MagneticSensor
 import std_msgs.msg, sensor_msgs.msg
 from scipy.optimize import fsolve, least_squares
+from pyquaternion import Quaternion
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument("config",help="path to magjoint config file, eg config/single_magnet.yaml")
 parser.add_argument("-g",help="generate magnetic field samples",action="store_true")
-parser.add_argument("-s",help="steps at which the magnetic field shall be sampled",type=float,default=10.0)
+parser.add_argument("-s",help="steps at which the magnetic field shall be sampled",type=float,default=1.0)
 parser.add_argument("model",help="model name to save/load, eg models/two_magnets.npz")
 parser.add_argument("-v",help="visualize",action="store_true")
-parser.add_argument("-r",help="radius on which to sample the magnetic field in mm",type=float,default=23.5)
+parser.add_argument("-scale",help="scale the magnetic field in cloud visualization",type=float,default=0.05)
+parser.add_argument("-r",help="radius on which to sample the magnetic field in mm",type=float,default=22)
 args = parser.parse_args()
 print(args)
 
@@ -64,6 +68,7 @@ else: # loading texture
     tex = np.load(args.model)['tex']
     print('the loaded texture has the shape:')
     print(tex.shape)
+    print(tex)
 
 class PoseEstimator:
     balljoint = None
@@ -83,10 +88,13 @@ class PoseEstimator:
         if( index > number_of_samples )
             return;
 
-        float theta = atan2(pos[index].y,pos[index].x)/(2*PI);
-        float phi = atan2(sqrtf(powf(pos[index].x,2.0)+powf(pos[index].y,2.0)),pos[index].z)/(2*PI);
+        float phi = atan2(pos[index].z,pos[index].y)*180.0f/PI;
+        float theta = atan2(sqrtf(powf(pos[index].z,2.0)+powf(pos[index].y,2.0)),pos[index].x)*180.0f/PI;
+        
+        float phi_normalized = (phi+180.0f)/360.0f;
+        float theta_normalized = (theta-11.0f)/143.0f;
 
-        float4 texval = tex2D(tex, theta, phi);
+        float4 texval = tex2D(tex, phi_normalized,theta_normalized);
         data[index].x = texval.x;
         data[index].y = texval.y;
         data[index].z = texval.z;
@@ -104,6 +112,7 @@ class PoseEstimator:
     normalize_magnetic_strength = False
     pos_estimate_prev = [0,0,0]
     body_part = 'head'
+    selection = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
     def __init__(self,balljoint,texture):
         self.balljoint = balljoint
         self.tex = texture
@@ -129,9 +138,6 @@ class PoseEstimator:
         self.gdim = ( int((dx + (mx>0))), int((dy + (my>0))))
         rospy.init_node('BallJointPoseestimator',anonymous=True)
         self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
-        while not rospy.is_shutdown():
-            msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
-            self.magneticsCallback(msg)
     def minimizeFunc(self,x):
         for pos,i in zip(self.sensor_pos,range(self.number_of_sensors)):
              r = R.from_euler('xzy', x,degrees=True)
@@ -141,15 +147,30 @@ class PoseEstimator:
         for out,target in zip(self.output,self.b_target):
             b_error += np.linalg.norm(out-target)
         return [b_error]
+    def interpolate(self,x):
+        for pos,i in zip(self.sensor_pos,range(self.number_of_sensors)):
+             r = R.from_euler('xzy', x,degrees=True)
+             self.input[i] = r.apply(pos)
+        self.interpol(np.int32(self.number_of_sensors), drv.In(self.input), drv.Out(self.output), texrefs=[self.texref],
+                      block=self.bdim, grid=self.gdim)
+        return self.input, self.output
+    def interpolatePosition(self,pos):
+        self.input[0] = pos
+        self.interpol(np.int32(1), drv.In(self.input), drv.Out(self.output), texrefs=[self.texref],
+                      block=self.bdim, grid=self.gdim)
+        return self.input, self.output
     def magneticsCallback(self,data):
         if(data.id != self.balljoint.config['id']):
             return
 
-        for i in range(0,4):
-            val = np.array((data.x[i], data.y[i], data.z[i]))
+        for select in self.selection:
+            val = np.array((data.x[select], data.y[select], data.z[select]))
             if self.normalize_magnetic_strength:
                 val /= np.linalg.norm(val)
-            self.b_target[i] = val
+            angle = self.balljoint.config['sensor_angle'][select][2]
+            sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
+            val = sensor_quat.rotate(val)
+            self.b_target[select] = val
         # print(b_target)
         res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-50,-50,-90), (50, 50, 90)),ftol=1e-8, xtol=1e-8,verbose=0,diff_step=0.1)#,max_nfev=20
         b_field_error = res.cost
@@ -169,4 +190,44 @@ class PoseEstimator:
             rospy.logwarn_throttle(1,'b field error too big, resetting joint position...')
             self.pos_estimate_prev = [0,0,0]
 
-PoseEstimator(ball,tex)
+estimator = PoseEstimator(ball,tex)
+
+positions = []
+values = []
+color = []
+
+number_of_samples = 100000
+pbar = tqdm(total=number_of_samples)
+for i in range(number_of_samples):
+    pose = np.array([random.uniform(-180,180),random.uniform(-180,180),random.uniform(-180,180)])
+    pos,value = estimator.interpolate(pose)
+    for i in range(ball.number_of_sensors):
+        positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
+        values.append(np.array([value[i][0],value[i][1],value[i][2]]))
+        color.append([80, 90, 0])
+    pbar.update(1)
+
+for j in range(tex.shape[0]):
+    for i in range(tex.shape[1]):
+        phi = (i - 180)
+        theta = (11 + j * 11)
+        theta_normalized = (theta - 11) / 143.0
+        phi_normalized = (phi + 180) / 360.0
+        pos = [22 * math.cos(theta * math.pi / 180),
+               22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
+               22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
+        positions.append(pos)
+        values.append(np.array(tex[j][i][0:3]))
+        color.append([255,255,255])
+
+        p,value = estimator.interpolatePosition(pos)
+        positions.append(pos)
+        values.append(np.array([value[0][0],value[0][1],value[0][2]]))
+        color.append([255, 0, 255])
+
+
+ball.visualizeCloudColor2(values, positions, args.scale, color)
+
+while not rospy.is_shutdown():
+    msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
+    estimator.magneticsCallback(msg)

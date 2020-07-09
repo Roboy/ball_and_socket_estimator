@@ -466,7 +466,7 @@ class BallJoint:
         for i in range(number_of_samples):
             for j in range(number_of_sensors):
                 # dir = mag/np.linalg.norm(mag)
-                p = (pos_values[i][j]+scale*mag_values[i][j])/100.0
+                p = (pos_values[i][j]+scale*mag_values[i][j])
 
                 points[k][0] = p[0]
                 points[k][1] = p[1]
@@ -489,7 +489,7 @@ class BallJoint:
         i = 0
         for pos,mag in zip(pos_values,mag_values):
             # dir = mag/np.linalg.norm(mag)
-            p = (pos+scale*mag)/100
+            p = (pos+scale*mag)
 
             points[i][0] = p[0]
             points[i][1] = p[1]

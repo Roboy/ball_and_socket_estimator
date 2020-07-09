@@ -14,17 +14,20 @@ from scipy.optimize import fsolve, least_squares
 from scipy.spatial.transform import Rotation as R
 import std_msgs.msg, sensor_msgs.msg
 from bisect import bisect_left
+import pycuda.driver as drv
+from pycuda.compiler import SourceModule
 
 parser = argparse.ArgumentParser()
 parser.add_argument("config",help="path to magjoint config file, eg config/single_magnet.yaml")
 parser.add_argument("-g",help="generate magnetic field samples",action="store_true")
 parser.add_argument("-s",help="steps at which the magnetic field shall be sampled",type=float,default=1.0)
 parser.add_argument("-scale",help="scale the magnetic field in cloud visualization",type=float,default=0.05)
-parser.add_argument("-m",help="model name to load, eg data/three_magnets.npz",default='data/three_magnets.npz')
+parser.add_argument("-model",help="model name to save, eg models/three_magnets.npz",default='models/three_magnets_v0.2.npz')
+parser.add_argument("-tex",help="use texture",action="store_true")
 parser.add_argument("-v",help="visualize only",action="store_true")
 parser.add_argument("-p",help="predict",action="store_true")
 parser.add_argument("-select", nargs='+', help="select which sensors", type=int,
-                        default=[0,1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13])
+                        default=[0,1,2,3,4,5,6,7,8,9,10,11,12])
 args = parser.parse_args()
 
 ball = magjoint.BallJoint(args.config)
@@ -42,6 +45,17 @@ sensor_positions_selection,sensor_values_selection,phi_selection,theta_selection
 
 number_of_sensors = len(args.select)
 number_of_samples = len(sensor_positions_selection[0])
+
+if args.tex:
+    print('saving texture '+args.model)
+    tex = np.zeros((number_of_sensors,number_of_samples,4),dtype=np.float32)
+    for i in range(number_of_sensors):
+        for j in range(number_of_samples):
+            tex[i, j, 0] = sensor_values_selection[i][j][0]
+            tex[i, j, 1] = sensor_values_selection[i][j][1]
+            tex[i, j, 2] = sensor_values_selection[i][j][2]
+
+    np.savez_compressed(args.model,tex=tex)
 
 # color = []
 # positions = []
@@ -198,20 +212,30 @@ color = []
 for j in range(number_of_sensors):
     for i in range(number_of_samples):
 
-        # pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
-        # pos = pos/np.linalg.norm(pos)
-        value = estimator.interpolate(sensor_positions_selection[j][i])
+        value_interpolated = estimator.interpolate(sensor_positions_selection[j][i])
         positions.append(sensor_positions_selection[j][i])
-        values.append(np.array([value[0],value[1],value[2]]))
+        values.append(np.array([value_interpolated[0],value_interpolated[1],value_interpolated[2]]))
         color.append([255,255,255])
         positions.append(sensor_positions_selection[j][i])
-        values.append(sensor_values_selection[j][i])
+        value_measured = sensor_values_selection[j][i]
+        values.append(value_measured)
         color.append([100, 0, 255])
-for i in range(100000):
-    pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
-    pos = pos / np.linalg.norm(pos)*22
-    value = estimator.interpolate(pos)
-    positions.append(pos)
-    values.append(np.array([value[0], value[1], value[2]]))
-    color.append([80, 90, 0])
+
+        phi = (i-180) * math.pi / 180
+        theta = (11 + j * 11) * math.pi / 180
+        positions.append([
+            22 * math.cos(theta),
+            22 * math.sin(theta) * math.cos(phi),
+            22 * math.sin(theta) * math.sin(phi)])
+        value_texture = tex[j][i][0:3]
+        values.append(np.array(value_texture))
+        # values.append(np.zeros(3))
+        color.append([255, 255, 255])
+# for i in range(100000):
+#     pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
+#     pos = pos / np.linalg.norm(pos)*22
+#     value = estimator.interpolate(pos)
+#     positions.append(pos)
+#     values.append(np.array([value[0], value[1], value[2]]))
+#     color.append([80, 90, 0])
 ball.visualizeCloudColor2(values, positions, args.scale, color)
