@@ -27,7 +27,7 @@ parser.add_argument("-tex",help="use texture",action="store_true")
 parser.add_argument("-v",help="visualize only",action="store_true")
 parser.add_argument("-p",help="predict",action="store_true")
 parser.add_argument("-select", nargs='+', help="select which sensors", type=int,
-                        default=[0,1,2,3,4,5,6,7,8,9,10,11,12])
+                        default=[0,1,2,3,4,5,6,7,8,9,10,11,12,13])
 args = parser.parse_args()
 
 ball = magjoint.BallJoint(args.config)
@@ -222,7 +222,7 @@ for j in range(number_of_sensors):
         color.append([100, 0, 255])
 
         phi = (i-180) * math.pi / 180
-        theta = (11 + j * 11) * math.pi / 180
+        theta = (j * 11) * math.pi / 180
         positions.append([
             22 * math.cos(theta),
             22 * math.sin(theta) * math.cos(phi),

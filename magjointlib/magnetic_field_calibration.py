@@ -23,7 +23,7 @@ parser.add_argument("-m",help="model name to load, eg data/three_magnets.npz",de
 parser.add_argument("-v",help="visualize only",action="store_true")
 parser.add_argument("-p",help="predict",action="store_true")
 parser.add_argument("-select", nargs='+', help="select which sensors", type=int,
-                        default=[1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13])
+                        default=[0,1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13])
 args = parser.parse_args()
 
 ball = magjoint.BallJoint(args.config)
@@ -47,7 +47,7 @@ if args.g: #record data
     pbar = tqdm(total=len(range(-10,3700)))
     for i in range(-10,3700):
         motor_target.publish(i/10)
-        rospy.sleep(0.01)
+        # rospy.sleep(0.01)
         sensor = rospy.wait_for_message("/roboy/middleware/MagneticSensor", MagneticSensor, timeout=None)
         motor_position = rospy.wait_for_message("/motor_position", Float32, timeout=None)
         values['motor_position'].append(motor_position.data)

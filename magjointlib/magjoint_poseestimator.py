@@ -68,7 +68,7 @@ else: # loading texture
     tex = np.load(args.model)['tex']
     print('the loaded texture has the shape:')
     print(tex.shape)
-    print(tex)
+    # print(tex)
 
 class PoseEstimator:
     balljoint = None
@@ -92,7 +92,7 @@ class PoseEstimator:
         float theta = atan2(sqrtf(powf(pos[index].z,2.0)+powf(pos[index].y,2.0)),pos[index].x)*180.0f/PI;
         
         float phi_normalized = (phi+180.0f)/360.0f;
-        float theta_normalized = (theta-11.0f)/143.0f;
+        float theta_normalized = (theta)/143.0f;
 
         float4 texval = tex2D(tex, phi_normalized,theta_normalized);
         data[index].x = texval.x;
@@ -112,7 +112,8 @@ class PoseEstimator:
     normalize_magnetic_strength = False
     pos_estimate_prev = [0,0,0]
     body_part = 'head'
-    selection = [0,1,2,3]
+    selection = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+    # angles = [180,90,0,-90]
     def __init__(self,balljoint,texture):
         self.balljoint = balljoint
         self.tex = texture
@@ -125,7 +126,7 @@ class PoseEstimator:
         self.texref.set_flags(drv.TRSF_NORMALIZED_COORDINATES)
         self.texref.set_filter_mode(drv.filter_mode.LINEAR)
         self.texref.set_address_mode(0,drv.address_mode.WRAP)
-        self.texref.set_address_mode(1,drv.address_mode.WRAP)
+        self.texref.set_address_mode(1,drv.address_mode.CLAMP)
         self.sensor_pos = balljoint.config['sensor_pos']
         self.number_of_sensors = len(self.sensor_pos)
         self.input = np.zeros((self.number_of_sensors,3), dtype=np.float32,order='C')
@@ -139,10 +140,11 @@ class PoseEstimator:
         rospy.init_node('BallJointPoseestimator',anonymous=True)
         self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
     def minimizeFunc(self,x):
-        for pos,i in zip(self.sensor_pos,range(self.number_of_sensors)):
+        for (select,i) in zip(self.selection,range(len(self.selection))):
              r = R.from_euler('xzy', x,degrees=True)
+             pos = self.sensor_pos[select]
              self.input[i] = r.apply(pos)
-        self.interpol(np.int32(self.number_of_sensors),drv.In(self.input),drv.Out(self.output),texrefs=[self.texref],block=self.bdim,grid=self.gdim)
+        self.interpol(np.int32(len(self.selection)),drv.In(self.input),drv.Out(self.output),texrefs=[self.texref],block=self.bdim,grid=self.gdim)
         b_error = 0
         for out,target in zip(self.output,self.b_target):
             b_error += np.linalg.norm(out-target)
@@ -174,6 +176,8 @@ class PoseEstimator:
                             ftol=1e-15, xtol=1e-15, gtol=1e-15, verbose=0,diff_step=0.01)#,max_nfev=20
         b_field_error = res.cost
         rospy.loginfo_throttle(1,"result %.3f %.3f %.3f b-field error %.3f"%(res.x[0],res.x[1],res.x[2],res.cost))
+        # print(self.b_target)
+        # print(self.output)
         msg = sensor_msgs.msg.JointState()
         msg.header = std_msgs.msg.Header()
         msg.header.stamp = rospy.Time.now()
@@ -191,11 +195,11 @@ class PoseEstimator:
 
 estimator = PoseEstimator(ball,tex)
 
-# positions = []
-# values = []
-# color = []
-#
-# number_of_samples = 100000
+positions = []
+values = []
+color = []
+
+# number_of_samples = 1000
 # pbar = tqdm(total=number_of_samples)
 # for i in range(number_of_samples):
 #     pose = np.array([random.uniform(-180,180),random.uniform(-180,180),random.uniform(-180,180)])
@@ -209,22 +213,22 @@ estimator = PoseEstimator(ball,tex)
 # for j in range(tex.shape[0]):
 #     for i in range(tex.shape[1]):
 #         phi = (i - 180)
-#         theta = (11 + j * 11)
-#         theta_normalized = (theta - 11) / 143.0
-#         phi_normalized = (phi + 180) / 360.0
+#         theta = (j * 11)
+#         # theta_normalized = (theta) / 143.0
+#         # phi_normalized = (phi + 180) / 360.0
 #         pos = [22 * math.cos(theta * math.pi / 180),
 #                22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
 #                22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
 #         positions.append(pos)
 #         values.append(np.array(tex[j][i][0:3]))
 #         color.append([255,255,255])
-#
+# #
 #         p,value = estimator.interpolatePosition(pos)
 #         positions.append(pos)
 #         values.append(np.array([value[0][0],value[0][1],value[0][2]]))
-#         color.append([255, 0, 255])
-#
-#
+#         color.append([0, 255, 255])
+# #
+# #
 # ball.visualizeCloudColor2(values, positions, args.scale, color)
 
 while not rospy.is_shutdown():
