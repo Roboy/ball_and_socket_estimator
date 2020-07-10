@@ -10,16 +10,27 @@ import sys, select
 from visualization_msgs.msg import Marker
 import geometry_msgs.msg
 from pyquaternion import Quaternion
+import magjoint
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("config",help="path to magjoint config file, eg config/single_magnet.yaml")
+parser.add_argument("body_part",help="ball joint prefix, eg head")
+parser.add_argument("sensor_id",help="the id of the ball joint sensor",type=int,default=0)
+args = parser.parse_args()
+print(args)
+
+ball = magjoint.BallJoint(args.config)
 
 rospy.init_node('shoulder_predictor',anonymous=True)
 normalize_magnetic_strength = False
 
 if len(sys.argv) < 2:
-    print("\nUSAGE: python predict.py body_part id, e.g. \n python predict.py shoulder_left 0\n")
+    print("\nUSAGE: python predict.py config body_part id, e.g. \n python3 predict.py single_magnet.yaml shoulder_left 0\n")
     sys.exit()
 
-body_part = sys.argv[1]
-id = int(sys.argv[2])
+body_part = args.body_part
+id = args.sensor_id
 
 print("prediction for %s with id %d"%(body_part,id))
 if normalize_magnetic_strength:
@@ -41,7 +52,8 @@ class ball_in_socket_estimator:
     joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
     msg = sensor_msgs.msg.JointState()
     prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
-    angles = [0,-90,-180,-270]
+    # selection = [0, 4, 8, 12]
+    selection = [0,1,2,3]
     def __init__(self):
         # load json and create model
         json_file = open(self.base_path+self.network_name+'.json', 'r')
@@ -101,10 +113,9 @@ class ball_in_socket_estimator:
     def magneticsCallback(self, data):
         if(data.id == id):
             values = []
-            for i in range(0,4):
-                val = np.array((data.x[i], data.y[i], data.z[i]))
-                sensor_quat = Quaternion(axis=[0, 0, 1], degrees=self.angles[i])
-                # sensor_quat = Quaternion(axis=[0, 0, 1], degrees=self.angles[select])
+            for select in self.selection:
+                val = np.array((data.x[select], data.y[select], data.z[select]))
+                sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-ball.config['sensor_angle'][select][2])
                 val = sensor_quat.rotate(val)
                 if normalize_magnetic_strength:
                     val /= np.linalg.norm(val)
@@ -126,14 +137,14 @@ class ball_in_socket_estimator:
                 self.msg.header = std_msgs.msg.Header()
                 self.msg.header.stamp = rospy.Time.now()
                 self.msg.name = [self.model_to_publish_name+'_axis0', self.model_to_publish_name+'_axis1', self.model_to_publish_name+'_axis2']
-                if self.model_to_publish_name=="head":
-                    self.msg.position = [-euler[0], euler[2], euler[1]]
-                elif self.model_to_publish_name=="wrist_left":
-                    self.msg.position = [-euler[1], -euler[0], -euler[2]]
-                elif self.model_to_publish_name=="shoulder_left":
-                    self.msg.position = [euler[1], euler[0], euler[2]]#[euler[1]+51.94/180*math.pi, euler[0]+70.96/180*math.pi, euler[2]-35.95/180*math.pi]
-                else:
-                    self.msg.position = [euler[0], euler[1], euler[2]]
+                # if self.model_to_publish_name=="head":
+                #     self.msg.position = [-euler[0], euler[2], euler[1]]
+                # elif self.model_to_publish_name=="wrist_left":
+                #     self.msg.position = [-euler[1], -euler[0], -euler[2]]
+                # elif self.model_to_publish_name=="shoulder_left":
+                #     self.msg.position = [euler[1], euler[0], euler[2]]#[euler[1]+51.94/180*math.pi, euler[0]+70.96/180*math.pi, euler[2]-35.95/180*math.pi]
+                # else:
+                self.msg.position = [euler[0], euler[1], euler[2]]
 
                 rospy.loginfo_throttle(1, (self.msg.position[0],self.msg.position[1],self.msg.position[2]))
 

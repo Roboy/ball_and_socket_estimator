@@ -159,7 +159,7 @@ class PoseEstimator:
                       block=self.bdim, grid=self.gdim)
         output_rot = np.zeros((self.number_of_sensors,3))
         for i in range(self.number_of_sensors):
-            output_rot[i] = r.apply(self.output[i])
+            output_rot[i] = r.inv().apply(self.output[i])
         return self.input, self.output,output_rot
     def interpolatePosition(self,pos):
         self.input[0] = pos
@@ -202,54 +202,56 @@ class PoseEstimator:
 estimator = PoseEstimator(ball,tex)
 
 
-# body_part = 'head'
-# record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
-# record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
+body_part = 'head'
+record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
+record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
+
+positions = []
+values = []
+color = []
+
+number_of_samples = 10000
+pbar = tqdm(total=number_of_samples)
+selection = [0,1,2,3]
+for i in range(number_of_samples):
+    pose = np.array([random.uniform(-90,90),random.uniform(90,270),random.uniform(-90,90)])
+    # pose = np.array([random.uniform(-60, 60), 0,0])
+    pos,value,value_rot = estimator.interpolate(pose)
+    for i in range(ball.number_of_sensors):
+        positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
+        values.append(np.array([value[i][0],value[i][1],value[i][2]]))
+        color.append([80, 90, 0])
+    record.write( \
+    str(value_rot[selection[0]][0]) + " " + str(value_rot[selection[0]][1]) + " " + str(value_rot[selection[0]][2]) + " " + \
+    str(value_rot[selection[1]][0]) + " " + str(value_rot[selection[1]][1]) + " " + str(value_rot[selection[1]][2]) + " " + \
+    str(value_rot[selection[2]][0]) + " " + str(value_rot[selection[2]][1]) + " " + str(value_rot[selection[2]][2]) + " " + \
+    str(value_rot[selection[3]][0]) + " " + str(value_rot[selection[3]][1]) + " " + str(value_rot[selection[3]][2]) + " " + \
+    str(pose[0] / 180.0 * math.pi) + " " + str(pose[1] / 180.0 * math.pi) + " " + str(
+        pose[2] / 180.0 * math.pi) + "\n")
+    pbar.update(1)
+record.close()
+print('data saved to /home/letrend/workspace/roboy3/' + body_part + '_data0.log')
 #
-# positions = []
-# values = []
-# color = []
+for j in range(tex.shape[0]):
+    for i in range(tex.shape[1]):
+        phi = (i - 180)
+        theta = (j * 11)
+        # theta_normalized = (theta) / 143.0
+        # phi_normalized = (phi + 180) / 360.0
+        pos = [22 * math.cos(theta * math.pi / 180),
+               22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
+               22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
+        positions.append(pos)
+        values.append(np.array(tex[j][i][0:3]))
+        color.append([255,255,255])
 #
-# number_of_samples = 10000
-# pbar = tqdm(total=number_of_samples)
-# for i in range(number_of_samples):
-#     pose = np.array([random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)])
-#     pos,value,value_rot = estimator.interpolate(pose)
-#     for i in range(ball.number_of_sensors):
-#         positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
-#         values.append(np.array([value[i][0],value[i][1],value[i][2]]))
-#         color.append([80, 90, 0])
-#     record.write( \
-#     str(value_rot[0][0]) + " " + str(value_rot[0][1]) + " " + str(value_rot[0][2]) + " " + \
-#     str(value_rot[1][0]) + " " + str(value_rot[1][1]) + " " + str(value_rot[1][2]) + " " + \
-#     str(value_rot[2][0]) + " " + str(value_rot[2][1]) + " " + str(value_rot[2][2]) + " " + \
-#     str(value_rot[3][0]) + " " + str(value_rot[3][1]) + " " + str(value_rot[3][2]) + " " + \
-#     str(pose[0] / 180.0 * math.pi) + " " + str(pose[1] / 180.0 * math.pi) + " " + str(
-#         pose[2] / 180.0 * math.pi) + "\n")
-#     pbar.update(1)
-# record.close()
-# print('data saved to /home/letrend/workspace/roboy3/' + body_part + '_data0.log')
-# #
-# for j in range(tex.shape[0]):
-#     for i in range(tex.shape[1]):
-#         phi = (i - 180)
-#         theta = (j * 11)
-#         # theta_normalized = (theta) / 143.0
-#         # phi_normalized = (phi + 180) / 360.0
-#         pos = [22 * math.cos(theta * math.pi / 180),
-#                22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
-#                22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
-#         positions.append(pos)
-#         values.append(np.array(tex[j][i][0:3]))
-#         color.append([255,255,255])
-# #
-#         p,value = estimator.interpolatePosition(pos)
-#         positions.append(pos)
-#         values.append(np.array([value[0][0],value[0][1],value[0][2]]))
-#         color.append([0, 255, 255])
-# #
-# #
-# ball.visualizeCloudColor2(values, positions, args.scale, color)
+        p,value = estimator.interpolatePosition(pos)
+        positions.append(pos)
+        values.append(np.array([value[0][0],value[0][1],value[0][2]]))
+        color.append([0, 255, 255])
+#
+#
+ball.visualizeCloudColor2(values, positions, args.scale, color)
 
 while not rospy.is_shutdown():
     msg = rospy.wait_for_message("roboy/middleware/MagneticSensor", MagneticSensor)
