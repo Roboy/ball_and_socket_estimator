@@ -113,7 +113,7 @@ class PoseEstimator:
     pos_estimate_prev = [0,0,0]
     body_part = 'head'
     selection = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-    # angles = [180,90,0,-90]
+    # angles = [0,-90,-180,-270]
     def __init__(self,balljoint,texture):
         self.balljoint = balljoint
         self.tex = texture
@@ -140,22 +140,27 @@ class PoseEstimator:
         rospy.init_node('BallJointPoseestimator',anonymous=True)
         self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
     def minimizeFunc(self,x):
+        r = R.from_euler('xzy', x, degrees=True)
         for (select,i) in zip(self.selection,range(len(self.selection))):
-             r = R.from_euler('xzy', x,degrees=True)
              pos = self.sensor_pos[select]
              self.input[i] = r.apply(pos)
         self.interpol(np.int32(len(self.selection)),drv.In(self.input),drv.Out(self.output),texrefs=[self.texref],block=self.bdim,grid=self.gdim)
         b_error = 0
-        for out,target in zip(self.output,self.b_target):
+        for i in range(len(self.selection)):
+            out = r.inv().apply(self.output[i])
+            target = self.b_target[i]
             b_error += np.linalg.norm(out-target)
         return [b_error]
     def interpolate(self,x):
+        r = R.from_euler('xzy', x, degrees=True)
         for pos,i in zip(self.sensor_pos,range(self.number_of_sensors)):
-             r = R.from_euler('xzy', x,degrees=True)
              self.input[i] = r.apply(pos)
         self.interpol(np.int32(self.number_of_sensors), drv.In(self.input), drv.Out(self.output), texrefs=[self.texref],
                       block=self.bdim, grid=self.gdim)
-        return self.input, self.output
+        output_rot = np.zeros((self.number_of_sensors,3))
+        for i in range(self.number_of_sensors):
+            output_rot[i] = r.apply(self.output[i])
+        return self.input, self.output,output_rot
     def interpolatePosition(self,pos):
         self.input[0] = pos
         self.interpol(np.int32(1), drv.In(self.input), drv.Out(self.output), texrefs=[self.texref],
@@ -169,10 +174,11 @@ class PoseEstimator:
             val = np.array((data.x[select], data.y[select], data.z[select]))
             angle = self.balljoint.config['sensor_angle'][select][2]
             sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
+            # sensor_quat = Quaternion(axis=[0, 0, 1], degrees=self.angles[select])
             val = sensor_quat.rotate(val)
             self.b_target[select] = val
         # print(b_target)
-        res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-180,-180,-180), (180, 180, 180)),
+        res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-360,-360,-360), (360, 360, 360)),
                             ftol=1e-15, xtol=1e-15, gtol=1e-15, verbose=0,diff_step=0.01)#,max_nfev=20
         b_field_error = res.cost
         rospy.loginfo_throttle(1,"result %.3f %.3f %.3f b-field error %.3f"%(res.x[0],res.x[1],res.x[2],res.cost))
@@ -195,21 +201,35 @@ class PoseEstimator:
 
 estimator = PoseEstimator(ball,tex)
 
-positions = []
-values = []
-color = []
 
-# number_of_samples = 1000
+# body_part = 'head'
+# record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
+# record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
+#
+# positions = []
+# values = []
+# color = []
+#
+# number_of_samples = 10000
 # pbar = tqdm(total=number_of_samples)
 # for i in range(number_of_samples):
-#     pose = np.array([random.uniform(-180,180),random.uniform(-180,180),random.uniform(-180,180)])
-#     pos,value = estimator.interpolate(pose)
+#     pose = np.array([random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)])
+#     pos,value,value_rot = estimator.interpolate(pose)
 #     for i in range(ball.number_of_sensors):
 #         positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
 #         values.append(np.array([value[i][0],value[i][1],value[i][2]]))
 #         color.append([80, 90, 0])
+#     record.write( \
+#     str(value_rot[0][0]) + " " + str(value_rot[0][1]) + " " + str(value_rot[0][2]) + " " + \
+#     str(value_rot[1][0]) + " " + str(value_rot[1][1]) + " " + str(value_rot[1][2]) + " " + \
+#     str(value_rot[2][0]) + " " + str(value_rot[2][1]) + " " + str(value_rot[2][2]) + " " + \
+#     str(value_rot[3][0]) + " " + str(value_rot[3][1]) + " " + str(value_rot[3][2]) + " " + \
+#     str(pose[0] / 180.0 * math.pi) + " " + str(pose[1] / 180.0 * math.pi) + " " + str(
+#         pose[2] / 180.0 * math.pi) + "\n")
 #     pbar.update(1)
-#
+# record.close()
+# print('data saved to /home/letrend/workspace/roboy3/' + body_part + '_data0.log')
+# #
 # for j in range(tex.shape[0]):
 #     for i in range(tex.shape[1]):
 #         phi = (i - 180)

@@ -9,6 +9,7 @@ import math
 import sys, select
 from visualization_msgs.msg import Marker
 import geometry_msgs.msg
+from pyquaternion import Quaternion
 
 rospy.init_node('shoulder_predictor',anonymous=True)
 normalize_magnetic_strength = False
@@ -40,6 +41,7 @@ class ball_in_socket_estimator:
     joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
     msg = sensor_msgs.msg.JointState()
     prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
+    angles = [0,-90,-180,-270]
     def __init__(self):
         # load json and create model
         json_file = open(self.base_path+self.network_name+'.json', 'r')
@@ -101,6 +103,9 @@ class ball_in_socket_estimator:
             values = []
             for i in range(0,4):
                 val = np.array((data.x[i], data.y[i], data.z[i]))
+                sensor_quat = Quaternion(axis=[0, 0, 1], degrees=self.angles[i])
+                # sensor_quat = Quaternion(axis=[0, 0, 1], degrees=self.angles[select])
+                val = sensor_quat.rotate(val)
                 if normalize_magnetic_strength:
                     val /= np.linalg.norm(val)
                 values.append(val[0])

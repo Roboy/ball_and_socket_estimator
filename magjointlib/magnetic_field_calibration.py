@@ -44,8 +44,8 @@ if args.g: #record data
     rospy.sleep(1)
 
     values = {'motor_position':[], 'sensor_values':[]}
-    pbar = tqdm(total=len(range(-10,3700)))
-    for i in range(-10,3700):
+    pbar = tqdm(total=len(range(0,3650)))
+    for i in range(0,3650):
         motor_target.publish(i/10)
         # rospy.sleep(0.01)
         sensor = rospy.wait_for_message("/roboy/middleware/MagneticSensor", MagneticSensor, timeout=None)
@@ -100,7 +100,7 @@ else: # load recorded data
                 sv = values[()]['sensor_values'][i][select]
                 sv = sensor_quat.rotate(sv)
                 # quat2 = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
-                # sv = quat2.rotate(sv)
+                sv = quat.rotate(sv)
                 if select>=14: # the sensor values on the opposite pcb side need to inverted
                     quat2 = Quaternion(axis=[1, 0, 0], degrees=180)
                     sv = quat2.rotate(sv)

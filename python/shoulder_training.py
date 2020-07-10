@@ -38,7 +38,7 @@ from keras import backend as K; K.set_session(K.tf.Session(config=K.tf.ConfigPro
 
 record = False
 train = True
-normalize_magnetic_strength = True
+normalize_magnetic_strength = False
 
 use_sftp = False
 
@@ -149,12 +149,12 @@ class ball_in_socket_estimator:
         self.trackingPublisher = rospy.Publisher("/external_joint_states", sensor_msgs.msg.JointState)
         if train:
             self.model = Sequential()
-            self.model.add(Dense(units=150, input_dim=12,kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=100, input_dim=12,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.01))
             # self.model.add(Dense(units=600, input_dim=6,kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.1))
             # self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
-            self.model.add(Dense(units=150, kernel_initializer='normal', activation='relu'))
+            self.model.add(Dense(units=100, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dropout(0.01))
             #            self.model.add(Dense(units=200, kernel_initializer='normal', activation='relu'))
             # self.model.add(Dense(units=400, kernel_initializer='normal', activation='tanh'))
