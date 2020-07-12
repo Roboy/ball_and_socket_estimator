@@ -27,7 +27,7 @@ parser.add_argument("-tex",help="use texture",action="store_true")
 parser.add_argument("-v",help="visualize only",action="store_true")
 parser.add_argument("-p",help="predict",action="store_true")
 parser.add_argument("-select", nargs='+', help="select which sensors", type=int,
-                        default=[0,1,2,3,4,5,6,7,8,9,10,11,12,13])
+                        default=[0,1,14,2,15,3,16,4,17,5,18,6,19,7,20,8,21,9,22,10,23,11,24,12,25,13])
 args = parser.parse_args()
 
 ball = magjoint.BallJoint(args.config)
@@ -121,8 +121,8 @@ class PoseEstimator:
         # else:
         #     return before,pos
     def interpolate(self,pos):
-        phi = math.atan2(pos[2], pos[1])
-        theta = math.atan2(math.sqrt(pos[2] ** 2 + pos[1] ** 2),pos[0])
+        phi = math.atan2(pos[0], pos[1])
+        theta = math.pi-math.atan2(math.sqrt(pos[0] ** 2 + pos[1] ** 2),pos[2])
         theta_selected,theta_index = self.take_closest(self.theta,theta)
         phi_selected,phi_index = self.take_closest(self.phi[theta_index],phi)
         # tx = theta - theta_selected
@@ -219,18 +219,18 @@ for j in range(number_of_sensors):
         positions.append(sensor_positions_selection[j][i])
         value_measured = sensor_values_selection[j][i]
         values.append(value_measured)
-        color.append([100, 0, 255])
+        color.append([255, 255, 0])
 
-        phi = (i-180) * math.pi / 180
-        theta = (j * 11) * math.pi / 180
-        positions.append([
-            22 * math.cos(theta),
-            22 * math.sin(theta) * math.cos(phi),
-            22 * math.sin(theta) * math.sin(phi)])
-        value_texture = tex[j][i][0:3]
-        values.append(np.array(value_texture))
-        # values.append(np.zeros(3))
-        color.append([255, 255, 255])
+        # phi = (i-180) * math.pi / 180
+        # theta = (j * 11) * math.pi / 180
+        # positions.append([
+        #     22 * math.cos(theta),
+        #     22 * math.sin(theta) * math.cos(phi),
+        #     22 * math.sin(theta) * math.sin(phi)])
+        # value_texture = tex[j][i][0:3]
+        # values.append(np.array(value_texture))
+        # # values.append(np.zeros(3))
+        # color.append([255, 255, 255])
 # for i in range(100000):
 #     pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
 #     pos = pos / np.linalg.norm(pos)*22

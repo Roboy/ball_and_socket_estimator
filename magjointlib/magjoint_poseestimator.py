@@ -88,8 +88,8 @@ class PoseEstimator:
         if( index > number_of_samples )
             return;
 
-        float phi = atan2(pos[index].z,pos[index].y)*180.0f/PI;
-        float theta = atan2(sqrtf(powf(pos[index].z,2.0)+powf(pos[index].y,2.0)),pos[index].x)*180.0f/PI;
+        float phi = atan2(pos[index].x,pos[index].y)*180.0f/PI;
+        float theta = 180.0f-atan2(sqrtf(powf(pos[index].x,2.0)+powf(pos[index].y,2.0)),pos[index].z)*180.0f/PI;
         
         float phi_normalized = (phi+180.0f)/360.0f;
         float theta_normalized = (theta)/143.0f;
@@ -112,8 +112,9 @@ class PoseEstimator:
     normalize_magnetic_strength = False
     pos_estimate_prev = [0,0,0]
     body_part = 'head'
-    selection = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-    # angles = [0,-90,-180,-270]
+    # selection = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+    # selection = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,14,15,16,17,18,19,20,21,22,23,24,25]
+    selection = [0, 1, 2, 3]
     def __init__(self,balljoint,texture):
         self.balljoint = balljoint
         self.tex = texture
@@ -140,19 +141,19 @@ class PoseEstimator:
         rospy.init_node('BallJointPoseestimator',anonymous=True)
         self.joint_state = rospy.Publisher('/external_joint_states', sensor_msgs.msg.JointState , queue_size=1)
     def minimizeFunc(self,x):
-        r = R.from_euler('xzy', x, degrees=True)
+        r = R.from_euler('xyz', x, degrees=True)
         for (select,i) in zip(self.selection,range(len(self.selection))):
              pos = self.sensor_pos[select]
              self.input[i] = r.apply(pos)
         self.interpol(np.int32(len(self.selection)),drv.In(self.input),drv.Out(self.output),texrefs=[self.texref],block=self.bdim,grid=self.gdim)
         b_error = 0
         for i in range(len(self.selection)):
-            out = r.inv().apply(self.output[i])
-            target = self.b_target[i]
+            out = self.output[i]
+            target = r.apply(self.b_target[i])
             b_error += np.linalg.norm(out-target)
         return [b_error]
     def interpolate(self,x):
-        r = R.from_euler('xzy', x, degrees=True)
+        r = R.from_euler('xyz', x, degrees=True)
         for pos,i in zip(self.sensor_pos,range(self.number_of_sensors)):
              self.input[i] = r.apply(pos)
         self.interpol(np.int32(self.number_of_sensors), drv.In(self.input), drv.Out(self.output), texrefs=[self.texref],
@@ -176,6 +177,9 @@ class PoseEstimator:
             sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
             # sensor_quat = Quaternion(axis=[0, 0, 1], degrees=self.angles[select])
             val = sensor_quat.rotate(val)
+            if select >= 14:  # the sensor values on the opposite pcb side need to inverted
+                quat2 = Quaternion(axis=[1, 0, 0], degrees=12)
+                val = quat2.rotate(val)
             self.b_target[select] = val
         # print(b_target)
         res = least_squares(self.minimizeFunc, self.pos_estimate_prev, bounds = ((-360,-360,-360), (360, 360, 360)),
@@ -201,46 +205,49 @@ class PoseEstimator:
 
 estimator = PoseEstimator(ball,tex)
 
-
-body_part = 'head'
-record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
-record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
+generate_training_data = True
+if generate_training_data:
+    body_part = 'head'
+    record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
+    record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
 
 positions = []
 values = []
 color = []
 
-number_of_samples = 10000
+number_of_samples = 50000
 pbar = tqdm(total=number_of_samples)
 selection = [0,1,2,3]
 for i in range(number_of_samples):
-    pose = np.array([random.uniform(-90,90),random.uniform(90,270),random.uniform(-90,90)])
+    pose = np.array([random.uniform(-40,40),random.uniform(-40,40),random.uniform(-40,40)])
     # pose = np.array([random.uniform(-60, 60), 0,0])
     pos,value,value_rot = estimator.interpolate(pose)
     for i in range(ball.number_of_sensors):
         positions.append(np.array([pos[i][0],pos[i][1],pos[i][2]]))
         values.append(np.array([value[i][0],value[i][1],value[i][2]]))
         color.append([80, 90, 0])
-    record.write( \
-    str(value_rot[selection[0]][0]) + " " + str(value_rot[selection[0]][1]) + " " + str(value_rot[selection[0]][2]) + " " + \
-    str(value_rot[selection[1]][0]) + " " + str(value_rot[selection[1]][1]) + " " + str(value_rot[selection[1]][2]) + " " + \
-    str(value_rot[selection[2]][0]) + " " + str(value_rot[selection[2]][1]) + " " + str(value_rot[selection[2]][2]) + " " + \
-    str(value_rot[selection[3]][0]) + " " + str(value_rot[selection[3]][1]) + " " + str(value_rot[selection[3]][2]) + " " + \
-    str(pose[0] / 180.0 * math.pi) + " " + str(pose[1] / 180.0 * math.pi) + " " + str(
-        pose[2] / 180.0 * math.pi) + "\n")
+    if generate_training_data:
+        record.write( \
+        str(value_rot[selection[0]][0]) + " " + str(value_rot[selection[0]][1]) + " " + str(value_rot[selection[0]][2]) + " " + \
+        str(value_rot[selection[1]][0]) + " " + str(value_rot[selection[1]][1]) + " " + str(value_rot[selection[1]][2]) + " " + \
+        str(value_rot[selection[2]][0]) + " " + str(value_rot[selection[2]][1]) + " " + str(value_rot[selection[2]][2]) + " " + \
+        str(value_rot[selection[3]][0]) + " " + str(value_rot[selection[3]][1]) + " " + str(value_rot[selection[3]][2]) + " " + \
+        str(pose[0] / 180.0 * math.pi) + " " + str(pose[1] / 180.0 * math.pi) + " " + str(
+            pose[2] / 180.0 * math.pi) + "\n")
     pbar.update(1)
-record.close()
-print('data saved to /home/letrend/workspace/roboy3/' + body_part + '_data0.log')
-#
+if generate_training_data:
+    record.close()
+    print('data saved to /home/letrend/workspace/roboy3/' + body_part + '_data0.log')
+
 for j in range(tex.shape[0]):
     for i in range(tex.shape[1]):
         phi = (i - 180)
-        theta = (j * 11)
+        theta = 180-(j * 5.5)
         # theta_normalized = (theta) / 143.0
         # phi_normalized = (phi + 180) / 360.0
-        pos = [22 * math.cos(theta * math.pi / 180),
-               22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
-               22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180)]
+        pos = [22 * math.sin(theta * math.pi / 180) * math.cos(phi * math.pi / 180),
+               22 * math.sin(theta * math.pi / 180) * math.sin(phi * math.pi / 180),
+               22 * math.cos(theta * math.pi / 180)]
         positions.append(pos)
         values.append(np.array(tex[j][i][0:3]))
         color.append([255,255,255])
@@ -249,8 +256,7 @@ for j in range(tex.shape[0]):
         positions.append(pos)
         values.append(np.array([value[0][0],value[0][1],value[0][2]]))
         color.append([0, 255, 255])
-#
-#
+
 ball.visualizeCloudColor2(values, positions, args.scale, color)
 
 while not rospy.is_shutdown():

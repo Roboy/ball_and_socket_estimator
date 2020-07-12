@@ -91,8 +91,10 @@ else: # load recorded data
             j = 0
             for select in args.select:
                 # print(motor_pos)
-                quat = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
+
                 sensor_positions[i][j] = np.array(ball.config['sensor_pos'][select])
+                quat = Quaternion(axis=[1, 0, 0], degrees=-motor_pos)
+
                 sensor_positions[i][j] = quat.rotate(sensor_positions[i][j])
                 angle = ball.config['sensor_angle'][select][2]
                 sensor_quat = Quaternion(axis=[0, 0, 1], degrees=-angle)
@@ -102,12 +104,15 @@ else: # load recorded data
                 # quat2 = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
                 sv = quat.rotate(sv)
                 if select>=14: # the sensor values on the opposite pcb side need to inverted
-                    quat2 = Quaternion(axis=[1, 0, 0], degrees=180)
+                    quat2 = Quaternion(axis=[1, 0, 0], degrees=8)
                     sv = quat2.rotate(sv)
                     # sv = np.array([sv[0],-sv[1],-sv[2]])
                 #     quat2 = Quaternion(axis=[0, 1, 0], degrees=motor_pos+180)
                 #     sv = quat2.rotate(sv)
                 # else:
+                quat2 = Quaternion(axis=[0, 1, 0], degrees=90)
+                sv = quat2.rotate(sv)
+                sensor_positions[i][j] = quat2.rotate(sensor_positions[i][j])
 
                 sensor_values[i][j] = sv
                 j+=1
@@ -285,10 +290,10 @@ else: # load recorded data
                 value = estimator.interpolate(sensor_positions[j][i])
                 positions.append(sensor_positions[j][i])
                 values.append(np.array([value[0],value[1],value[2]]))
-                color.append([255,255,255])
+                color.append([255,0,0])
                 positions.append(sensor_positions[j][i])
                 values.append(sensor_values[j][i])
-                color.append([100, 0, 255])
+                color.append([255, 255,255])
         for i in range(100000):
             pos = np.array([random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)])
             pos = pos / np.linalg.norm(pos)*22

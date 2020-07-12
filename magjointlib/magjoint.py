@@ -56,9 +56,9 @@ class BallJoint:
         pbar = tqdm(total=number_of_sensors, desc='calculating spherical coordinates', leave=True)
         for j in range(0, number_of_sensors):
             for i in range(0, number_of_samples): # calculate sperical coordinates from sensor positions
-                phi[j][i] = math.atan2(sensor_positions[i][j][2], sensor_positions[i][j][1])
-                theta[j][i] = math.atan2(math.sqrt(sensor_positions[i][j][1] ** 2 + sensor_positions[i][j][2] ** 2),
-                                    sensor_positions[i][j][0])
+                phi[j][i] = math.atan2(sensor_positions[i][j][0], sensor_positions[i][j][1])
+                theta[j][i] = math.pi-math.atan2(math.sqrt(sensor_positions[i][j][0] ** 2 + sensor_positions[i][j][1] ** 2),
+                                    sensor_positions[i][j][2])
             # sort them in increasing phi order
             indices = sorted(range(number_of_samples), key=lambda k: phi[j][k])
             phi[j] = phi[j][indices]
