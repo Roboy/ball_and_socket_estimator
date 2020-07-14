@@ -101,15 +101,11 @@ else: # load recorded data
                 # sv = np.array([0,0,0])
                 sv = values[()]['sensor_values'][i][select]
                 sv = sensor_quat.rotate(sv)
-                # quat2 = Quaternion(axis=[1, 0, 0], degrees=motor_pos)
                 sv = quat.rotate(sv)
-                if select>=14: # the sensor values on the opposite pcb side need to inverted
+                if select>=14: # align sensors from other side of the pcb
                     quat2 = Quaternion(axis=[1, 0, 0], degrees=8)
                     sv = quat2.rotate(sv)
-                    # sv = np.array([sv[0],-sv[1],-sv[2]])
-                #     quat2 = Quaternion(axis=[0, 1, 0], degrees=motor_pos+180)
-                #     sv = quat2.rotate(sv)
-                # else:
+
                 quat2 = Quaternion(axis=[0, 1, 0], degrees=90)
                 sv = quat2.rotate(sv)
                 sensor_positions[i][j] = quat2.rotate(sensor_positions[i][j])

@@ -212,10 +212,10 @@ color = []
 for j in range(number_of_sensors):
     for i in range(number_of_samples):
 
-        value_interpolated = estimator.interpolate(sensor_positions_selection[j][i])
-        positions.append(sensor_positions_selection[j][i])
-        values.append(np.array([value_interpolated[0],value_interpolated[1],value_interpolated[2]]))
-        color.append([255,255,255])
+        # value_interpolated = estimator.interpolate(sensor_positions_selection[j][i])
+        # positions.append(sensor_positions_selection[j][i])
+        # values.append(np.array([value_interpolated[0],value_interpolated[1],value_interpolated[2]]))
+        # color.append([255,255,255])
         positions.append(sensor_positions_selection[j][i])
         value_measured = sensor_values_selection[j][i]
         values.append(value_measured)
