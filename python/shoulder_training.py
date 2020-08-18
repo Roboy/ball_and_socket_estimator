@@ -11,7 +11,7 @@ import tensorflow
 import tf
 import geometry_msgs.msg
 from pyquaternion import Quaternion
-from keras.layers import Dense, Activation, Dropout, LSTM, CuDNNLSTM
+from keras.layers import Dense, Activation, Dropout, LSTM
 from keras.models import model_from_json
 from roboy_middleware_msgs.msg import MagneticSensor
 from visualization_msgs.msg import Marker
@@ -35,17 +35,19 @@ import pdb
 # record = True
 # train = False
 
-record = False
-train = True
+# record = False
+# train = True
 
 
 use_sftp = False
 
 if len(sys.argv) < 2:
-    print("\nUSAGE: python shoulder_training.py body_part, e.g. \n python shoulder_training.py shoulder_left \n")
+    print("\nUSAGE: python shoulder_training.py body_part command (train/record), e.g. \n python shoulder_training.py shoulder_left train \n")
     sys.exit()
 
 body_part = sys.argv[1]
+train = sys.argv[2] == "train"
+record = sys.argv[2] == "record"
 joint_names = [body_part+"_axis"+str(i) for i in range(3)]
 if  body_part == "head":
     id = 0
@@ -89,7 +91,7 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
 if record is True:
     print("recording training data for %s"%body_part)
     global numberOfSamples
-    numberOfSamples = 1000000
+    numberOfSamples = 20000 #1000000
     global sample
     global samples
     samples = np.zeros((numberOfSamples,9))
@@ -109,7 +111,7 @@ if record is True:
     quaternion_set = np.zeros((numberOfSamples,4))
     global sensors_set
     sensors_set = np.zeros((numberOfSamples,9))
-    record = open("/home/letrend/workspace/roboy3/"+body_part+"_data0.log","w")
+    record = open("/home/roboy/workspace/roboy3/"+body_part+"_data0.log","w")
     record.write("mx0 my0 mz0 mx1 my1 mz1 mx2 my2 mz3 mx3 my3 mz3 roll pitch yaw\n")
     roll = 0
     pitch = 0
@@ -117,35 +119,39 @@ if record is True:
     sample = 0
 
     def magneticsCallback(data):
-        # if (data.id == id):
-        global sample
-        global samples
-        global numberOfSamples
-        global record
-        # try:
-        #     (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
-        #     (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
-        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-        #     return
+        if (data.id == 0):
+            global sample
+            global samples
+            global numberOfSamples
+            global record
+            # try:
+            #     (trans,rot) = listener.lookupTransform('/world', '/top_estimate', rospy.Time(0))
+            #     (trans,rot2) = listener.lookupTransform('/world', '/top', rospy.Time(0))
+            # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            #     return
 
-        s0_norm = ((data.x[0]+data.y[0]+data.z[0])**2)**(0.5)
-        s1_norm = ((data.x[1]+data.y[1]+data.z[1])**2)**(0.5)
-        s2_norm = ((data.x[2]+data.y[2]+data.z[2])**2)**(0.5)
-        s3_norm = ((data.x[3]+data.y[3]+data.z[3])**2)**(0.5)
-        if s0_norm==0 or s1_norm==0 or s2_norm==0 or s3_norm==0:
-            return
+            s0_norm = ((data.x[0]+data.y[0]+data.z[0])**2)**(0.5)
+            s1_norm = ((data.x[1]+data.y[1]+data.z[1])**2)**(0.5)
+            s2_norm = ((data.x[2]+data.y[2]+data.z[2])**2)**(0.5)
+            s3_norm = ((data.x[3]+data.y[3]+data.z[3])**2)**(0.5)
+            if s0_norm==0 or s1_norm==0 or s2_norm==0 or s3_norm==0:
+                return
 
-        record.write(str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2])  + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3])+ " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
+            record.write(str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " "
+                         + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " +
+                         str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2])  + " " +
+                         str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3])+ " " +
+                         str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
 
-        # record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
-        rospy.loginfo_throttle(5,str(sample) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
-        sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
-        # q = np.array([rot[0], rot[1], rot[2], rot[3]])
-        # sensors_set[sample,:] = sensor.reshape(1,9)
-        # quaternion_set[sample,:] = q.reshape(1,4)
-        # samples[sample,:]= sample
-        sample = sample + 1
-        rospy.loginfo_throttle(5, "%s: \n Data collection progress: %f%%"%(body_part, float(sample)/float(numberOfSamples)*100.0))
+            # record.write(str(rot[0]) + " " + str(rot[1])+ " " + str(rot[2])+ " " + str(rot[3]) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + " " +  str(rot2[0]) + " " + str(rot2[1])+ " " + str(rot2[2])+ " " + str(rot2[3]) + "\n")
+            rospy.loginfo_throttle(5,str(sample) + " " + str(data.x[0])+ " " + str(data.y[0]) + " " + str(data.z[0])+ " " + str(data.x[1])+ " " + str(data.y[1])+ " " + str(data.z[1])+ " " + str(data.x[2])+ " " + str(data.y[2])+ " " + str(data.z[2]) + " " + str(data.x[3])+ " " + str(data.y[3])+ " " + str(data.z[3]) + " " + str(roll) + " " + str(pitch) + " " + str(yaw) + "\n")
+            sensor = np.array([data.x[0], data.y[0], data.z[0], data.x[1], data.y[1], data.z[1], data.x[2], data.y[2], data.z[2], data.x[3], data.y[3], data.z[3]])
+            # q = np.array([rot[0], rot[1], rot[2], rot[3]])
+            # sensors_set[sample,:] = sensor.reshape(1,9)
+            # quaternion_set[sample,:] = q.reshape(1,4)
+            # samples[sample,:]= sample
+            sample = sample + 1
+            rospy.loginfo_throttle(5, "%s: \n Data collection progress: %f%%"%(body_part, float(sample)/float(numberOfSamples)*100.0))
 
     def trackingCallback(data):
         global roll
@@ -153,8 +159,12 @@ if record is True:
         global yaw
         position = [0,0,0]
         for i in range(3):
-            idx = data.name.index(joint_names[i])
-            position[i] = data.position[idx]
+            # import pdb; pdb.set_trace()
+            if joint_names[i] in data.name:
+                idx = data.name.index(joint_names[i])
+                position[i] = data.position[idx]
+            else:
+                continue
 
         roll = position[0]
         pitch = position[1]
@@ -164,7 +174,9 @@ if record is True:
 
     magneticsSubscriber = rospy.Subscriber("roboy/middleware/MagneticSensor", MagneticSensor, magneticsCallback)
     trackingSubscriber = rospy.Subscriber("external_joint_states", sensor_msgs.msg.JointState, trackingCallback)
-    rospy.spin()
+    while not rospy.is_shutdown() and sample < numberOfSamples:
+        rospy.spin()
+    print("done data collection")
 
 class ball_in_socket_estimator:
     model = Sequential()
@@ -211,7 +223,7 @@ class ball_in_socket_estimator:
                 remote_file = sftp_client.open('/home/letrend/workspace/roboy3/data0.log')
                 dataset = pandas.read_csv(remote_file, delim_whitespace=True, header=1)
             else:
-                dataset = pandas.read_csv('/home/letrend/workspace/roboy3/'+self.body_part+'_data0.log', delim_whitespace=True, header=1)
+                dataset = pandas.read_csv('/home/roboy/workspace/roboy3/'+self.body_part+'_data0.log', delim_whitespace=True, header=1)
 
 
             dataset = dataset.values[1:len(dataset)-1,0:]
@@ -266,7 +278,7 @@ class ball_in_socket_estimator:
             # print(out)
 
             earlyStopping = EarlyStopping(monitor='val_loss', patience=50, verbose=2, mode='min')
-            mcp_save = ModelCheckpoint(self.body_part+'model.h5', save_best_only=True, monitor='val_loss', mode='min')
+            mcp_save = ModelCheckpoint(self.body_part+'.h5', save_best_only=True, monitor='val_loss', mode='min')
 
             # fit network
             history = self.model.fit(data_in_train, data_out_train, epochs=1000, batch_size=1000,
@@ -275,7 +287,7 @@ class ball_in_socket_estimator:
 
             # serialize model to JSON
             model_json = self.model.to_json()
-            with open(self.body_part+"model.json", "w") as json_file:
+            with open(self.body_part+".json", "w") as json_file:
                 json_file.write(model_json)
             # serialize weights to HDF5
             # self.model.save("model.h5")
@@ -297,13 +309,13 @@ class ball_in_socket_estimator:
             self.trackingSubscriber = rospy.Subscriber("joint_states_training", sensor_msgs.msg.JointState, self.trackingCallback)
 
             # load json and create model
-            json_file = open('/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/'+self.body_part+'model.json', 'r')
+            json_file = open('/home/roboy/workspace/roboy3/src/ball_in_socket_estimator/python/'+self.body_part+'model.json', 'r')
 
             loaded_model_json = json_file.read()
             json_file.close()
             self.model = model_from_json(loaded_model_json)
             # load weights into new model
-            self.model.load_weights("/home/letrend/workspace/roboy3/src/ball_in_socket_estimator/python/"+self.body_part+"model.h5")
+            self.model.load_weights("/home/roboy/workspace/roboy3/src/ball_in_socket_estimator/python/"+self.body_part+"model.h5")
 
             print("Loaded model from disk")
             self.listener()
@@ -395,7 +407,8 @@ class ball_in_socket_estimator:
 
 
 # In[34]:
-estimator = ball_in_socket_estimator(body_part)
-
-# In[34]:
-estimator.listener()
+if train:
+    estimator = ball_in_socket_estimator(body_part)
+#
+# # In[34]:
+# estimator.listener()

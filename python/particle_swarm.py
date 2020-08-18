@@ -1,7 +1,7 @@
 import random
 import numpy as np
-import pcl
-import pcl.pcl_visualization
+# import pcl
+# import pcl.pcl_visualization
 import scipy
 from scipy import spatial
 import time
@@ -58,7 +58,7 @@ class Space():
         self.personal_attraction = 0.1
         self.random_speed = 0.1
         global model_name
-        with open("/home/letrend/workspace/roboy3/src/robots/"+model_name+"/joint_limits.yaml", 'r') as stream:
+        with open("/home/roboy/workspace/roboy3/src/robots/"+model_name+"/joint_limits.yaml", 'r') as stream:
             try:
                 joint_limits = yaml.safe_load(stream)
                 polygon = []
@@ -138,19 +138,20 @@ class Space():
 
     def trackingCallback(self,data):
         # if moself.received_messages,10) ==0:
-        self.visited = np.vstack([self.visited,np.array([data.position[0],data.position[1],data.position[2]], dtype=np.float32)])
-        self.visited_colored = np.vstack([self.visited_colored,np.array([data.position[0],data.position[1],data.position[2],self.colors[self.best_particle]], dtype=np.float32)])
-        self.receiving_data = True
-        rospy.loginfo_throttle(5, "receiving tracking data for %s"%self.body_part)
-        search_space.move()
-        search_space.fitness()
-        search_space.set_pbest()
-        search_space.set_gbest()
-        # print(search_space.gbest_position)
-        pc_1 = pcl.PointCloud_PointXYZRGB()
-        pc_1.from_array(search_space.visited_colored)
-        #self.visual.ShowColorCloud(pc_1, b'particle_swarm')
-        # time.sleep(0.5)
+        if "shoulder_left_axis0" in data.name:
+            self.visited = np.vstack([self.visited,np.array([data.position[0],data.position[1],data.position[2]], dtype=np.float32)])
+            self.visited_colored = np.vstack([self.visited_colored,np.array([data.position[0],data.position[1],data.position[2],self.colors[self.best_particle]], dtype=np.float32)])
+            self.receiving_data = True
+            rospy.loginfo_throttle(5, "receiving tracking data for %s"%self.body_part)
+            search_space.move()
+            search_space.fitness()
+            search_space.set_pbest()
+            search_space.set_gbest()
+            # print(search_space.gbest_position)
+            # pc_1 = pcl.PointCloud_PointXYZRGB()
+            # pc_1.from_array(search_space.visited_colored)
+            #self.visual.ShowColorCloud(pc_1, b'particle_swarm')
+            # time.sleep(0.5)
 
     def run(self):
         trackingSubscriber = rospy.Subscriber("external_joint_states", sensor_msgs.msg.JointState, self.trackingCallback, queue_size=1)
