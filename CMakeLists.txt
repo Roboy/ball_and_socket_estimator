@@ -2,9 +2,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(ball_in_socket_estimator C CXX)
 
+# Set target C++ standard and required compiler features
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # RelWithDebInfo, Release or Debug
 SET(CMAKE_BUILD_TYPE Debug FORCE)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++14")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 # ros
 find_package(catkin REQUIRED COMPONENTS
