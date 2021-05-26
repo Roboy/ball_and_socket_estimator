@@ -63,7 +63,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
 
     rospack = rospkg.RosPack()
-    base_path = rospack.get_path('ball_in_socket_estimator') + '/python_new/'
+    base_path = rospack.get_path('ball_in_socket_estimator') + '/python/'
     model_path = './output/'+body_part+'_tanh'
 
     model.restore_model(model_path + "/best_model")
