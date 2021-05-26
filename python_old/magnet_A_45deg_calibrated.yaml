@@ -1,0 +1,85 @@
+calibration:
+  max_nfev: 2000
+  optimize: [field_strength, sensor_angle]
+field_strength:
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - &id001 !!python/object/apply:numpy.dtype
+    args: [f8, 0, 1]
+    state: !!python/tuple [3, <, null, null, null, -1, -1, 0]
+  - !!binary |
+    QjVwzDvKlkA=
+id: 0
+magnet_angle:
+- [-90, 0, 0]
+magnet_angle_offsets:
+- [0, 0, 0]
+magnet_dimension:
+- [10, 10, 10]
+magnet_pos:
+- [0, 0, 0]
+magnet_pos_offsets:
+- [0, 0, 0]
+sensor_angle:
+- [0, 0, 90]
+- [0, 0, 90]
+- [0, 0, 90]
+- [0, 0, 90]
+sensor_angle_offsets:
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      RWyFoD1BiTw=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      uwfTF25/qjw=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      +9t8jXjYBMA=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      OdNCePBnczw=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      WFKekdSIWTk=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      CPpbucu6GMA=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      Ia+GOD3Exzg=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      VmwwBm9MsrI=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      nXccu1fZ+j8=
+- - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      jQ/48WaMtis=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      5IfKZyDaC6c=
+  - !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      zY8wtlZDE0A=
+sensor_pos:
+- [-22.7, 7.7, 0.9]
+- [-14.7, -19.4, 0.9]
+- [14.7, -19.4, 0.9]
+- [22.7, 7.7, 0.9]
+sensor_pos_offsets:
+- [0, 0, 0]
+- [0, 0, 0]
+- [0, 0, 0]
+- [0, 0, 0]
