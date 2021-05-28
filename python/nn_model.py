@@ -14,25 +14,36 @@ def mean_square_error(y_logit, y_true):
 
 
 class NeuralNetworkModel:
-    def __init__(self):
-        self.session = tf.Session()
+    def __init__(self, name, hidden_size=100):
 
-        self.x = tf.placeholder(dtype=tf.float32, shape=[None, 12])
-        self.y = tf.placeholder(dtype=tf.float32, shape=[None, 6])
-        self.output = self._build()
+        self.name = name
 
-        learning_rate = 5e-4
-        self.mse = mean_square_error(self.output, self.y)
-        optimizer = tf.train.AdamOptimizer(learning_rate)
-        self.step_op = optimizer.minimize(self.mse)
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            self.hidden_size = hidden_size
 
-        self.saver = tf.train.Saver(max_to_keep=20)
-        self.session.run(tf.global_variables_initializer())
+            self.x = tf.placeholder(dtype=tf.float32, shape=[None, 12])
+            self.y = tf.placeholder(dtype=tf.float32, shape=[None, 6])
+            self.output = self._build()
+
+            learning_rate = 5e-4
+            self.mse = mean_square_error(self.output, self.y)
+            optimizer = tf.train.AdamOptimizer(learning_rate)
+            self.step_op = optimizer.minimize(self.mse)
+
+            initialization = tf.global_variables_initializer()
+            self.saver = tf.train.Saver(max_to_keep=20)
+
+        self.session = tf.Session(graph=self.graph)
+        self.session.run(initialization)
 
     def _build(self):
-        hidden = tf.layers.dense(self.x, 100, tf.nn.tanh, kernel_initializer='glorot_uniform')
-        hidden = tf.layers.dense(hidden, 100, tf.nn.tanh, kernel_initializer='glorot_uniform')
-        return tf.layers.dense(hidden, 6, tf.nn.tanh, kernel_initializer='glorot_uniform')
+        hidden = tf.layers.dense(self.x, self.hidden_size, tf.nn.tanh,
+                                 kernel_initializer='glorot_uniform', name=self.name+"_layer_1")
+        hidden = tf.layers.dense(hidden, self.hidden_size, tf.nn.tanh,
+                                 kernel_initializer='glorot_uniform', name=self.name+"_layer_2")
+        return tf.layers.dense(hidden, 6, tf.nn.tanh,
+                               kernel_initializer='glorot_uniform', name=self.name+"_layer_out")
 
     def save_model(self, path):
         self.saver.save(self.session, path, write_meta_graph=False)

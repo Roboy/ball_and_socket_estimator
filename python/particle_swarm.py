@@ -32,6 +32,8 @@ class Space:
         elif self.body_part == BodyPart.SHOULDER_RIGHT:
             self.joint_names += ["elbow_right_axis0"]
 
+        self.n_axis = len(self.joint_names)
+
         self.particles_visited = np.zeros((n_particles, 4), dtype=np.float32)
         self.best_particle = 0
         self.gbest_value = int(1000)
@@ -48,8 +50,8 @@ class Space:
         self.colors = np.zeros(n_particles, dtype=np.float32)
         self.minima = np.zeros((4, 1), dtype=np.float32)
         self.maxima = np.zeros((4, 1), dtype=np.float32)
-        self.minima[2] = -0.1
-        self.maxima[2] = 0.1
+        self.minima[2] = -0.6 # -0.1
+        self.maxima[2] = 0.6 # 0.1
         self.minima[3] = 0.0
         self.maxima[3] = 1.5
         self.receiving_data = False
@@ -166,7 +168,7 @@ class Space:
         lin_target = np.linspace(self.last_target, target, n_sample)
 
         for t in lin_target:
-            self.joint_targets_msg.position = t
+            self.joint_targets_msg.position = t[:self.n_axis]
             self.joint_targets_pub.publish(self.joint_targets_msg)
             self.rate.sleep()
 
@@ -204,6 +206,5 @@ if __name__ == '__main__':
 
     rospy.init_node(args.body_part + '_particle_swarm')
     search_space = Space(args.n_neighbors, args.body_part)
-    search_space.run()
     while not rospy.is_shutdown():
         search_space.run()
