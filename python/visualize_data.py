@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     body_part = args.body_part
 
-    extjs_test_sub = rospy.Subscriber('/roboy/pinky/external_joint_states_nn', sensor_msgs.msg.JointState,
+    extjs_test_sub = rospy.Subscriber('/roboy/pinky/sensing/external_joint_states', sensor_msgs.msg.JointState,
                                       extjs_test_callback)
     extjs_sub = rospy.Subscriber('/roboy/pinky/external_joint_states', sensor_msgs.msg.JointState, extjs_callback)
 

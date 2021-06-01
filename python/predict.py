@@ -16,7 +16,7 @@ rospy.init_node('ball_socket_neural_network')
 sensors_scaler = [None for _ in MagneticId]
 model = [None for _ in MagneticId]
 prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
-trackingPublisher = rospy.Publisher("/roboy/pinky/external_joint_states_nn", sensor_msgs.msg.JointState)
+trackingPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState)
 targetPublisher = rospy.Publisher("/roboy/pinky/control/joint_targets", sensor_msgs.msg.JointState)
 
 
