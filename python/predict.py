@@ -46,12 +46,15 @@ def magentic_data_callback(data):
 
     rospy.loginfo_throttle(1, x_test)
 
+    # Normalize input data
     x_test = x_test.reshape((1, len(x_test)))
     x_test = sensors_scaler[data.id].transform(x_test).astype('float32')
 
+    # Pass data into neural network and output sin and cos, then convert them to Euler Angles
     output = model[data.id].predict(x_test)
     output = sin_cos_to_angle(output)[0]
 
+    # Publish messages
     msg = sensor_msgs.msg.JointState()
     msg.header = std_msgs.msg.Header()
     msg.header.stamp = rospy.Time.now()
@@ -70,6 +73,7 @@ if __name__ == '__main__':
     rospack = rospkg.RosPack()
     base_path = rospack.get_path('ball_in_socket_estimator') + '/python/'
 
+    # Search models and its corresponding body_parts.
     for i in range(len(model)):
         body_part = BodyPart[MagneticId(i).name]
         model_path = './output/'+body_part+'_tanh'
