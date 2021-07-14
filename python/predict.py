@@ -12,17 +12,21 @@ from nn_model import NeuralNetworkModel
 from utils import BodyPart, MagneticId
 
 
+filter_n = 10
+
 rospy.init_node('ball_socket_neural_network')
 sensors_scaler = [None for _ in MagneticId]
 model = [None for _ in MagneticId]
+filter = [None for _ in MagneticId]
 prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
 trackingPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState)
 targetPublisher = rospy.Publisher("/roboy/pinky/control/joint_targets", sensor_msgs.msg.JointState)
 
 
 def load_data(name, id):
-    global sensors_scaler
+    global sensors_scaler, filter
     sensors_scaler[id] = joblib.load(name+'/scaler.pkl')
+    filter[id] = np.zeros((1, 3))
 
 
 def sin_cos_to_angle(sin_cos):
@@ -52,19 +56,33 @@ def magentic_data_callback(data):
 
     # Pass data into neural network and output sin and cos, then convert them to Euler Angles
     output = model[data.id].predict(x_test)
-    output = sin_cos_to_angle(output)[0]
+    output = sin_cos_to_angle(output)
 
-    # Publish messages
-    msg = sensor_msgs.msg.JointState()
-    msg.header = std_msgs.msg.Header()
-    msg.header.stamp = rospy.Time.now()
+    if len(filter[data.id]) < filter_n:
+        filter[data.id] = np.append(filter[data.id], output, axis=0)
+        return
 
-    msg.name = [BodyPart[MagneticId(data.id).name] + "_axis" + str(i) for i in range(3)]
-    msg.position = [output[0], output[1], output[2]]
-    msg.velocity = [0, 0, 0]
-    msg.effort = [0, 0, 0]
+    avg = np.mean(filter[data.id], axis=0)
+    error = np.abs(avg - output).sum()
 
-    trackingPublisher.publish(msg)
+    if error < 0.5:
+        filter[data.id] = np.append(filter[data.id], output, axis=0)
+        filter[data.id] = np.delete(filter[data.id], 0, axis=0)
+
+        # Publish messages
+        msg = sensor_msgs.msg.JointState()
+        msg.header = std_msgs.msg.Header()
+        msg.header.stamp = rospy.Time.now()
+
+        output = output[0]
+        msg.name = [BodyPart[MagneticId(data.id).name] + "_axis" + str(i) for i in range(3)]
+        msg.position = [output[0], output[1], output[2]]
+        msg.velocity = [0, 0, 0]
+        msg.effort = [0, 0, 0]
+
+        trackingPublisher.publish(msg)
+    else:
+        rospy.logwarn("Reject {} with error={}".format(BodyPart[MagneticId(data.id).name], error))
 
 
 if __name__ == '__main__':
