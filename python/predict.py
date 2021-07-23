@@ -18,6 +18,7 @@ rospy.init_node('ball_socket_neural_network')
 sensors_scaler = [None for _ in MagneticId]
 model = [None for _ in MagneticId]
 filter = [None for _ in MagneticId]
+reject_count = [0 for _ in MagneticId]
 prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
 trackingPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState)
 targetPublisher = rospy.Publisher("/roboy/pinky/control/joint_targets", sensor_msgs.msg.JointState)
@@ -38,6 +39,8 @@ def sin_cos_to_angle(sin_cos):
 
 
 def magentic_data_callback(data):
+
+    global filter, reject_count
 
     if sensors_scaler[data.id] is None:
         return
@@ -82,7 +85,13 @@ def magentic_data_callback(data):
 
         trackingPublisher.publish(msg)
     else:
+        reject_count[data.id] += 1
         rospy.logwarn("Reject {} with error={}".format(BodyPart[MagneticId(data.id).name], error))
+
+        # Auto reset
+        if reject_count[data.id] == 10:
+            reject_count[data.id] = 0
+            filter = [np.zeros((1, 3)) for _ in MagneticId]
 
 
 if __name__ == '__main__':
@@ -104,4 +113,3 @@ if __name__ == '__main__':
 
     rospy.Subscriber("/roboy/pinky/middleware/MagneticSensor", MagneticSensor, magentic_data_callback, queue_size=1)
     rospy.spin()
-
