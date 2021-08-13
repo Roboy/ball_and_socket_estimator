@@ -7,6 +7,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 import rospy
 import sensor_msgs.msg
+import std_msgs.msg
 import rospkg
 import argparse
 from argparse import RawTextHelpFormatter
@@ -20,6 +21,15 @@ ax = fig.add_subplot(111, projection='3d')
 
 MODEL_NAME = "upper_body"
 
+tracker_down = False
+tracker_down_cnt = 0
+last_tracker_down = 0
+
+
+def tracker_down_callback(data):
+    global tracker_down, tracker_down_cnt
+    tracker_down = data.data
+
 
 class Space:
     def __init__(self, n_particles, body_part):
@@ -28,9 +38,9 @@ class Space:
 
         self.joint_names = [self.body_part + "_axis" + str(i) for i in range(3)]
         if self.body_part == BodyPart.SHOULDER_LEFT:
-            self.joint_names += ["elbow_left_axis0"]
+            self.joint_names += ["elbow_left_axis0", "elbow_left_axis1"]
         elif self.body_part == BodyPart.SHOULDER_RIGHT:
-            self.joint_names += ["elbow_right_axis0"]
+            self.joint_names += ["elbow_right_axis0", "elbow_right_axis1"]
 
         self.n_axis = len(self.joint_names)
 
@@ -50,10 +60,10 @@ class Space:
         self.colors = np.zeros(n_particles, dtype=np.float32)
         self.minima = np.zeros((4, 1), dtype=np.float32)
         self.maxima = np.zeros((4, 1), dtype=np.float32)
-        self.minima[2] = -0.6 # -0.1
-        self.maxima[2] = 0.6 # 0.1
+        self.minima[2] = -0.1 # -0.6
+        self.maxima[2] = 0.1 # 0.6
         self.minima[3] = 0.0
-        self.maxima[3] = 1.5
+        self.maxima[3] = 0.73
         self.receiving_data = False
 
         for i in range(self.colors.size):
@@ -139,6 +149,8 @@ class Space:
                 self.pbest_position[particle] = self.particles[particle]
 
     def set_gbest(self):
+        global tracker_down, tracker_down_cnt
+
         new_global_best = False
         for particle in range(self.particles.shape[0]):
             if (self.neighbors[particle] <= self.gbest_value) and self.best_particle != particle:
@@ -164,11 +176,20 @@ class Space:
         target = np.array(
             [self.gbest_position[0], self.gbest_position[1], self.gbest_position[2], self.gbest_position[3]])
         target_dist = np.linalg.norm(self.last_target - target)
-        n_sample = int(target_dist * 200)
+        n_sample = int(target_dist * 120)
         lin_target = np.linspace(self.last_target, target, n_sample)
 
         for t in lin_target:
             self.joint_targets_msg.position = t[:self.n_axis]
+
+            # Replicate value from elbow axis 0 to elbow axis 1
+            if self.body_part == BodyPart.SHOULDER_LEFT or self.body_part == BodyPart.SHOULDER_RIGHT:
+                self.joint_targets_msg.position = np.hstack([self.joint_targets_msg.position, t[-1]])
+
+            while tracker_down:
+                rospy.loginfo("Tracker down. Waiting until it up again!!!")
+                rospy.sleep(0.2)
+
             self.joint_targets_pub.publish(self.joint_targets_msg)
             self.rate.sleep()
 
@@ -205,6 +226,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     rospy.init_node(args.body_part + '_particle_swarm')
+    tracking_loss_sub = rospy.Subscriber('/tracking_loss', std_msgs.msg.Bool, tracker_down_callback)
     search_space = Space(args.n_neighbors, args.body_part)
     while not rospy.is_shutdown():
         search_space.run()
