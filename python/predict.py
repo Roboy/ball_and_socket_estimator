@@ -11,8 +11,8 @@ from roboy_middleware_msgs.msg import MagneticSensor
 from nn_model import FFNeuralNetworkModel, LSTMNeuralNetworkModel
 from utils import BodyPart, MagneticId
 
-filter_n = 5
-history_n = 10
+filter_n = 2
+history_n = 3
 
 rospy.init_node('ball_socket_neural_network')
 sensors_scaler = [None for _ in MagneticId]
@@ -79,10 +79,10 @@ def magentic_data_callback(data):
         filter[data.id] = np.append(filter[data.id], output, axis=0)
         # return
 
-    avg = np.mean(filter[data.id], axis=0)
-    error = np.abs(avg - output).sum()
+    # avg = np.mean(filter[data.id], axis=0)
+    error = np.abs(filter[data.id][-1] - output).max()
 
-    if error < 1.5:
+    if error < 0.15:
         filter[data.id] = np.append(filter[data.id], output, axis=0)
         filter[data.id] = np.delete(filter[data.id], 0, axis=0)
 
