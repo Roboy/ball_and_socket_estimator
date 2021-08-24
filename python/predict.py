@@ -12,7 +12,7 @@ from nn_model import FFNeuralNetworkModel, LSTMNeuralNetworkModel
 from utils import BodyPart, MagneticId
 
 MAX_ERROR = 3
-RESET_AFTER_N_REJECTION = 5
+RESET_AFTER_N_REJECTIONS = 5
 
 filter_n = 2
 history_n = 3
@@ -106,7 +106,7 @@ def magentic_data_callback(data):
         rospy.logwarn("Reject {} with error={}".format(BodyPart[MagneticId(data.id).name], error))
 
         # Auto reset
-        if reject_count[data.id] > RESET_AFTER_N_REJECTION:
+        if reject_count[data.id] > RESET_AFTER_N_REJECTIONS:
             reject_count[data.id] = 0
             filter = [output for _ in MagneticId]
 
