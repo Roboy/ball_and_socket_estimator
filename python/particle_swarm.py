@@ -187,7 +187,7 @@ class Space:
                 self.joint_targets_msg.position = np.hstack([self.joint_targets_msg.position, t[-1]])
 
             while tracker_down:
-                rospy.loginfo("Tracker down. Waiting until it up again!!!")
+                rospy.loginfo("Tracker down. Waiting until it is up again!!!")
                 rospy.sleep(0.2)
 
             self.joint_targets_pub.publish(self.joint_targets_msg)

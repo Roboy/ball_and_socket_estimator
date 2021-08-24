@@ -11,6 +11,9 @@ from roboy_middleware_msgs.msg import MagneticSensor
 from nn_model import FFNeuralNetworkModel, LSTMNeuralNetworkModel
 from utils import BodyPart, MagneticId
 
+MAX_ERROR = 3
+RESET_AFTER_N_REJECTION = 5
+
 filter_n = 2
 history_n = 3
 
@@ -82,7 +85,7 @@ def magentic_data_callback(data):
     # avg = np.mean(filter[data.id], axis=0)
     error = np.abs(filter[data.id][-1] - output).max()
 
-    if error < 0.15:
+    if error < MAX_ERROR:
         filter[data.id] = np.append(filter[data.id], output, axis=0)
         filter[data.id] = np.delete(filter[data.id], 0, axis=0)
 
@@ -103,7 +106,7 @@ def magentic_data_callback(data):
         rospy.logwarn("Reject {} with error={}".format(BodyPart[MagneticId(data.id).name], error))
 
         # Auto reset
-        if reject_count[data.id] == 5:
+        if reject_count[data.id] > RESET_AFTER_N_REJECTION:
             reject_count[data.id] = 0
             filter = [output for _ in MagneticId]
 
