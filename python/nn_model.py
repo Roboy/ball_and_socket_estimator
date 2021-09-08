@@ -1,5 +1,8 @@
 import numpy as np
 import tensorflow.compat.v1 as tf
+
+from abc import ABC, abstractmethod
+
 tf.disable_v2_behavior()
 
 # physical_devices = tf.config.list_physical_devices('GPU')
@@ -8,12 +11,12 @@ tf.disable_v2_behavior()
 
 def mean_square_error(y_logit, y_true):
     y_diff = y_true - y_logit
-    mse = tf.reduce_sum(tf.square(y_diff), axis=1)
+    mse = tf.reduce_sum(tf.square(y_diff), axis=-1)
 
     return tf.reduce_mean(mse)
 
 
-class NeuralNetworkModel:
+class NeuralNetworkModel(ABC):
     def __init__(self, name, hidden_size=100):
 
         self.name = name
@@ -22,8 +25,7 @@ class NeuralNetworkModel:
         with self.graph.as_default():
             self.hidden_size = hidden_size
 
-            self.x = tf.placeholder(dtype=tf.float32, shape=[None, 12])
-            self.y = tf.placeholder(dtype=tf.float32, shape=[None, 6])
+            self.x, self.y = self._init_placeholder()
             self.output = self._build()
 
             learning_rate = 5e-4
@@ -37,13 +39,13 @@ class NeuralNetworkModel:
         self.session = tf.Session(graph=self.graph)
         self.session.run(initialization)
 
+    @abstractmethod
+    def _init_placeholder(self):
+        pass
+
+    @abstractmethod
     def _build(self):
-        hidden = tf.layers.dense(self.x, self.hidden_size, tf.nn.tanh,
-                                 kernel_initializer='glorot_uniform', name=self.name+"_layer_1")
-        hidden = tf.layers.dense(hidden, self.hidden_size, tf.nn.tanh,
-                                 kernel_initializer='glorot_uniform', name=self.name+"_layer_2")
-        return tf.layers.dense(hidden, 6, tf.nn.tanh,
-                               kernel_initializer='glorot_uniform', name=self.name+"_layer_out")
+        pass
 
     def save_model(self, path):
         self.saver.save(self.session, path, write_meta_graph=False)
@@ -72,7 +74,7 @@ class NeuralNetworkModel:
             rand_out_train = y[rand_idx]
 
             for i in range(n_train_batches - 1):
-                idx = slice(i*batch_size, i*batch_size+batch_size)
+                idx = slice(i * batch_size, i * batch_size + batch_size)
 
                 minibatch_x = rand_in_train[idx]
                 minibatch_y = rand_out_train[idx]
@@ -87,7 +89,7 @@ class NeuralNetworkModel:
                 training_loss += loss / n_train_batches
 
             for i in range(n_valid_batches - 1):
-                idx = slice(i*batch_size, i*batch_size+batch_size)
+                idx = slice(i * batch_size, i * batch_size + batch_size)
 
                 minibatch_x = x_val[idx]
                 minibatch_y = y_val[idx]
@@ -114,3 +116,46 @@ class NeuralNetworkModel:
             if cur_patience >= patience:
                 print("Stop training after %04d iterations" % epoch)
                 break
+
+
+class FFNeuralNetworkModel(NeuralNetworkModel):
+    def __init__(self, name, hidden_size=100):
+        super().__init__(name, hidden_size)
+
+    def _init_placeholder(self):
+        x = tf.placeholder(dtype=tf.float32, shape=[None, 12])
+        y = tf.placeholder(dtype=tf.float32, shape=[None, 6])
+        return x, y
+
+    def _build(self):
+        hidden = tf.layers.dense(self.x, self.hidden_size, tf.nn.tanh,
+                                 kernel_initializer='glorot_uniform', name=self.name + "_layer_1")
+        hidden = tf.layers.dense(hidden, self.hidden_size, tf.nn.tanh,
+                                 kernel_initializer='glorot_uniform', name=self.name + "_layer_2")
+        return tf.layers.dense(hidden, 6, tf.nn.tanh,
+                               kernel_initializer='glorot_uniform', name=self.name + "_layer_out")
+
+
+class LSTMNeuralNetworkModel(NeuralNetworkModel):
+    def __init__(self, name, hidden_size=100, look_back=10):
+
+        self.look_back = look_back
+
+        super().__init__(name, hidden_size)
+
+    def _init_placeholder(self):
+        x = tf.placeholder(dtype=tf.float32, shape=[None, self.look_back, 12])
+        y = tf.placeholder(dtype=tf.float32, shape=[None, self.look_back, 6])
+        return x, y
+
+    def _build(self):
+        hidden = tf.keras.layers.LSTM(self.hidden_size, return_sequences=True, input_shape=(self.look_back, 12),
+                                      stateful=False)(self.x)
+        hidden = tf.keras.layers.LSTM(self.hidden_size, return_sequences=True)(hidden)
+        return tf.layers.dense(hidden, 6, tf.nn.tanh,
+                               kernel_initializer='glorot_uniform', name=self.name + "_layer_out")
+
+    def predict(self, x):
+        return super().predict(x)[:, -1, :]
+
+

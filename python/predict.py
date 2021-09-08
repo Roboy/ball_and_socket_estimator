@@ -8,26 +8,32 @@ import std_msgs.msg
 import sensor_msgs.msg
 from visualization_msgs.msg import Marker
 from roboy_middleware_msgs.msg import MagneticSensor
-from nn_model import NeuralNetworkModel
+from nn_model import FFNeuralNetworkModel, LSTMNeuralNetworkModel
 from utils import BodyPart, MagneticId
 
+MAX_ERROR = 3
+RESET_AFTER_N_REJECTIONS = 5
 
-filter_n = 10
+filter_n = 2
+history_n = 3
 
 rospy.init_node('ball_socket_neural_network')
 sensors_scaler = [None for _ in MagneticId]
 model = [None for _ in MagneticId]
+history = [None for _ in MagneticId]
 filter = [None for _ in MagneticId]
 reject_count = [0 for _ in MagneticId]
+use_lstm = [True, True, True, True, True]
 prediction_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1)
 trackingPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState)
 targetPublisher = rospy.Publisher("/roboy/pinky/control/joint_targets", sensor_msgs.msg.JointState)
 
 
 def load_data(name, id):
-    global sensors_scaler, filter
-    sensors_scaler[id] = joblib.load(name+'/scaler.pkl')
+    global sensors_scaler, filter, history
+    sensors_scaler[id] = joblib.load(name + '/scaler.pkl')
     filter[id] = np.zeros((1, 3))
+    history[id] = np.zeros((1, 12))
 
 
 def sin_cos_to_angle(sin_cos):
@@ -39,8 +45,7 @@ def sin_cos_to_angle(sin_cos):
 
 
 def magentic_data_callback(data):
-
-    global filter, reject_count
+    global filter, history, reject_count
 
     if sensors_scaler[data.id] is None:
         return
@@ -57,18 +62,30 @@ def magentic_data_callback(data):
     x_test = x_test.reshape((1, len(x_test)))
     x_test = sensors_scaler[data.id].transform(x_test).astype('float32')
 
-    # Pass data into neural network and output sin and cos, then convert them to Euler Angles
-    output = model[data.id].predict(x_test)
-    output = sin_cos_to_angle(output)
+    if use_lstm[data.id]:
+
+        history[data.id] = np.append(history[data.id], x_test, axis=0)
+        if len(history[data.id]) <= history_n:
+            return
+        else:
+            history[data.id] = np.delete(history[data.id], 0, axis=0)
+
+        # Pass data into neural network and output sin and cos, then convert them to Euler Angles
+        output = model[data.id].predict(history[data.id][None, :, :])
+        output = sin_cos_to_angle(output)
+    else:
+        # Pass data into neural network and output sin and cos, then convert them to Euler Angles
+        output = model[data.id].predict(x_test)
+        output = sin_cos_to_angle(output)
 
     if len(filter[data.id]) < filter_n:
         filter[data.id] = np.append(filter[data.id], output, axis=0)
-        return
+        # return
 
-    avg = np.mean(filter[data.id], axis=0)
-    error = np.abs(avg - output).sum()
+    # avg = np.mean(filter[data.id], axis=0)
+    error = np.abs(filter[data.id][-1] - output).max()
 
-    if error < 0.5:
+    if error < MAX_ERROR:
         filter[data.id] = np.append(filter[data.id], output, axis=0)
         filter[data.id] = np.delete(filter[data.id], 0, axis=0)
 
@@ -89,13 +106,13 @@ def magentic_data_callback(data):
         rospy.logwarn("Reject {} with error={}".format(BodyPart[MagneticId(data.id).name], error))
 
         # Auto reset
-        if reject_count[data.id] == 10:
+        if reject_count[data.id] > RESET_AFTER_N_REJECTIONS:
             reject_count[data.id] = 0
-            filter = [np.zeros((1, 3)) for _ in MagneticId]
+            filter = [output for _ in MagneticId]
 
 
 if __name__ == '__main__':
-    rate = rospy.Rate(100)
+    rate = rospy.Rate(300)
 
     rospack = rospkg.RosPack()
     base_path = rospack.get_path('ball_in_socket_estimator') + '/python/'
@@ -103,9 +120,12 @@ if __name__ == '__main__':
     # Search models and its corresponding body_parts.
     for i in range(len(model)):
         body_part = BodyPart[MagneticId(i).name]
-        model_path = './output/'+body_part+'_tanh'
+        model_path = './output/' + body_part
+        model_path += "_lstm" if use_lstm[i] else "_tanh"
+
         if os.path.isdir(model_path):
-            model[i] = NeuralNetworkModel(name=body_part)
+            model[i] = LSTMNeuralNetworkModel(name=body_part, look_back=history_n) \
+                if use_lstm[i] else FFNeuralNetworkModel(name=body_part)
             print("Loading model " + model_path + " from disk")
             model[i].restore_model(model_path + "/best_model")
             print("Loaded model " + model_path + " from disk")
