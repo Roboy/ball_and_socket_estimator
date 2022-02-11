@@ -1,0 +1,1 @@
+{"seq_len": 50, "batch_size": 1000, "max_epochs": 10000, "n_frames": 4, "n_observations": 3, "n_actions": 3, "n_latents": 16, "n_outputs": 6, "n_initial_obs": 5, "hidden_size": 100, "learning_rate": 0.0005, "alpha": 10.0, "beta": 0.1, "temperature": 100000.0}
