@@ -5,7 +5,7 @@ import numpy as np
 def normalize_vector( v):
     batch=v.shape[0]
     v_mag = torch.sqrt(v.pow(2).sum(1))# batch
-    v_mag = torch.max(v_mag, torch.autograd.Variable(torch.FloatTensor([1e-8]).cuda()))
+    v_mag = torch.max(v_mag, torch.autograd.Variable(torch.FloatTensor([1e-8]).cpu()))
     v_mag = v_mag.view(batch,1).expand(batch,v.shape[1])
     v = v/v_mag
     return v
@@ -41,7 +41,7 @@ def compute_euler_angles_from_rotation_matrices(rotation_matrices):
     ys=torch.atan2(-R[:,2,0], sy)
     zs=R[:,1,0]*0
         
-    out_euler=torch.autograd.Variable(torch.zeros(batch,3).cuda())
+    out_euler=torch.autograd.Variable(torch.zeros(batch,3).cpu())
     out_euler[:,0]=x*(1-singular)+xs*singular
     out_euler[:,1]=y*(1-singular)+ys*singular
     out_euler[:,2]=z*(1-singular)+zs*singular
