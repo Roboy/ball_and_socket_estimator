@@ -40,8 +40,9 @@ filter_lstm = [None for _ in MagneticId]
 reject_count_dvbf = [0 for _ in MagneticId]
 reject_count_lstm = [0 for _ in MagneticId]
 
-dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/dvbf_joint_states", sensor_msgs.msg.JointState, queue_size=1)
+# dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/dvbf_joint_states", sensor_msgs.msg.JointState, queue_size=1)
 lstmPublisher = rospy.Publisher("/roboy/pinky/sensing/lstm_joint_states", sensor_msgs.msg.JointState, queue_size=1)
+dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState, queue_size=1)
 joint_target = None
 
 
@@ -64,7 +65,8 @@ def target_data_callback(target_data):
 
     # Check shoulder left
     if 'shoulder_left_axis0' in target_data.name:
-        joint_target = np.array(target_data.position[:3])
+        idx = target_data.name.index('shoulder_left_axis0')
+        joint_target = np.array(target_data.position[idx:idx+3])
 
 
 def magentic_data_callback(magnetic_data):
