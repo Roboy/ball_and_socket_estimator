@@ -4,19 +4,21 @@
 
 * Pytorch `conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch`
 
+* `pip install -r requirements.txt`
+
 ## Data collection
 
-* Generate data with `python particle_swarm_.py --body_part BODY_PART`
+* Generate data using `python particle_swarm_.py --body_part BODY_PART`
   
  with `BODY_PART = {head, shoulder_left, shoulder_right, hand_left, hand_right}`
 
 ## Training
 
-* Convert from `bags` to `csv` using `write_dataset_from_bag.ipynb`
+* Convert `bags` to `csv` using `write_dataset_from_bag.ipynb`
 
-* Data analysis to make sure all the inputs and outputs are correct using `data_analysis.ipynb`
+* Run `data_analysis.ipynb` to make sure all the inputs and outputs are correct
 
-* Training an LSTM network `training.ipynb`
+* Train an LSTM network using `training.ipynb`
 
 ## Prediction
 
