@@ -1,17 +1,13 @@
 import os.path
-
 import gc
-
 import numpy as np
 import rospkg
 import rospy
 import joblib
 import std_msgs.msg
 import sensor_msgs.msg
-import message_filters
 import torch
 import time
-from visualization_msgs.msg import Marker
 from sensor_msgs.msg import JointState
 from roboy_middleware_msgs.msg import MagneticSensor
 from libs.deploy_utils import BodyPart, MagneticId
