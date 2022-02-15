@@ -131,7 +131,7 @@ if __name__ == '__main__':
     # Search models and its corresponding body_parts.
     for i in range(len(model_lstm)):
         body_part = BodyPart[MagneticId(i).name].value
-        lstm_path = f'{base_path}/outputs_idp/{body_part}_lstm_rot6D'
+        lstm_path = f'{base_path}/outputs_new/{body_part}_lstm_rot6D'
 
         if os.path.isdir(lstm_path):
             model_lstm[i] = LSTMRegressor.load_from_checkpoint(checkpoint_path=f'{lstm_path}/best.ckpt')
