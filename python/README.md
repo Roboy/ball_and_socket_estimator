@@ -8,7 +8,7 @@
 
 ## Data collection
 
-* Generate data using `python particle_swarm_.py --body_part BODY_PART`
+* Generate data using `python particle_swarm.py --body_part BODY_PART`
   
  with `BODY_PART = {head, shoulder_left, shoulder_right, hand_left, hand_right}`
 
