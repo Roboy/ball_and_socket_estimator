@@ -1,5 +1,7 @@
 import os.path
 
+import gc
+
 import numpy as np
 import rospkg
 import rospy
@@ -40,11 +42,12 @@ filter_lstm = [None for _ in MagneticId]
 reject_count_dvbf = [0 for _ in MagneticId]
 reject_count_lstm = [0 for _ in MagneticId]
 
-# dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/dvbf_joint_states", sensor_msgs.msg.JointState, queue_size=1)
+dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/dvbf_joint_states", sensor_msgs.msg.JointState, queue_size=1)
 lstmPublisher = rospy.Publisher("/roboy/pinky/sensing/lstm_joint_states", sensor_msgs.msg.JointState, queue_size=1)
-dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState, queue_size=1)
+# dvbfPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState, queue_size=1)
 joint_target = None
 
+prev_time = time.time()
 
 def load_data(name, id, dvbf=False):
     global sensors_scaler_dvbf, actions_scaler_dvbf, sensors_scaler_lstm, filter, history
@@ -70,7 +73,7 @@ def target_data_callback(target_data):
 
 
 def magentic_data_callback(magnetic_data):
-    global filter_dvbf, filter_lstm, history_dvbf, history_lstm, init_dvbf, reject_count_dvbf, reject_count_lstm
+    global filter_dvbf, filter_lstm, history_dvbf, history_lstm, init_dvbf, reject_count_dvbf, reject_count_lstm, prev_time
 
     if sensors_scaler_lstm[magnetic_data.id] is None:
         return
@@ -146,7 +149,9 @@ def magentic_data_callback(magnetic_data):
         action = actions_scaler_dvbf[magnetic_data.id].transform(joint_target[None]).astype('float32')
         x_in = torch.tensor(x_dvbf_test, dtype=torch.float32)
         u_in = torch.tensor(action, dtype=torch.float32)
-        out_set, dvbf_state[magnetic_data.id] = model_dvbf[magnetic_data.id].predict_belief(dvbf_state[magnetic_data.id], u_in, x_in)
+        state = dvbf_state[magnetic_data.id]
+        out_set, dvbf_state[magnetic_data.id] = model_dvbf[magnetic_data.id].predict_belief(state, u_in, x_in)
+        del state
 
         out_set = compute_rotation_matrix_from_ortho6d(out_set)
         output_dvbf = compute_euler_angles_from_rotation_matrices(out_set).detach().numpy()
@@ -180,7 +185,12 @@ def magentic_data_callback(magnetic_data):
             if reject_count_dvbf[magnetic_data.id] > RESET_AFTER_N_REJECTIONS:
                 reject_count_dvbf[magnetic_data.id] = 0
                 filter_dvbf = [output_dvbf for _ in MagneticId]
-
+                
+    # Clean up the memory after few seconds
+    if time.time() - prev_time > 3:
+        gc.collect()
+        prev_time = time.time()
+        print("Clean up")
 
 if __name__ == '__main__':
     rate = rospy.Rate(300)
