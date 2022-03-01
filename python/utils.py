@@ -15,6 +15,7 @@ class BodyPart(str, Enum):
     SHOULDER_RIGHT = "shoulder_right"
     HAND_LEFT = "hand_left"
     HAND_RIGHT = "hand_right"
+    SHOULDER = "shoulder"
 
     def __str__(self):
         return self.value
