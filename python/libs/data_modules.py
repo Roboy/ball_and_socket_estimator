@@ -86,7 +86,7 @@ class SensorsDataModule(pl.LightningDataModule):
         if stage is None and self.X_train is not None and self.X_test is not None:  
             return
         
-        data_split = 0.6
+        data_split = 0.7
         data_idx = np.arange(len(self.data_x))
         np.random.shuffle(data_idx)
         split_idx = int(len(self.data_x)*data_split)

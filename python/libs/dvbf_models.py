@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import pytorch_lightning as pl
 from typing import Tuple, Dict
+from libs.nn_models import mse_seq
 
 
 class DVBF(pl.LightningModule):
@@ -290,6 +291,8 @@ class DVBF(pl.LightningModule):
         p_y = self.regressing(z, return_dist=True)
         logprob_y = p_y.log_prob(y + 1e-6)
 
+        mse = mse_seq(p_y.mean, y)
+
         nllx = -logprob_x.mean()
         nlly = -logprob_y.mean()
         kl = torch.distributions.kl_divergence(q_z, prior_z).mean()
@@ -298,7 +301,7 @@ class DVBF(pl.LightningModule):
 
         self.annealing = min(self.annealing + (1.0 / self.temperature), 1.0)
 
-        return loss, nllx, nlly, kl
+        return loss, nllx, nlly, kl, mse
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
@@ -309,8 +312,8 @@ class DVBF(pl.LightningModule):
             x_hat = None
         elif len(batch) == 4:
             x, u, y, x_hat = batch
-        loss, nllx, nlly, kl = self.criterion(x, u, y, x_hat)
-        self.log_dict({"train_loss": loss, "train_nllx": nllx, "train_nlly": nlly, "train_kl": kl}, on_epoch=True, prog_bar=True, logger=True)
+        loss, nllx, nlly, kl, mse = self.criterion(x, u, y, x_hat)
+        self.log_dict({"train_loss": loss, "train_nllx": nllx, "train_nlly": nlly, "train_kl": kl, "mse": mse}, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -319,8 +322,8 @@ class DVBF(pl.LightningModule):
             x_hat = None
         elif len(batch) == 4:
             x, u, y, x_hat = batch
-        loss, nllx, nlly, kl = self.criterion(x, u, y, x_hat)
-        self.log_dict({"val_loss": loss, "val_nllx": nllx, "val_nlly": nlly, "val_kl": kl}, on_epoch=True, prog_bar=True, logger=True)
+        loss, nllx, nlly, kl, mse = self.criterion(x, u, y, x_hat)
+        self.log_dict({"val_loss": loss, "val_nllx": nllx, "val_nlly": nlly, "val_kl": kl, "mse": mse}, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def test_step(self, batch, batch_idx):
@@ -329,6 +332,6 @@ class DVBF(pl.LightningModule):
             x_hat = None
         elif len(batch) == 4:
             x, u, y, x_hat = batch
-        loss, nllx, nlly, kl = self.criterion(x, u, y, x_hat)
-        self.log_dict({"test_loss": loss, "test_nllx": nllx, "test_nlly": nlly, "test_kl": kl}, on_epoch=True, prog_bar=True, logger=True)
+        loss, nllx, nlly, kl, mse = self.criterion(x, u, y, x_hat)
+        self.log_dict({"test_loss": loss, "test_nllx": nllx, "test_nlly": nlly, "test_kl": kl, "mse": mse}, on_epoch=True, prog_bar=True, logger=True)
         return loss

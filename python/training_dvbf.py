@@ -24,7 +24,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers.csv_logs import CSVLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from libs.data_modules import SensorsDataModule
-from libs.nn_models import LSTMRegressor
+from libs.nn_models import LSTMRegressor, mse_seq
 from libs.dvbf_models import DVBF
 
 
