@@ -59,7 +59,7 @@ class DVBF(pl.LightningModule):
             nn.Linear(in_features=n_latents+n_actions, out_features=hidden_size),
             nn.ReLU(),
             nn.Linear(in_features=hidden_size, out_features=num_matrices),
-            nn.Softmax()
+            nn.Softmax(dim=1)
         )
 
         shared_encoder = nn.Sequential(
