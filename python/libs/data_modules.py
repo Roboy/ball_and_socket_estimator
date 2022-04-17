@@ -45,7 +45,9 @@ class SensorsDataModule(pl.LightningDataModule):
       and processing work in one place.
     '''
     
-    def __init__(self, data_x, data_u, data_y, data_x_hat = None, seq_len = 1, batch_size = 128, num_workers=0):
+    def __init__(self, data_x, data_u, data_y, data_x_hat = None, 
+                 data_x_val = None, data_u_val = None, data_y_val = None,
+                 seq_len = 1, batch_size = 128, num_workers=0):
         super().__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -68,6 +70,17 @@ class SensorsDataModule(pl.LightningDataModule):
         self.data_u = data_u
         self.data_y = data_y
         self.data_x_hat = data_x_hat
+        self.data_x_val = data_x_val
+        self.data_u_val = data_u_val
+        self.data_y_val = data_y_val
+
+        if self.data_x_hat is None:
+            split_rate = 0.7
+        else:
+            split_rate = 0.3
+        self.data_idx = np.arange(len(self.data_x))
+        np.random.shuffle(self.data_idx)
+        self.split_idx = int(len(self.data_x)*split_rate)
 
     def prepare_data(self):
         pass
@@ -85,31 +98,47 @@ class SensorsDataModule(pl.LightningDataModule):
             return
         if stage is None and self.X_train is not None and self.X_test is not None:  
             return
-        
-        data_split = 0.7
-        data_idx = np.arange(len(self.data_x))
-        np.random.shuffle(data_idx)
-        split_idx = int(len(self.data_x)*data_split)
 
         if stage == 'fit' or stage is None:
-            self.X_train = np.array(self.data_x)[data_idx[:split_idx]]
-            self.U_train = np.array(self.data_u)[data_idx[:split_idx]]
-            self.y_train = np.array(self.data_y)[data_idx[:split_idx]]
-            self.X_val = np.array(self.data_x)[data_idx[split_idx:]]
-            self.U_val = np.array(self.data_u)[data_idx[split_idx:]]
-            self.y_val = np.array(self.data_y)[data_idx[split_idx:]]
+
+            if self.data_x_val is None:
+                self.X_train = np.array(self.data_x)[self.data_idx[:self.split_idx]]
+                self.U_train = np.array(self.data_u)[self.data_idx[:self.split_idx]]
+                self.y_train = np.array(self.data_y)[self.data_idx[:self.split_idx]]
+                self.X_val = np.array(self.data_x)[self.data_idx[self.split_idx:]]
+                self.U_val = np.array(self.data_u)[self.data_idx[self.split_idx:]]
+                self.y_val = np.array(self.data_y)[self.data_idx[self.split_idx:]]
+            else:
+                self.X_train = np.array(self.data_x)[self.data_idx[:self.split_idx]]
+                self.U_train = np.array(self.data_u)[self.data_idx[:self.split_idx]]
+                self.y_train = np.array(self.data_y)[self.data_idx[:self.split_idx]]
+                self.X_val = np.array(self.data_x_val)
+                self.U_val = np.array(self.data_u_val)
+                self.y_val = np.array(self.data_y_val)
 
             if self.data_x_hat is not None:
-                self.X_hat_train = np.array(self.data_x_hat)[data_idx[:split_idx]]
-                self.X_hat_val = np.array(self.data_x_hat)[data_idx[split_idx:]]
+                if self.data_x_val is None:
+                    self.X_hat_train = np.array(self.data_x_hat)[self.data_idx[:self.split_idx]]
+                    self.X_hat_val = np.array(self.data_x_hat)[self.data_idx[self.split_idx:]]
+                else:
+                    self.X_hat_train = np.array(self.data_x_hat)[self.data_idx[:self.split_idx]]
+                    self.X_hat_val = np.array(self.data_x_val)
             
         if stage == 'test' or stage is None:
-            self.X_test = np.array(self.data_x)[data_idx[split_idx:]]
-            self.U_test = np.array(self.data_u)[data_idx[split_idx:]]
-            self.y_test = np.array(self.data_y)[data_idx[split_idx:]]
+            if self.data_x_val is None:
+                self.X_test = np.array(self.data_x)[self.data_idx[self.split_idx:]]
+                self.U_test = np.array(self.data_u)[self.data_idx[self.split_idx:]]
+                self.y_test = np.array(self.data_y)[self.data_idx[self.split_idx:]]
+            else:
+                self.X_test = np.array(self.data_x_val)
+                self.U_test = np.array(self.data_u_val)
+                self.y_test = np.array(self.data_y_val)
 
             if self.data_x_hat is not None:
-                self.X_hat_test = np.array(self.data_x_hat)[data_idx[split_idx:]]
+                if self.data_x_val is None:
+                    self.X_hat_test = np.array(self.data_x_hat)[self.data_idx[self.split_idx:]]
+                else:
+                    self.X_hat_test = np.array(self.data_x_val)
         
 
     def train_dataloader(self):

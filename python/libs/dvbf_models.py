@@ -145,7 +145,7 @@ class DVBF(pl.LightningModule):
 
     def sensor_fusion(self, means, vars):
         # Check dimension
-        inv_vars = 1 / (vars + 1e-5)
+        inv_vars = 1 / (vars + 1e-6)
         posterior_variance = 1 / inv_vars.sum(1)
         posterior_mean = posterior_variance * (inv_vars * means).sum(1)
         return torch.distributions.MultivariateNormal(posterior_mean, torch.diag_embed(torch.sqrt(posterior_variance)))
@@ -165,18 +165,18 @@ class DVBF(pl.LightningModule):
         for i, encoder in enumerate(self.encoder_models):
             meas = encoder(x[:, i])
             meas_mean, meas_var = torch.split(meas, split_size_or_sections=self.n_latents, dim=1)
-            meas_var = torch.exp(meas_var) + 1e-5
+            meas_var = torch.exp(meas_var) + 1e-6
 
             meas_means.append(meas_mean)
             meas_vars.append(meas_var)
 
-        # Sensor fusion
+        # Sensor fusion        
         all_means = torch.stack([z] + meas_means, 1) # concat z and meas_mean
         all_vars = torch.stack([posterior_var] + meas_vars, 1) # concat posterior_var and meas_var
         z_dist = self.sensor_fusion(all_means, all_vars)
         z = z_dist.rsample()
 
-        return z, z_dist.mean, z_dist.variance, prior_var
+        return z, z_dist.mean, z_dist.variance, prior_var, torch.stack(meas_means, 1), torch.stack(meas_vars, 1)
 
     def filter(self, x: torch.Tensor, u: torch.Tensor = None):
         q_w, z_t, w_t = self.get_initial_samples(x[:, :self.n_initial_obs])
@@ -184,22 +184,25 @@ class DVBF(pl.LightningModule):
         z_mean = [q_w.mean]
         z_var = [q_w.variance]
         prior_var = []
+        meas_means = []
 
         for t in range(1, self.seq_len):
             if u is not None:
-                z_t, z_t_mean, z_t_var, prior_t_var = self.belief_update(z=z_t, u=u[:, t - 1], x=x[:, t])
+                z_t, z_t_mean, z_t_var, prior_t_var, meas_mean, _ = self.belief_update(z=z_t, u=u[:, t - 1], x=x[:, t])
             else:
-                z_t, z_t_mean, z_t_var, prior_t_var = self.belief_update(z=z_t, x=x[:, t])
+                z_t, z_t_mean, z_t_var, prior_t_var, meas_mean, _ = self.belief_update(z=z_t, x=x[:, t])
 
             z.append(z_t)
             z_mean.append(z_t_mean)
             z_var.append(z_t_var)
             prior_var.append(prior_t_var)
+            meas_means.append(meas_mean)
 
         z = torch.stack(z, dim=1)
         z_mean = torch.stack(z_mean, dim=1)
         z_var = torch.stack(z_var, dim=1)
         prior_var = torch.stack(prior_var, dim=1)
+        meas_means = torch.stack(meas_means, dim=1)
         
         q_z = torch.distributions.MultivariateNormal(z_mean, torch.diag_embed(z_var))
         prior_z = torch.distributions.MultivariateNormal(
@@ -208,12 +211,12 @@ class DVBF(pl.LightningModule):
                 torch.cat((torch.ones_like(prior_var[:, 0])[:, None], prior_var[:, :-1]), dim=1)
             )
         )
-        return z, q_z, prior_z
+        return z, q_z, prior_z, meas_means
 
     def reconstruct(self, z: torch.Tensor, return_dist=False):
         x_rec = self.decoder_model(z)
         mean, std = torch.split(x_rec, split_size_or_sections=self.n_frames * self.n_observations, dim=-1)
-        std = torch.exp(std) + 1e-5
+        std = torch.exp(std) + 1e-6 
         p_x = torch.distributions.MultivariateNormal(mean, torch.diag_embed(std))
 
         if return_dist:
@@ -224,7 +227,7 @@ class DVBF(pl.LightningModule):
     def regressing(self, z: torch.Tensor, return_dist=False):
         y_hat = self.regressor_model(z)
         mean, std = torch.split(y_hat, split_size_or_sections=self.n_outputs, dim=-1)
-        std = torch.exp(std) + 1e-5
+        std = torch.exp(std) + 1e-6
         p_y = torch.distributions.MultivariateNormal(mean, torch.diag_embed(std))
 
         if return_dist:
@@ -245,26 +248,33 @@ class DVBF(pl.LightningModule):
     def predict_belief(self, z: torch.Tensor, u: torch.Tensor = None, x: torch.Tensor = None):
 
         if u is not None:
-            z_t, z_t_mean, z_t_var, prior_t_var = self.belief_update(z=z, u=u, x=x)
+            z_t, z_t_mean, z_t_var, prior_t_var, meas_mean, meas_var = self.belief_update(z=z, u=u, x=x)
         else:
-            z_t, z_t_mean, z_t_var, prior_t_var = self.belief_update(z=z, x=x)
+            z_t, z_t_mean, z_t_var, prior_t_var, meas_mean, meas_var = self.belief_update(z=z, x=x)
 
         p_y = self.regressing(z_t_mean, return_dist=True)
         y_mean = p_y.mean
 
-        return y_mean, z_t_mean
+        return y_mean, z_t_mean, meas_mean, meas_var
 
-    def predict(self, x: torch.Tensor, u: torch.Tensor = None):
+    def predict(self, x: torch.Tensor, u: torch.Tensor = None, meas_latent_output: bool = False):
         T = x.shape[1]
 
         outputs = []
-        state, _ = self.predict_initial(x[:, :self.n_initial_obs])
+        meas_means = []
+        meas_vars = []
+        state, _  = self.predict_initial(x[:, :self.n_initial_obs])
         for t in range(T):
-            output, state = self.predict_belief(state, u[:, t], x[:, t])
+            output, state, meas_mean, meas_var = self.predict_belief(state, u[:, t], x[:, t])
             # output, state = self.predict_belief(state, None, x[:, t])
             outputs.append(output)
+            meas_means.append(meas_mean)
+            meas_vars.append(meas_var)
 
-        return torch.stack(outputs, dim=1)
+        if meas_latent_output:
+            return torch.stack(outputs, dim=1), meas_means, meas_vars
+        else:
+            return torch.stack(outputs, dim=1)
 
     def inv_meas(self, x: torch.Tensor):
         # Inverse measurement
@@ -272,7 +282,7 @@ class DVBF(pl.LightningModule):
         for i, encoder in enumerate(self.encoder_models):
             meas = encoder(x[:, i])
             meas_mean, meas_var = torch.split(meas, split_size_or_sections=self.n_latents, dim=1)
-            meas_var = torch.exp(meas_var) + 1e-5
+            meas_var = torch.exp(meas_var) + 1e-6
 
             meas_means.append(meas_mean)
             meas_vars.append(meas_var)
@@ -283,7 +293,7 @@ class DVBF(pl.LightningModule):
         # u = None
         x_hat = x if x_hat is None else x_hat
 
-        z, q_z, prior_z = self.filter(x, u)
+        z, q_z, prior_z, meas_means = self.filter(x, u)
 
         p_x = self.reconstruct(z, return_dist=True)
         logprob_x = p_x.log_prob(x.view(-1, self.seq_len, self.n_frames * self.n_observations) + 1e-6)
@@ -291,13 +301,15 @@ class DVBF(pl.LightningModule):
         p_y = self.regressing(z, return_dist=True)
         logprob_y = p_y.log_prob(y + 1e-6)
 
+        meas_ref = torch.zeros_like(meas_means[:, :, 0, :][:, :, None, :])
         mse = mse_seq(p_y.mean, y)
 
         nllx = -logprob_x.mean()
         nlly = -logprob_y.mean()
         kl = torch.distributions.kl_divergence(q_z, prior_z).mean()
+        mse_meas = torch.square((meas_means - meas_ref)).sum((2,3)).mean()
         
-        loss = nllx + self.alpha * nlly + self.beta * self.annealing * kl
+        loss = nllx + self.alpha * nlly + self.beta * self.annealing * kl + 0.01 * mse_meas
 
         self.annealing = min(self.annealing + (1.0 / self.temperature), 1.0)
 
@@ -323,7 +335,7 @@ class DVBF(pl.LightningModule):
         elif len(batch) == 4:
             x, u, y, x_hat = batch
         loss, nllx, nlly, kl, mse = self.criterion(x, u, y, x_hat)
-        self.log_dict({"val_loss": loss, "val_nllx": nllx, "val_nlly": nlly, "val_kl": kl, "mse": mse}, on_epoch=True, prog_bar=True, logger=True)
+        self.log_dict({"val_loss": loss, "val_nllx": nllx, "val_nlly": nlly, "val_kl": kl, "val_mse": mse}, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def test_step(self, batch, batch_idx):
@@ -333,5 +345,5 @@ class DVBF(pl.LightningModule):
         elif len(batch) == 4:
             x, u, y, x_hat = batch
         loss, nllx, nlly, kl, mse = self.criterion(x, u, y, x_hat)
-        self.log_dict({"test_loss": loss, "test_nllx": nllx, "test_nlly": nlly, "test_kl": kl, "mse": mse}, on_epoch=True, prog_bar=True, logger=True)
+        self.log_dict({"test_loss": loss, "test_nllx": nllx, "test_nlly": nlly, "test_kl": kl, "test_mse": mse}, on_epoch=True, prog_bar=True, logger=True)
         return loss
