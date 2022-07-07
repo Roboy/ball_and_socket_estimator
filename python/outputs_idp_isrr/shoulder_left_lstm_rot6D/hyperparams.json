@@ -1,0 +1,1 @@
+{"seq_len": 10, "batch_size": 1000, "max_epochs": 500, "n_features": 12, "hidden_size": 100, "num_layers": 2, "dropout": 0.2, "learning_rate": 0.0005}

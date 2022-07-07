@@ -1,4 +1,5 @@
 .ipynb_checkpoints
+**/__pycache__/
 devel/
 build/
 .idea
@@ -16,3 +17,5 @@ python/hyperparameter_logs
 *.png
 *.gif
 *.gch
+python/outputs_idp/shoulder_left_dvbf_long_trajs_ad_with_target_rot6D/*
+python/outputs_idp/shoulder_left_lstm_rot6D/*
