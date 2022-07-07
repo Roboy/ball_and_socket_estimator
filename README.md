@@ -31,6 +31,6 @@ Switch to `python` folder as your working directory `cd python`
 * Train an LSTM network using `training.ipynb`
 
 ## Prediction
-
+`cd python`
 * Run the trained network `python predict_lstm.py`
 
