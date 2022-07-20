@@ -28,7 +28,7 @@ history_lstm = [None for _ in MagneticId]
 filter_lstm = [None for _ in MagneticId]
 reject_count_lstm = [0 for _ in MagneticId]
 
-lstmPublisher = rospy.Publisher("/roboy/oxford/prediction/external_joint_states", sensor_msgs.msg.JointState, queue_size=1)
+lstmPublisher = rospy.Publisher("/roboy/pinky/sensing/external_joint_states", sensor_msgs.msg.JointState, queue_size=1)
 joint_targets = [None for _ in MagneticId]
 
 prev_time = time.time()
@@ -101,7 +101,7 @@ def magentic_data_callback(magnetic_data):
 
             output_lstm = output_lstm[0]
             # msg.name = [BodyPart[MagneticId(magnetic_data.id).name] + "_axis" + str(i) for i in range(3)]
-            msg.name = ["axis" + str(i) for i in range(3)]
+            msg.name = ["shoulder_left_axis" + str(i) for i in range(3)]
             msg.position = [output_lstm[0], output_lstm[1], output_lstm[2]]
             msg.velocity = [0, 0, 0]
             msg.effort = [0, 0, 0]
@@ -131,17 +131,17 @@ if __name__ == '__main__':
 
     # Search models and its corresponding body_parts.
     for i in range(len(model_lstm)):
-        body_part = "shoulder" #BodyPart[MagneticId(i).name].value
-        lstm_path = f'{base_path}/outputs_new/{body_part}_lstm_rot6D'
+        body_part = BodyPart[MagneticId(i).name].value
+        lstm_path = f'{base_path}/zukunft/outputs/{body_part}_lstm_rot6D' #{body_part}_lstm_rot6D'
 
         if os.path.isdir(lstm_path):
-            model_lstm[i] = LSTMRegressor.load_from_checkpoint(checkpoint_path=f'{lstm_path}/500epochs.ckpt')
+            model_lstm[i] = LSTMRegressor.load_from_checkpoint(checkpoint_path=f'{lstm_path}/best.ckpt') #500epochs.ckpt')
             torch.set_grad_enabled(False)
             model_lstm[i].eval()
             print("Loading LSTM model " + lstm_path + " from disk")
             load_data(lstm_path, i)
 
-    rospy.Subscriber("/roboy/oxford/simulation/joint_targets", JointState, target_data_callback, queue_size=1)
-    rospy.Subscriber("/roboy/oxford/middleware/MagneticSensor", MagneticSensor, magentic_data_callback, queue_size=1)
+    rospy.Subscriber("/roboy/pinky/simulation/joint_targets", JointState, target_data_callback, queue_size=1)
+    rospy.Subscriber("/roboy/pinky/middleware/MagneticSensor", MagneticSensor, magentic_data_callback, queue_size=1)
 
     rospy.spin()
